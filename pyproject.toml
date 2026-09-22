@@ -1,0 +1,54 @@
+[project]
+name = "tcc-gnn"
+version = "0.0.1"
+description = "TCC — Sumarização de vídeo com GNN sobre grafo time-aware (HieTaSumm + SLC-HELM)"
+authors = [{ name = "Caio Notini" }]
+requires-python = ">=3.10"
+
+dependencies = [
+    # Grafo e hierarquia (mesma stack usada por HieTaSumm-lib e mHELMNet)
+    "networkx>=3.0",
+    "higra>=0.6",
+
+    # Extração de features (torchvision no lugar do TF/Keras do HieTaSumm-lib original —
+    # ver seção "Stack e Configuração Inicial" no doc de escopo)
+    "torch>=2.2",
+    "torchvision>=0.17",
+
+    # GNN
+    "torch-geometric>=2.5",
+    "torch-scatter",
+
+    # Processamento de vídeo / imagem
+    "opencv-python>=4.9",
+    "pillow>=10.0",
+    "scikit-learn>=1.4",
+    "scikit-image>=0.22",
+    "scipy>=1.12",
+
+    # Avaliação (F-score, Kendall's tau, Spearman's rho vêm do scipy/scikit-learn acima)
+    "numpy>=1.26",
+
+    # Tracking de experimentos (mesmo usado no mHELMNet do lab)
+    "mlflow>=2.10",
+
+    # Config
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=4.1",
+    "ruff>=0.3",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]

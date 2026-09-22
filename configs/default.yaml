@@ -1,0 +1,44 @@
+# Config de experimento — equivalente ao options.json do HieTaSumm-lib (Leonardo),
+# em YAML para ficar consistente com o resto do repo.
+
+data:
+  video_path: "./data/raw/videos"
+  summary_path: "./data/processed/summaries"
+  dataset: "vsumm" # vsumm | summe | tvsum
+
+graph:
+  # janela temporal (em nº de frames) usada por Frame.py no HieTaSumm-lib
+  delta_t: 8
+  rate: 4
+
+features:
+  backbone: "resnet50" # portado de TensorFlow/Keras para torchvision — ver doc de escopo
+  pretrained: "imagenet"
+  img_size: [224, 224]
+
+hierarchy:
+  # baseline de comparação — mesma lib (higra) usada no HieTaSumm-lib original
+  baseline_method: "watershed_hierarchy_by_area"
+  is_binary: true
+
+  # método principal (novo, sem código de referência disponível — SLC-HELM não foi compartilhado)
+  slc:
+    enabled: true
+    distance_threshold: null # a definir empiricamente
+
+model:
+  embedding_size: 64
+  gat_heads: 4
+
+training:
+  unsupervised_objective: "graph_reconstruction" # graph_reconstruction | diversity_regularization | both
+  epochs: 100
+  lr: 0.001
+  batch_size: 1 # um vídeo = um grafo
+
+evaluation:
+  metrics: ["f_score", "kendall_tau", "spearman_rho"]
+
+experiment_tracking:
+  backend: "mlflow"
+  tracking_uri: "./mlruns"

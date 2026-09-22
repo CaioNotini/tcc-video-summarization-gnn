@@ -1,0 +1,6 @@
+[submodule "references/HieTaSumm-lib"]
+	path = references/HieTaSumm-lib
+	url = https://github.com/IMScience-PPGINF-PucMinas/HieTaSumm-lib.git
+[submodule "references/mHELMNet"]
+	path = references/mHELMNet
+	url = https://github.com/IMScience-PPGINF-PucMinas/mHELMNet.git
