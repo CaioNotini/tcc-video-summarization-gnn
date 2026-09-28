@@ -29,3 +29,4 @@ reports/*
 .pytest_cache/
 .coverage
 htmlcov/
+teste.py

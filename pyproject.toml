@@ -9,6 +9,7 @@ dependencies = [
     # Grafo e hierarquia (mesma stack usada por HieTaSumm-lib e mHELMNet)
     "networkx>=3.0",
     "higra>=0.6",
+    "h5py>=3.10",
 
     # Extração de features (torchvision no lugar do TF/Keras do HieTaSumm-lib original —
     # ver seção "Stack e Configuração Inicial" no doc de escopo)
@@ -17,7 +18,6 @@ dependencies = [
 
     # GNN
     "torch-geometric>=2.5",
-    "torch-scatter",
 
     # Processamento de vídeo / imagem
     "opencv-python>=4.9",
