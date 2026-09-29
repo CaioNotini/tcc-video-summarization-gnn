@@ -9,7 +9,6 @@ dependencies = [
     # Grafo e hierarquia (mesma stack usada por HieTaSumm-lib e mHELMNet)
     "networkx>=3.0",
     "higra>=0.6",
-    "h5py>=3.10",
 
     # Extração de features (torchvision no lugar do TF/Keras do HieTaSumm-lib original —
     # ver seção "Stack e Configuração Inicial" no doc de escopo)
@@ -17,6 +16,11 @@ dependencies = [
     "torchvision>=0.17",
 
     # GNN
+    # torch-scatter NÃO entra aqui de propósito: exige compilar contra o build exato do
+    # torch instalado (via wheel do data.pyg.org) e não tem wheel pronta pra versões muito
+    # recentes do torch. PyG >=2.3 já tem fallback nativo em PyTorch puro pras operações de
+    # scatter, então não é bloqueante — só reconsiderar se algum gargalo de performance real
+    # aparecer mais pra frente (aí instala à parte, com -f https://data.pyg.org/whl/torch-<versão>+cpu.html).
     "torch-geometric>=2.5",
 
     # Processamento de vídeo / imagem
@@ -28,6 +32,9 @@ dependencies = [
 
     # Avaliação (F-score, Kendall's tau, Spearman's rho vêm do scipy/scikit-learn acima)
     "numpy>=1.26",
+
+    # Leitura de datasets pré-extraídos em .h5 (SumMe/TVSum no formato eccv16_dataset)
+    "h5py>=3.10",
 
     # Tracking de experimentos (mesmo usado no mHELMNet do lab)
     "mlflow>=2.10",
@@ -41,6 +48,11 @@ dev = [
     "pytest>=8.0",
     "pytest-cov>=4.1",
     "ruff>=0.3",
+]
+
+# Dependência TEMPORÁRIA, só pra fase de validação.
+tf-validation = [
+    "tensorflow>=2.15",
 ]
 
 [tool.pytest.ini_options]

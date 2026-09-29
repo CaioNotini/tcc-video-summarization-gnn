@@ -1,28 +1,12 @@
-"""Construção do grafo time-aware (nós = frames, arestas = janela temporal).
-
-Porta a lógica de HieTaSumm-lib/HieTaSumm/Frame.py (e do `calc_end()` usado
-em Summary.py), mas desacoplada de dataset e de I/O: recebe direto um array
-de feature vectors já extraídas e devolve um grafo
-networkx puro em memória.
-
-Diferenças propositais em relação ao original:
-- Recebe features já extraídas (`np.ndarray`), não um diretório de frames
-  + um modelo (`Models.features()`) para extraí-las na hora.
-- Não escreve o grafo em disco via `Files.save_graph_data()` a cada
-  aresta -- só retorna o `networkx.Graph` em memória.
-
-A lógica de conexão (janela temporal via `delta_t`) e de peso (distância
-L1 normalizada) é a mesma do original.
-"""
+"""Construção do grafo time-aware (nós = frames, arestas = janela temporal)."""
 
 from __future__ import annotations
-
 import networkx as nx
 import numpy as np
 
 
 def calc_window_end(i: int, delta_t: int, n_frames: int) -> int:
-    if (i + delta_t) > n_frames or delta_t <= 0:
+    if (i + delta_t) > n_frames or delta_t < 0:
         return n_frames
     return i + delta_t
 
