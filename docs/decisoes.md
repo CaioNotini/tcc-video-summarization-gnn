@@ -1,18 +1,16 @@
 # Notas de decisão (ADR leve)
 
-Registro curto de decisões técnicas tomadas ao longo do projeto, pra não perder o
-raciocínio depois. Uma entrada por decisão: contexto, decisão, alternativas
+Registro curto de decisões técnicas tomadas ao longo do projeto. Uma entrada por decisão: contexto, decisão, alternativas
 descartadas.
 
 ## 2026-09-22 — TensorFlow/Keras → torchvision na extração de features
 
-**Contexto:** `HieTaSumm-lib` (código do Leonardo) extrai features com
+**Contexto:** `HieTaSumm-lib` extrai features com
 TensorFlow/Keras (VGG16/ResNet50). A GNN (PyTorch Geometric) já exige PyTorch.
 
 **Decisão:** portar a extração de features para `torchvision` (ResNet50
 pré-treinada ImageNet), evitando manter duas engines de deep learning como
-dependência. Pendente de validação com o Zenilton — não deveria afetar a
-arquitetura decidida, é só engine.
+dependência. Pendente de validação com o Zenilton.
 
 **Alternativas descartadas:** manter TensorFlow só para essa etapa (mais
 dependências, sem ganho técnico claro).
@@ -28,3 +26,25 @@ do paper, usando os blocos de código do `mHELMNet` (`Linear`, `BatchNorm`,
 
 **Acompanhar:** confirmar com o laboratório se o código do SLC-HELM fica
 disponível mais adiante (reduziria retrabalho).
+
+## 2026-09-29 — ResNet50: avgpool em vez de predictions na extração de features
+
+**Contexto:** o `Models.py` do HieTaSumm-lib usa a camada `predictions` do ResNet50
+(saída softmax de classificação, 1000-dim). Com a migração para torchvision,
+era preciso escolher a camada de onde extrair as features, já que esse vetor
+também vai virar a representação inicial de nó da GNN, alimentando o GATv2 e,
+depois, o pooling SLC.
+
+**Decisão:** usar a camada `avgpool` (global average pooling, 2048-dim,
+pré-classificação) em vez de `predictions`. `predictions` é uma saída
+softmax: satura, já que a rede comprime tudo em direção às classes
+dominantes, então distâncias L1 entre frames com classes previstas diferentes
+tendem a ficar quase todas no mesmo patamar, perdendo discriminação visual
+fina. `avgpool` preserva um sinal mais rico (textura, cor, composição), é
+prática padrão em sumarização de vídeo e retrieval, e é consistente com o
+que HELMNet/mHELMNet consomem (embeddings de conv, não saída de
+classificação).
+
+**Alternativas descartadas:** manter `predictions` por fidelidade estrita ao
+Leonardo (perderia sinal justamente na etapa que mais precisa dele, o
+pooling hierárquico).
