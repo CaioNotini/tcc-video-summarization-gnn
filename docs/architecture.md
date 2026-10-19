@@ -12,6 +12,12 @@ Every component carries one of two states. **Exists** means the code is in the r
 
 Decisions are identified as D-01, D-02 and so on, and open questions as Q-01, Q-02 and so on. The same identifiers are used in [status.md](./status.md) and [phases.md](./phases.md), so a decision or a blocker can be referenced from any document.
 
+## The proposal and its comparisons
+
+The proposed method is the SLC hierarchy followed by a GNN that scores the frames and picks the keyframes. After the graph, nothing from the combinatorial part of HieTaSumm is used in it (D-19). The other two paths below exist only for comparison. The terms are defined once, in the Terminology section of [decisions.md](./decisions.md).
+
+The HieTaSumm baseline shares only the graph with the proposed method. Running an MST hierarchy through the same network is not part of the evaluation; it may be used only as an early development check (D-01).
+
 ## Where things stand
 
 ```
@@ -20,7 +26,7 @@ src/tcc_gnn/
 ├── features/     [exists]    features.py, frame_extraction.py      (no tests yet)
 │                             tf_resnet_extractor.py                (validation only)
 ├── data/         [planned]   base.py is empty                      (T05, T10)
-├── hierarchy/    [planned]   MST baseline, SLC pooling             (T06, T13)
+├── hierarchy/    [planned]   MST hierarchy, SLC pooling              (T06, T13)
 ├── models/       [planned]   GATv2, MGP, readout                   (T09, T15, T17)
 ├── training/     [planned]   unsupervised loops                    (after T13, objective open)
 └── evaluation/   [planned]   F-score, tau, rho, time, memory       (T07, T18)
@@ -32,9 +38,9 @@ references/       [exists]    git submodules: HieTaSumm-lib, mHELMNet (read-only
 
 ## Pipeline
 
-The method takes a video and returns a summary, through seven steps. The first step is the graph construction, which is the base of everything else. The second is the feature extraction, which gives each node its initial description. The third applies graph attention over the temporal neighbours, so that each frame's features reflect its immediate context. The fourth builds the hierarchy, which is either the fixed MST of HieTaSumm (the baseline) or the learned SLC pooling (the main method). The fifth processes the hierarchy as a multigraph with two kinds of edges, using separate branches that are merged by a perceptron. The sixth reads the hierarchy at each scale, weights the levels by importance, and picks one keyframe per group using frame-level attention. The seventh assembles the keyframes in their original order and evaluates the result.
+The method takes a video and returns a summary, through seven steps. The first step is the graph construction, which is the base of everything else. The second is the feature extraction, which gives each node its initial description. The third applies graph attention over the temporal neighbours, so that each frame's features reflect its immediate context. The fourth builds the hierarchy, which is the learned SLC pooling. The fifth processes the hierarchy as a multigraph with two kinds of edges, using separate branches that are merged by a perceptron. The sixth reads the hierarchy at each scale, weights the levels by importance, and picks one keyframe per group using frame-level attention. The seventh assembles the keyframes in their original order and evaluates the result.
 
-The baseline and the main method share steps one, two, three, five, six and seven. They differ only in step four. This is the design that makes the comparison between a learned and a fixed hierarchy a controlled one.
+The seven steps describe the proposed method. The original HieTaSumm baseline is a separate path that shares only step one.
 
 ```
  video
@@ -49,7 +55,7 @@ The baseline and the main method share steps one, two, three, five, six and seve
  [3] GATv2 ───────────►  frames updated from neighbours planned
    │
    ▼
- [4] hierarchy ───────►  SLC (main)  or  MST (baseline) planned
+ [4] hierarchy ───────►  SLC pooling (learned)       planned
    │
    ▼
  [5] multigraph (MGP) ►  temporal + hierarchical edges  planned
@@ -98,10 +104,10 @@ A GATv2 layer from PyTorch Geometric (`GATv2Conv`) updates each frame's features
 
 ## Hierarchy (step 4, planned)
 
-Both implementations produce the same kind of output: a set of levels, each a partition of the frames into groups, with each node linked to its parent group. Because the output has the same shape, the two can be swapped in the same pipeline.
+Both implementations produce the same kind of output: a set of levels, each a partition of the frames into groups, with each node linked to its parent group. The MST hierarchy serves the HieTaSumm baseline. Because the output has the same shape, it can also stand in for SLC in an early development check of steps three, five and six before SLC exists, but that is not part of the final evaluation (D-01).
 
 ```
- MST baseline (T06)                          SLC pooling, main method (T13)
+ MST hierarchy (T06)                          SLC pooling, main method (T13)
 
  graph ──► minimum spanning tree             graph ──► learned features
            │                                            │
@@ -121,7 +127,7 @@ A hierarchy built by either method looks like this. Each group is a contiguous s
  level 0    1  2  3  4  5    6  7  8  9  10  11  12
 ```
 
-The SLC threshold is still open (Q-02). The MST baseline uses higra, the library the HieTaSumm code and the lab's multigraph code also use (D-05).
+The SLC threshold is still open (Q-02). The MST hierarchy uses higra, the library the HieTaSumm code and the lab's multigraph code also use (D-05).
 
 ## Multigraph processing (step 5, planned, T15 and T16)
 
@@ -144,7 +150,7 @@ Following mHELMNet, the features of the edges are fixed after the initial embedd
 
 ## Readout and keyframe selection (step 6, planned, T17)
 
-The readout is adapted from the region graph readout (RGR) of HELMNet. It produces an importance weight for each level. Inside each level, frame-level attention, following VOGNet, scores each frame. The keyframe of a group is the frame with the highest combined score in the most important level that covers it.
+The readout is adapted from the region graph readout (RGR) of HELMNet. It produces an importance weight for each level. Inside each level, frame-level attention, following VOGNet, scores each frame. The keyframe of a group is the frame with the highest combined score in the most important level that covers it. Both sets of scores come from learned layers, so no combinatorial rule from HieTaSumm is used to pick keyframes in the proposed method (D-19).
 
 ```
  level 2 ──► importance β2 ──┐
@@ -192,7 +198,7 @@ Every compared method is run through the same evaluation code and the same proto
 ```
  experiments/run_eval.py
 
- video ──► method (proposed, baseline, ablation or simple baseline) ──► keyframes ──► summary
+ video ──► method (proposed, HieTaSumm, ablation, simple) ──► keyframes ──► summary
                                                                                       │
  ground truth ──► adapter ──────────────────────────────────────────────────────────►  ├──► F-score
                                                                                       ├──► tau, rho  (where available)
@@ -212,11 +218,11 @@ The comparison covers four cells, and each cell changes one factor at a time:
              └──────────────────────────┘   └──────────────────────────────┘
              ┌──────────────────────────┐   ┌──────────────────────────────┐
  WITH        │ HieTaSumm (MST + area)   │   │ proposed GNN                 │
- GRAPH       │ (baseline)               │   │ (SLC + multigraph)           │
+ GRAPH       │ (HieTaSumm baseline)     │   │ (SLC + multigraph)           │
              └──────────────────────────┘   └──────────────────────────────┘
 ```
 
-All four cells belong to TCC1 (D-16). The SLC-versus-MST comparison is a sub-question inside the bottom-right cell.
+All four cells belong to TCC1 (D-16). The cell with a graph and without learning is the original HieTaSumm method, and the cell with a graph and with learning is the proposed method.
 
 ## Code structure
 
@@ -234,7 +240,7 @@ tcc-video-summarization-gnn/
 │   ├── features/               # features.py, frame_extraction.py,          [exists]
 │   │                           # tf_resnet_extractor.py (validation only)
 │   ├── data/                   # base.py (empty), one adapter per dataset  [planned]
-│   ├── hierarchy/              # MST baseline, SLC pooling                 [planned]
+│   ├── hierarchy/              # MST hierarchy, SLC pooling                  [planned]
 │   ├── models/                 # GATv2 base, MGP modules, readout          [planned]
 │   ├── training/               # unsupervised loops                        [planned]
 │   └── evaluation/             # F-score, tau, rho, time, memory           [planned]
@@ -260,18 +266,18 @@ Submodules are read-only references. They must be populated with `git submodule 
 
 ## Stack
 
-| Layer                | Tool                            | Reason                                                                               |
-| -------------------- | ------------------------------- | ------------------------------------------------------------------------------------ |
-| Language             | Python 3.10+                    | Required by the PyTorch Geometric version in use                                     |
-| Graph and hierarchy  | networkx, higra                 | networkx for the graph; higra for watershed and MST, as HieTaSumm and mHELMNet use   |
-| Features             | PyTorch, torchvision (ResNet50) | Production extractor; avgpool output (D-03)                                          |
-| Frame extraction     | OpenCV                          | Reads video frames                                                                   |
-| Graph neural network | PyTorch Geometric 2.3+          | Provides `GATv2Conv` and the scatter operations; `torch_scatter` not required (D-11) |
-| Validation only      | TensorFlow (optional extra)     | Checks fidelity against the original feature extraction (D-04)                       |
-| Data files           | h5py                            | Reads SumMe and VSUMM feature and ground truth files                                 |
-| Experiment tracking  | mlflow                          | Already used by the lab (D-12)                                                       |
-| Tests                | pytest                          | Unit tests per module                                                                |
-| Code style           | PEP 8, type hints               | Modern style; ported logic keeps original names (D-10)                               |
+| Layer                | Tool                                            | Reason                                                                               |
+| -------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Language             | Python 3.10+                                    | Required by the PyTorch Geometric version in use                                     |
+| Graph and hierarchy  | networkx, higra                                 | networkx for the graph; higra for watershed and MST, as HieTaSumm and mHELMNet use   |
+| Features             | PyTorch, torchvision (ResNet50)                 | Production extractor; avgpool output (D-03)                                          |
+| Frame extraction     | OpenCV                                          | Reads video frames                                                                   |
+| Graph neural network | PyTorch Geometric (version in `pyproject.toml`) | Provides `GATv2Conv` and the scatter operations; `torch_scatter` not required (D-11) |
+| Validation only      | TensorFlow (optional extra)                     | Checks fidelity against the original feature extraction (D-04)                       |
+| Data files           | h5py                                            | Reads SumMe and VSUMM feature and ground truth files                                 |
+| Experiment tracking  | mlflow                                          | Already used by the lab (D-12)                                                       |
+| Tests                | pytest                                          | Unit tests per module                                                                |
+| Code style           | PEP 8, type hints                               | Modern style; ported logic keeps original names (D-10)                               |
 
 Whether training runs on a local GPU or a cloud notebook is open (Q-08). Feature extraction and graph construction run on CPU.
 
@@ -306,7 +312,7 @@ Open questions are blockers or pending decisions. Each one names the task it aff
 
 ## Invariants
 
-These rules hold in every change to the code. Edges join only frames within the temporal window, so the graph stays sparse and local. Clusters produced by SLC pooling are contiguous segments of the video, which holds only because the edges are temporal. Feature vectors have 2048 dimensions and come from the same extractor for every compared method. The graph construction keeps producing the output validated in T01; any change to it is followed by the validation again. Baseline and main method receive the same graph, so that only the hierarchy differs (D-14). Every compared method uses the same evaluation code and protocol, and produces summaries of the same length (D-16).
+These rules hold in every change to the code. Edges join only frames within the temporal window, so the graph stays sparse and local. Clusters produced by SLC pooling are contiguous segments of the video, which holds only because the edges are temporal. Feature vectors have 2048 dimensions and come from the same extractor for every compared method. The graph construction keeps producing the output validated in T01; any change to it is followed by the validation again. The HieTaSumm baseline and the proposed method receive the same graph (D-14). Every compared method uses the same evaluation code and protocol, and produces summaries of the same length (D-16).
 
 ## Links
 

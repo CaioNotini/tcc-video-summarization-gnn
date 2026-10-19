@@ -10,23 +10,33 @@ This file is the record of why the project is built the way it is. Each decision
 
 ## Status values
 
-**Locked** means the decision is settled. It is not revisited without a new entry that supersedes it. **Decided** means the decision is taken and in use, but may change if new evidence appears, and any change must be recorded here. **Superseded** means the decision was replaced; its entry stays in the file, with a link to the one that replaced it.
+**Locked** means the decision is settled. It is not revisited without a new entry that supersedes it. **Decided** means the decision is taken and in use, but may change if new evidence appears, and any change must be recorded here. **Superseded** means the decision was replaced; its entry stays in the file, with a link to the one that replaced it. **Open** means the decision has not been taken yet, and the entry records the options.
 
 ## Entry template
 
 Every new decision follows the same structure: identifier and title, date, status, context, decision, alternatives discarded, consequences, and links to the documents it affects. Context says why the question came up. Decision says what was chosen, in one or two sentences. Alternatives say what was discarded and why. Consequences say what the choice makes easier and what it makes harder.
 
-## D-01 — The main method learns the hierarchy with SLC pooling; MST is the baseline
+## Terminology
+
+Two terms are used in every document, and each has one meaning.
+
+**Proposed method** (also called the main method) is the thesis contribution: the time-aware graph of HieTaSumm, GATv2, a hierarchy learned by SLC pooling, a multigraph GNN, and a learned readout with frame attention that picks the keyframes. After the graph, every step is a learned component.
+
+**HieTaSumm baseline** is the original HieTaSumm method, with no learning: the graph, the minimum spanning tree, the cut by area and a rule-based choice of keyframe. It is the "graph without learning" cell of the comparison.
+
+The word "baseline" is not used alone. Documents say "HieTaSumm baseline", or name the simple baselines (uniform sampling, k-means) explicitly.
+
+## D-01 — The main method learns the hierarchy with SLC pooling; the original HieTaSumm method is the baseline
 
 **Date:** not recorded. **Status:** Locked, confirmed with the advisor.
 
 **Context:** HieTaSumm builds its hierarchy with a fixed rule (minimum spanning tree cut by area). The thesis needs a learned hierarchy to be the contribution.
 
-**Decision:** The main method learns the hierarchy with single-link clustering (SLC) pooling, inspired by SLC-HELM. The fixed MST hierarchy of HieTaSumm is kept as the baseline, on the same input graph.
+**Decision:** The main method learns the hierarchy with single-link clustering (SLC) pooling, inspired by SLC-HELM. The original HieTaSumm method is kept as the baseline, on the same input graph. Running the same network on an MST hierarchy is not part of the final evaluation; it may be used only as an early development check of the shared steps (GATv2, multigraph, readout) before SLC pooling exists, and it is not reported as a result.
 
-**Alternatives discarded:** Only the MST baseline, which has no learning and so does not test the contribution. Only the SLC method, which has nothing to compare against.
+**Alternatives discarded:** Only the HieTaSumm baseline, which has no learning and so does not test the contribution. Only the SLC method, which has nothing to compare against. An MST variant of the GNN in the final evaluation, dropped by the researcher: the comparison with the HieTaSumm baseline already measures the effect of learning over the graph.
 
-**Consequences:** Every experiment has a direct comparison between a learned and a fixed hierarchy. The cost is that the SLC layer must be implemented, which depends on D-17.
+**Consequences:** Every experiment has a direct comparison between the proposed method and the original HieTaSumm method. The cost is that the SLC layer must be implemented, which depends on D-17.
 
 **Affects:** T06, T12, T13, T18.
 
@@ -72,17 +82,17 @@ Every new decision follows the same structure: identifier and title, date, statu
 
 **Affects:** T01, T09.
 
-## D-05 — The hierarchy baseline uses higra
+## D-05 — The MST hierarchy uses higra
 
 **Date:** not recorded. **Status:** Decided.
 
-**Context:** The MST baseline needs a hierarchy implementation. HieTaSumm and the lab's multigraph code both use higra.
+**Context:** The MST hierarchy, used by the HieTaSumm baseline, needs an implementation. HieTaSumm and the lab's multigraph code both use higra.
 
 **Decision:** Implement the MST hierarchy with higra, in `src/tcc_gnn/hierarchy/`.
 
-**Alternatives discarded:** Implement the MST by hand. It duplicates a maintained library and makes the baseline harder to trust.
+**Alternatives discarded:** Implement the MST by hand. It duplicates a maintained library and makes the MST hierarchy harder to trust.
 
-**Consequences:** The baseline matches the reference behaviour. The project depends on higra, which must be installed in the environment.
+**Consequences:** The MST hierarchy matches the reference behaviour. The project depends on higra, which must be installed in the environment.
 
 **Affects:** T06, T07.
 
@@ -162,7 +172,7 @@ Every new decision follows the same structure: identifier and title, date, statu
 
 **Context:** Graph layers use scatter operations. The separate `torch_scatter` package must be compiled against the exact installed PyTorch build and has no ready wheels for recent versions.
 
-**Decision:** Rely on the scatter operations built into PyTorch Geometric 2.3 or later, which have a pure PyTorch fallback.
+**Decision:** Rely on the scatter operations built into the PyTorch Geometric version pinned in `pyproject.toml`, which has a pure PyTorch fallback.
 
 **Alternatives discarded:** Require `torch_scatter`. It adds an installation step that often fails.
 
@@ -198,15 +208,15 @@ Every new decision follows the same structure: identifier and title, date, statu
 
 **Affects:** T07, T18, and every evaluation task.
 
-## D-14 — The baseline and the main method receive the same graph
+## D-14 — The HieTaSumm baseline and the proposed method receive the same graph
 
 **Date:** not recorded. **Status:** Locked.
 
-**Context:** To attribute a difference in results to the hierarchy, nothing else may differ between the methods.
+**Context:** To attribute a difference in results to the method, the input must not differ between the methods.
 
-**Decision:** Both hierarchies are built from the same time-aware graph, with the same features, from the same extractor.
+**Decision:** Both methods are built from the same time-aware graph, with the same features, from the same extractor.
 
-**Alternatives discarded:** Let each method build its own graph. It would confound the effect of the hierarchy with the effect of the input.
+**Alternatives discarded:** Let each method build its own graph. It would confound the effect of the method with the effect of the input.
 
 **Consequences:** The comparison is controlled. Any change to the shared graph affects both methods and must be validated once.
 
@@ -263,6 +273,20 @@ Every new decision follows the same structure: identifier and title, date, statu
 **Decision:** Pending. When decided, record it here and mark D-09 as implemented by this objective.
 
 **Affects:** T13.
+
+## D-19 — After the graph, the proposed method uses no combinatorial step from HieTaSumm
+
+**Date:** 2026-10. **Status:** Locked, stated by the researcher.
+
+**Context:** HieTaSumm uses a graph but no learning. The contribution of the thesis is learning over the graph, so mixing rule-based steps into the proposed method would blur what is being tested.
+
+**Decision:** In the proposed method, only the graph construction comes from HieTaSumm. The hierarchy comes from SLC pooling, and the processing of the hierarchy and the choice of keyframes are done by GNN layers. The MST, the cut by area and the rule-based keyframe choice appear only in the HieTaSumm baseline. If a learned step turns out not to be plausible, the replacement is recorded here as a new decision and is never made silently.
+
+**Alternatives discarded:** Reuse the HieTaSumm keyframe choice on the learned hierarchy. It would make it unclear whether the results come from learning.
+
+**Consequences:** The comparison with the HieTaSumm baseline measures learning over the graph. The readout and the attention (T17) are required for the method to produce a summary at all.
+
+**Affects:** T13, T15, T16, T17, T18.
 
 ## Links
 

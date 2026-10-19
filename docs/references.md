@@ -18,7 +18,7 @@ As of 16 October 2026, five works are cited in the thesis: HieTaSumm [1], HELMNe
 
 Cardoso, Gomes, Guimarães and Patrocínio Júnior, BRACIS 2023. Cited as [1].
 
-This is the foundation of the whole thesis. It provides two things. The first is the time-aware sparse graph, in which each video frame is a node and only temporally close frames are connected. The second is the fixed hierarchy, built as a minimum spanning tree and cut by area, which becomes the baseline that the learned hierarchy is compared against. Its reference implementation, the `HieTaSumm-lib` submodule, is the ground truth for validation: the graph built in this repository must reproduce its output, and that is the purpose of T01. The same library is used for the SumMe data in T05. The method is evaluated on VSUMM with F-score, which is the metric the thesis keeps as its primary result.
+This is the foundation of the whole thesis. It provides two things. The first is the time-aware sparse graph, in which each video frame is a node and only temporally close frames are connected. The second is the fixed hierarchy, built as a minimum spanning tree and cut by area, which is used only for comparison: the original HieTaSumm method is the baseline. Its reference implementation, the `HieTaSumm-lib` submodule, is the ground truth for validation: the graph built in this repository must reproduce its output, and that is the purpose of T01. The same library is used for the SumMe data in T05. The method is evaluated on VSUMM with F-score, which is the metric the thesis keeps as its primary result.
 
 Used in: T01, T05, T06, T07.
 

@@ -1,6 +1,6 @@
 ```
 Role: Defines the TCC stages, what each stage delivers, where its foundation comes from, and when it is considered complete.
-Entrance: docs/status.md
+Entry: docs/status.md
 Related to: [status.md](./status.md), [project.md](./project.md), [references.md](./references.md), [architecture.md](./architecture.md), [decisions.md](./decisions.md), [principles.md](./principles.md)
 ```
 
@@ -8,7 +8,7 @@ Related to: [status.md](./status.md), [project.md](./project.md), [references.md
 
 This document explains how the thesis work is divided into stages, what each stage delivers, where its ideas come from, and when it counts as done. It is written for both people and AI agents. Read it after `status.md`, which records what is currently verified. This file defines the plan; `status.md` records progress.
 
-The work is a single line of tasks, numbered T01 to T18. Tasks are done one at a time, in order. Each task has an acceptance criterion, and a task is only marked as done when its evidence is saved in `docs/evidencias/`. Dates are not used to decide progress. The advisor checkpoints (PC3, PC4, PC5, PC6) are fixed external deadlines, and each one depends on a group of tasks being finished.
+The work is a single line of tasks, numbered T01 to T18. Tasks are done one at a time, in order. Each task has an acceptance criterion, and a task is only marked as done when its evidence is saved in `docs/evidence/`. Dates are not used to decide progress. The advisor checkpoints (PC3, PC4, PC5, PC6) are fixed external deadlines, and each one depends on a group of tasks being finished.
 
 ## Why the work is organised this way
 
@@ -78,7 +78,7 @@ This stage has two tasks, T17 and T18.
 
 T17 adds the readout that chooses the keyframes. It has two parts. The first scores each level of the hierarchy, using the region graph readout (RGR) from the HELMNet work, which weights the levels by importance. The second scores each frame inside its level using attention, following the VOGNet approach. Together they decide which frame represents each cluster. This is an initial version, meant to produce keyframes at every level so the method can be evaluated.
 
-T18 runs the comparison between the learned hierarchy (SLC) and the fixed hierarchy (MST) on the same input, and records the F-score in a table saved under `docs/evidences/`. These are preliminary results. They do not need to be final, but they must be real and reproducible. The checkpoint PC5 (29 November) depends on this task.
+T18 runs the comparison between the learned hierarchy (SLC) and the fixed hierarchy (MST) on the same input, and records the F-score in a table saved under `docs/evidence/`. These are preliminary results. They do not need to be final, but they must be real and reproducible. The checkpoint PC5 (29 November) depends on this task.
 
 The stage is complete when the keyframes are generated and the SLC and MST results are saved as evidence.
 
@@ -108,4 +108,4 @@ The unsupervised training objective itself, which is graph reconstruction, diver
 - [architecture.md](./architecture.md): what exists in the code versus what is only planned
 - [decisions.md](./decisions.md): decisions with context, alternatives and consequences
 - [principles.md](./principles.md): the ten working principles
-- [evidences/](./evidences/): saved outputs that prove a task is complete
+- [evidence/](./evidence/): saved outputs that prove a task is complete

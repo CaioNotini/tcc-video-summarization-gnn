@@ -31,7 +31,7 @@ model:
   gat_heads: 4
 
 training:
-  unsupervised_objective: "graph_reconstruction" # graph_reconstruction | diversity_regularization | both
+  unsupervised_objective: null # graph_reconstruction | d18 definir ainda
   epochs: 100
   lr: 0.001
   batch_size: 1 # um vídeo = um grafo
