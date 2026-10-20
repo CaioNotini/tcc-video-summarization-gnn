@@ -6,7 +6,7 @@ Related to: [status.md](./status.md), [phases.md](./phases.md), [architecture.md
 
 # Project overview
 
-This project is an undergraduate thesis (TCC) in Computer Science at PUC Minas, written by Caio Notini and supervised by Prof. Zenilton Kleber Patrocínio Júnior. It studies unsupervised video summarisation with graph neural networks. This document describes the project as a whole. It does not record progress, which lives in `status.md`, nor the detailed tasks, which live in `phases.md`.
+This project is an undergraduate thesis (TCC) in Computer Science at PUC Minas, written by Caio Notini and supervised by Prof. Zenilton Kleber Patrocínio Júnior. It studies unsupervised video summarisation with graph neural networks. This document describes the project as a whole. It does not record progress, which lives in [status.md](./status.md), nor the detailed tasks, which live in [phases.md](./phases.md).
 
 The README of the repository is written for human visitors and summarises the project for them. This document is the complete reference, and it is the one that agents and contributors should read. It is written to be self-contained, so that someone who has never seen the project can understand it from this file alone.
 
@@ -95,13 +95,3 @@ The thesis has four advisor checkpoints. PC3 is on 21 October 2026, and it requi
 An agent starting a session should read [status.md](./status.md) first, to find the active task, then this file for the context of the work, then the task's entry in [phases.md](./phases.md). Before writing code, it should read [architecture.md](./architecture.md) for the structure and the rules that must not be broken, [principles.md](./principles.md) for the working principles, and [decisions.md](./decisions.md) for the reasons behind the existing choices. The works behind each component are in [references.md](./references.md).
 
 Terms used throughout the project have specific meanings. A frame is one image of the video. A graph is the structure whose nodes are frames and whose edges join frames that are close in time. A cluster is a group of frames that the method treats as redundant with each other. A keyframe is the frame chosen to represent a cluster. A GNN is a neural network that learns from a graph structure. Single-link clustering groups nodes that are connected through low-distance edges. A multigraph has more than one kind of edge. The MST is the minimum spanning tree, the fixed hierarchy used by HieTaSumm.
-
-## Links
-
-- [status.md](./status.md): current state of each task and the next task to do
-- [phases.md](./phases.md): the five phases and the tasks, with their acceptance criteria
-- [architecture.md](./architecture.md): what exists in the code versus what is only planned
-- [references.md](./references.md): the works behind each component and where they enter the project
-- [decisions.md](./decisions.md): recorded decisions, with context and consequences
-- [principles.md](./principles.md): the ten working principles
-- [evidence/](./evidence/): saved outputs that prove a task is complete

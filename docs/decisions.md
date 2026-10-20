@@ -1,7 +1,7 @@
 ```
 Role: Records every architectural and methodological decision of the thesis, with context, alternatives and consequences. Identifiers match architecture.md.
 Entry: docs/status.md
-Related to: [status.md](./status.md), [architecture.md](./architecture.md), [phases.md](./phases.md), [project.md](./project.md), [references.md](./references.md), [principles.md](./principles.md)
+Related to: [status.md](./status.md), [architecture.md](./architecture.md), [phases.md](./phases.md)
 ```
 
 # Decisions
@@ -287,12 +287,3 @@ The word "baseline" is not used alone. Documents say "HieTaSumm baseline", or na
 **Consequences:** The comparison with the HieTaSumm baseline measures learning over the graph. The readout and the attention (T17) are required for the method to produce a summary at all.
 
 **Affects:** T13, T15, T16, T17, T18.
-
-## Links
-
-- [status.md](./status.md): current state of each task and the next task to do
-- [architecture.md](./architecture.md): the architecture these decisions shape, with open questions and risks
-- [phases.md](./phases.md): the five phases and the tasks that implement each decision
-- [project.md](./project.md): objective, research question, method and scope
-- [references.md](./references.md): the works behind each decision
-- [principles.md](./principles.md): the ten working principles that govern how decisions are made

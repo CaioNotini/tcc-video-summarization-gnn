@@ -1,12 +1,12 @@
 ```
 Role: Lists the works the thesis relies on, grouped by role, and explains where each one enters the project and which task uses it.
 Entry: docs/status.md
-Related to: [status.md](./status.md), [phases.md](./phases.md), [project.md](./project.md), [architecture.md](./architecture.md), [decisions.md](./decisions.md), [principles.md](./principles.md)
+Related to: [status.md](./status.md), [phases.md](./phases.md)
 ```
 
 # References and their role in the work
 
-This document explains how the literature enters the project. For each work, it says what the thesis takes from it, which component it justifies, and which task (T01 to T18, as defined in `phases.md`) uses it. Read it when you need to know why a component exists, or where a design choice came from.
+This document explains how the literature enters the project. For each work, it says what the thesis takes from it, which component it justifies, and which task (T01 to T18, as defined in [phases.md](./phases.md)) uses it. Read it when you need to know why a component exists, or where a design choice came from.
 
 Works are grouped into three roles. Base works supply the method itself: the thesis either implements them or adapts their code, so they must be read in full before the related task starts. Comparison works supply baselines, metrics or design ideas that the thesis measures itself against or borrows from, without being the foundation. Auxiliary works are read and may be used, but the thesis does not depend on them. Each entry below notes whether the work is already cited in the Overleaf document, where the bibliography is maintained. The numbering [1] to [5] refers to the citation order in that document.
 
@@ -111,13 +111,3 @@ Used in: T02 (must be read), T12 (justification of the choice).
 ## Gaps to close in T02
 
 T02 is due for the PC3 checkpoint on 21 October and is not finished. Four items remain. First, the thesis needs at least one survey of video summarisation, to place the work in the field. Second, it needs literature on hierarchical readout in graph neural networks, to justify the adaptation of RGR. Third, the details of VOGNet, RSGN and DMoN-DPR must be checked against the primary sources, because the project notes give incomplete or differing author information for them. Fourth, the six works that are not yet cited must be added to the Overleaf bibliography, and DiffPool and MinCutPool must be read and summarised.
-
-## Links
-
-- [status.md](./status.md): current state of each task and the next task to do
-- [phases.md](./phases.md): the five phases and the tasks in each one
-- [project.md](./project.md): objective, scope, supervision and checkpoint dates
-- [architecture.md](./architecture.md): what exists in the code versus what is only planned
-- [decisions.md](./decisions.md): decisions with context, alternatives and consequences
-- [principles.md](./principles.md): the ten working principles
-- [evidence/](./evidence/): saved outputs that prove a task is complete

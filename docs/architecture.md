@@ -83,7 +83,7 @@ each frame links only to frames inside its temporal window
 → the graph is a band along the diagonal, not a complete graph
 ```
 
-The graph is built by `build_time_aware_graph` in `src/tcc_gnn/graph/frame.py`, a port of the `Frame` class of the HieTaSumm library, validated against the reference in T01. The window end for each frame is computed by `calc_window_end`. Variable names and algorithmic logic are kept faithful to the original so that outputs can be compared directly.
+The graph is built by `build_time_aware_graph` in [`src/tcc_gnn/graph/frame.py`](../src/tcc_gnn/graph/frame.py), a port of the `Frame` class of the HieTaSumm library, validated against the reference in T01. The window end for each frame is computed by `calc_window_end`. Variable names and algorithmic logic are kept faithful to the original so that outputs can be compared directly.
 
 ## Feature extraction (step 2, exists)
 
@@ -100,7 +100,7 @@ Each frame is described by a 2048-dimensional vector: the global average pooling
 
 ## Graph attention over the base graph (step 3, planned, T09)
 
-A GATv2 layer from PyTorch Geometric (`GATv2Conv`) updates each frame's features from its direct temporal neighbours. Attention weights are learned per pair of nodes. Because the graph has only temporal edges, the attention is always local. The layer is not implemented from scratch, and the edge distance may be passed as an edge attribute. Planned location: `src/tcc_gnn/models/`.
+A GATv2 layer from PyTorch Geometric (`GATv2Conv`) updates each frame's features from its direct temporal neighbours. Attention weights are learned per pair of nodes. Because the graph has only temporal edges, the attention is always local. The layer is not implemented from scratch, and the edge distance may be passed as an edge attribute. Planned location: [`src/tcc_gnn/models/`](../src/tcc_gnn/models/).
 
 ## Hierarchy (step 4, planned)
 
@@ -162,11 +162,11 @@ The readout is adapted from the region graph readout (RGR) of HELMNet. It produc
  summary            = keyframes, in their original temporal order
 ```
 
-Planned location: `src/tcc_gnn/models/`.
+Planned location: [`src/tcc_gnn/models/`](../src/tcc_gnn/models/).
 
 ## Training (planned, objective open)
 
-Training is unsupervised: no human summary is used. The objective is still open (Q-03). The candidates are graph reconstruction, as in VOGNet and RSGN, diversity regularisation between keyframes, as in DMoN-DPR, or a combination. The decision must be recorded in `decisions.md` before T13 is finished.
+Training is unsupervised: no human summary is used. The objective is still open (Q-03). The candidates are graph reconstruction, as in VOGNet and RSGN, diversity regularisation between keyframes, as in DMoN-DPR, or a combination. The decision must be recorded in [`decisions.md`](./decisions.md) before T13 is finished.
 
 ```
  frame graph ──► model ──► hierarchy + keyframes
@@ -175,11 +175,11 @@ Training is unsupervised: no human summary is used. The objective is still open 
                          no human labels at any point
 ```
 
-Training loops go in `src/tcc_gnn/training/`, and the experiments that run them in `experiments/`, tracked with mlflow.
+Training loops go in [`src/tcc_gnn/training/`](../src/tcc_gnn/training/), and the experiments that run them in [`experiments/`](../experiments/)`, tracked with mlflow.
 
 ## Data layer (planned, T05 and T10)
 
-Each dataset has its own adapter in `src/tcc_gnn/data/`. An adapter lists the videos and converts the ground truth into one common format, so that evaluation does not depend on the dataset. The formats differ: SumMe and TVSum give importance scores from several annotators, while VSUMM gives five sets of selected keyframes per video, without a continuous score. This difference is the reason the rank metrics do not apply directly to VSUMM (Q-01).
+Each dataset has its own adapter in [`src/tcc_gnn/data/`](../src/tcc_gnn/data/). An adapter lists the videos and converts the ground truth into one common format, so that evaluation does not depend on the dataset. The formats differ: SumMe and TVSum give importance scores from several annotators, while VSUMM gives five sets of selected keyframes per video, without a continuous score. This difference is the reason the rank metrics do not apply directly to VSUMM (Q-01).
 
 ```
  VSUMM ──► adapter_vsumm ──┐
@@ -189,7 +189,7 @@ Each dataset has its own adapter in `src/tcc_gnn/data/`. An adapter lists the vi
  TVSum ──► adapter_tvsum ──┘
 ```
 
-The base class in `src/tcc_gnn/data/base.py` is empty and will define the common interface. SumMe is the first dataset used, and its data comes from the HieTaSumm library submodule.
+The base class in [`src/tcc_gnn/data/base.py`](../src/tcc_gnn/data/base.py) is empty and will define the common interface. SumMe is the first dataset used, and its data comes from the HieTaSumm library submodule.
 
 ## Evaluation (step 7, planned, T07 and T18)
 
@@ -226,7 +226,7 @@ All four cells belong to TCC1 (D-16). The cell with a graph and without learning
 
 ## Code structure
 
-The package is `src/tcc_gnn/`. Directories marked as planned are empty placeholders today.
+The package is [`src/tcc_gnn/`](../src/tcc_gnn/). Directories marked as planned are empty placeholders today.
 
 ```
 tcc-video-summarization-gnn/
@@ -313,13 +313,3 @@ Open questions are blockers or pending decisions. Each one names the task it aff
 ## Invariants
 
 These rules hold in every change to the code. Edges join only frames within the temporal window, so the graph stays sparse and local. Clusters produced by SLC pooling are contiguous segments of the video, which holds only because the edges are temporal. Feature vectors have 2048 dimensions and come from the same extractor for every compared method. The graph construction keeps producing the output validated in T01; any change to it is followed by the validation again. The HieTaSumm baseline and the proposed method receive the same graph (D-14). Every compared method uses the same evaluation code and protocol, and produces summaries of the same length (D-16).
-
-## Links
-
-- [status.md](./status.md): current state of each task and the next task to do
-- [project.md](./project.md): objective, research question, method and scope
-- [phases.md](./phases.md): the five phases and the tasks, with their acceptance criteria
-- [references.md](./references.md): the works behind each component
-- [decisions.md](./decisions.md): recorded decisions, with context and consequences
-- [principles.md](./principles.md): the ten working principles
-- [evidence/](./evidence/): saved outputs that prove a task is complete

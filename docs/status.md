@@ -65,13 +65,3 @@ These results were reported, but no saved output exists in the repository, so th
 5. Update this file: move T01 to validated and link the saved file.
 
 T01 comes first because every later task depends on the graph, and PC3 on 21 October requires it.
-
-## Links
-
-- [phases.md](./phases.md): the five phases and the tasks, with their acceptance criteria
-- [project.md](./project.md): objective, research question, method and scope
-- [architecture.md](./architecture.md): what exists in the code, with open questions and risks
-- [decisions.md](./decisions.md): decisions with context, status and alternatives
-- [references.md](./references.md): the works behind each component
-- [principles.md](./principles.md): the ten working principles
-- [evidence/](./evidence/): saved outputs that prove a task is complete

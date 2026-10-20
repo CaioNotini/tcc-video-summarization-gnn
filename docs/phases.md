@@ -6,9 +6,9 @@ Related to: [status.md](./status.md), [project.md](./project.md), [references.md
 
 # Stages of the work
 
-This document explains how the thesis work is divided into stages, what each stage delivers, where its ideas come from, and when it counts as done. It is written for both people and AI agents. Read it after `status.md`, which records what is currently verified. This file defines the plan; `status.md` records progress.
+This document explains how the thesis work is divided into stages, what each stage delivers, where its ideas come from, and when it counts as done. It is written for both people and AI agents. Read it after [status.md](./status.md), which records what is currently verified. This file defines the plan; [status.md](./status.md) records progress.
 
-The work is a single line of tasks, numbered T01 to T18. Tasks are done one at a time, in order. Each task has an acceptance criterion, and a task is only marked as done when its evidence is saved in `docs/evidence/`. Dates are not used to decide progress. The advisor checkpoints (PC3, PC4, PC5, PC6) are fixed external deadlines, and each one depends on a group of tasks being finished.
+The work is a single line of tasks, numbered T01 to T18. Tasks are done one at a time, in order. Each task has an acceptance criterion, and a task is only marked as done when its evidence is saved in [docs/evidence](docs/evidence). Dates are not used to decide progress. The advisor checkpoints (PC3, PC4, PC5, PC6) are fixed external deadlines, and each one depends on a group of tasks being finished.
 
 ## Why the work is organised this way
 
@@ -22,7 +22,7 @@ This stage has three tasks, T01 to T03.
 
 T01 validates the time-aware graph. Each video frame is a node, and an edge connects two frames only when they are close in time. The graph construction is ported from the code of Leonardo, the author of HieTaSumm, and the port must reproduce his output. The validation compares the graph built by this repository against the reference implementation, and the result must be saved as evidence. Right now the port exists and a small test suite passes, but the comparison with the reference has been reported and not yet saved in the repository. Until it is saved, T01 is not done. This stage's basis is the HieTaSumm paper and its reference code, which are in the `references/` submodules.
 
-T02 is the literature review. It must cover at least ten works, and it is due for the PC3 checkpoint on 21 October. The works are the ones that justify each part of the method, and they are listed in full in `references.md` when that file is written. The review also has to examine two graph pooling methods, DiffPool and MinCutPool, as alternatives to the learned hierarchy.
+T02 is the literature review. It must cover at least ten works, and it is due for the PC3 checkpoint on 21 October. The works are the ones that justify each part of the method, and they are listed in full in `[references.md](./references.md) when that file is written. The review also has to examine two graph pooling methods, DiffPool and MinCutPool, as alternatives to the learned hierarchy.
 
 T03 organises the documentation itself. It creates the files that let a person or an agent resume the work without the conversation history. This task is what produced the present file.
 
@@ -78,13 +78,13 @@ This stage has two tasks, T17 and T18.
 
 T17 adds the readout that chooses the keyframes. It has two parts. The first scores each level of the hierarchy, using the region graph readout (RGR) from the HELMNet work, which weights the levels by importance. The second scores each frame inside its level using attention, following the VOGNet approach. Together they decide which frame represents each cluster. This is an initial version, meant to produce keyframes at every level so the method can be evaluated.
 
-T18 runs the comparison between the learned hierarchy (SLC) and the fixed hierarchy (MST) on the same input, and records the F-score in a table saved under `docs/evidence/`. These are preliminary results. They do not need to be final, but they must be real and reproducible. The checkpoint PC5 (29 November) depends on this task.
+T18 runs the comparison between the learned hierarchy (SLC) and the fixed hierarchy (MST) on the same input, and records the F-score in a table saved under [docs/evidence](docs/evidence). These are preliminary results. They do not need to be final, but they must be real and reproducible. The checkpoint PC5 (29 November) depends on this task.
 
 The stage is complete when the keyframes are generated and the SLC and MST results are saved as evidence.
 
 ## Summary of the stages
 
-The table below condenses the five stages above. The state column reflects the verification of 16 October 2026 and must be updated in `status.md` as work progresses.
+The table below condenses the five stages above. The state column reflects the verification of 16 October 2026 and must be updated in [status.md](./status.md) as work progresses.
 
 | Stage                               | Tasks   | What it delivers                                                   | Basis                                         | State (16 Oct 2026)                                             | Done when                                                              |
 | ----------------------------------- | ------- | ------------------------------------------------------------------ | --------------------------------------------- | --------------------------------------------------------------- | ---------------------------------------------------------------------- |
@@ -96,16 +96,6 @@ The table below condenses the five stages above. The state column reflects the v
 
 ## Stages not yet covered
 
-Two extensions are outside the guaranteed scope and are only added if the schedule allows. The first is a supervised version, trained with the human summaries from VSUMM, which serves as an upper bound for comparison. The second is unsupervised pre-training on a larger video collection, followed by evaluation on SumMe and TVSum. Both are described in the project scope document. They are not tasks in the sequence above, and they must not be added to the sequence without a decision recorded in `decisions.md`.
+Two extensions are outside the guaranteed scope and are only added if the schedule allows. The first is a supervised version, trained with the human summaries from VSUMM, which serves as an upper bound for comparison. The second is unsupervised pre-training on a larger video collection, followed by evaluation on SumMe and TVSum. Both are described in the project scope document. They are not tasks in the sequence above, and they must not be added to the sequence without a decision recorded in [decisions.md](./decisions.md).
 
 The unsupervised training objective itself, which is graph reconstruction, diversity regularisation or a combination, is still to be defined. It is part of the design of stage 4 and must be decided before T13 is finished.
-
-## Links
-
-- [status.md](./status.md): current state of each task and the next task to do
-- [project.md](./project.md): objective, scope, supervision and checkpoint dates
-- [references.md](./references.md): works behind each stage and the component each one justifies
-- [architecture.md](./architecture.md): what exists in the code versus what is only planned
-- [decisions.md](./decisions.md): decisions with context, alternatives and consequences
-- [principles.md](./principles.md): the ten working principles
-- [evidence/](./evidence/): saved outputs that prove a task is complete
