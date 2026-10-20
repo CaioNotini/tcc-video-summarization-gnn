@@ -24,8 +24,6 @@ Two terms are used in every document, and each has one meaning.
 
 **HieTaSumm baseline** is the original HieTaSumm method, with no learning: the graph, the minimum spanning tree, the cut by area and a rule-based choice of keyframe. It is the "graph without learning" cell of the comparison.
 
-The word "baseline" is not used alone. Documents say "HieTaSumm baseline", or name the simple baselines (uniform sampling, k-means) explicitly.
-
 ## D-01 — The main method learns the hierarchy with SLC pooling; the original HieTaSumm method is the baseline
 
 **Date:** not recorded. **Status:** Locked, confirmed with the advisor.
@@ -36,7 +34,7 @@ The word "baseline" is not used alone. Documents say "HieTaSumm baseline", or na
 
 **Alternatives discarded:** Only the HieTaSumm baseline, which has no learning and so does not test the contribution. Only the SLC method, which has nothing to compare against. An MST variant of the GNN in the final evaluation, dropped by the researcher: the comparison with the HieTaSumm baseline already measures the effect of learning over the graph.
 
-**Consequences:** Every experiment has a direct comparison between the proposed method and the original HieTaSumm method. The cost is that the SLC layer must be implemented, which depends on D-17.
+**Consequences:** Every experiment has a direct comparison between the proposed method and the original HieTaSumm method. The cost is that the SLC layer must be implemented (T13).
 
 **Affects:** T06, T12, T13, T18.
 
@@ -148,7 +146,7 @@ The word "baseline" is not used alone. Documents say "HieTaSumm baseline", or na
 
 **Alternatives discarded:** Supervised training on the VSUMM summaries. It is kept only as an extension, as an upper bound for comparison, if the schedule allows.
 
-**Consequences:** The method stays aligned with its claim. The training objective is still open (see D-18 when recorded), and the choice has to be made before T13.
+**Consequences:** The method stays aligned with its claim. The training objective is still open (see D-17 when recorded), and the choice has to be made before T13.
 
 **Affects:** T13, T14, and all training tasks.
 
@@ -172,7 +170,7 @@ The word "baseline" is not used alone. Documents say "HieTaSumm baseline", or na
 
 **Context:** Graph layers use scatter operations. The separate `torch_scatter` package must be compiled against the exact installed PyTorch build and has no ready wheels for recent versions.
 
-**Decision:** Rely on the scatter operations built into the PyTorch Geometric version pinned in `pyproject.toml`, which has a pure PyTorch fallback.
+**Decision:** Rely on the scatter operations built into the PyTorch Geometric version declared in `pyproject.toml`, which has a pure PyTorch fallback.
 
 **Alternatives discarded:** Require `torch_scatter`. It adds an installation step that often fails.
 
@@ -200,13 +198,13 @@ The word "baseline" is not used alone. Documents say "HieTaSumm baseline", or na
 
 **Context:** Choosing metrics or settings after seeing the numbers can make any method look better.
 
-**Decision:** The protocol covers how keyframes become a summary, how the F-score is computed, how the per-frame score is derived where needed, the summary length, and the hardware used for timing. It is written as a specification before task T07, and it is the same for every compared method.
+**Decision:** The protocol covers how keyframes become a summary, how the F-score is computed, how the per-frame score is derived where needed, the summary length, and the hardware used for timing. It is written as a specification in task T19, before T07, and it is the same for every compared method.
 
 **Alternatives discarded:** Decide the protocol as results come in. It invites selecting the setting that favours the method.
 
 **Consequences:** The protocol must be written before the first result. It can be revised, but any revision is recorded here with its reason and applied to all methods again.
 
-**Affects:** T07, T18, and every evaluation task.
+**Affects:** T19, T07, T18, and every evaluation task.
 
 ## D-14 — The HieTaSumm baseline and the proposed method receive the same graph
 
@@ -236,35 +234,21 @@ The word "baseline" is not used alone. Documents say "HieTaSumm baseline", or na
 
 **Affects:** T05, T10.
 
-## D-16 — All four comparison cells belong to TCC1
+## D-16 — Which comparison cells belong to TCC1
 
-**Date:** 2026-10. **Status:** Decided, by the researcher.
+**Date:** 2026-10, revised 2026-10-20. **Status:** Decided, by the researcher.
 
-**Context:** The comparison has four cells: with or without graph, with or without learning. The uniform and k-means baselines are cheap to implement. The ablation of the network without message passing depends on the model working.
+**Context:** The full comparison has four cells: with or without graph, with or without learning. Two of them need methods that sit outside the proposal: the simple baselines that use no graph and no learning, and the ablation of the network without message passing.
 
-**Decision:** The uniform and k-means baselines and the ablation without message passing all belong to TCC1. TCC2 extends the complete comparison to all three datasets.
+**Decision:** In TCC1 the proposed method is compared only with the HieTaSumm baseline. The ablation without message passing and the uniform sampling, k-means and random selection baselines are left for TCC2, which also extends the complete comparison to all three datasets. The first version of this decision put the uniform and k-means baselines and the ablation in TCC1. The researcher removed them on 2026-10-20 because they are outside the scope of the proposal and the first phase only needs preliminary results.
 
-**Alternatives discarded:** Leave the ablation for TCC2. The TCC1 text could not then separate the effect of the graph from the effect of learning.
+**Alternatives discarded:** Keep the ablation in TCC1. It would let the first phase separate the effect of the graph from the effect of learning, but it needs a definition of what is removed and a full run of the modified network, which preliminary results do not need.
 
-**Consequences:** The ablation is a task after T16, which adds work to the first phase. All compared methods produce summaries of the same length, defined by the protocol (D-13).
+**Consequences:** The only evaluation task is T19, the protocol. Tasks T20 and T21 were removed. The first phase cannot separate the effect of the graph from the effect of learning, nor show whether the proposed method beats a method with no graph and no learning, and the thesis text must say so. Before the ablation is implemented in TCC2, a decision must record what it removes: the GATv2 layer only, or also the neighbour aggregation in the multigraph branches, and whether the SLC hierarchy is kept. All compared methods produce summaries of the same length, defined by the protocol (D-13).
 
-**Affects:** Phases, T07 and after, T16, the protocol specification.
+**Affects:** T19, T18.
 
-## D-17 — The SLC pooling layer is implemented from the paper, without reference code
-
-**Date:** 2026-09-22. **Status:** Decided. Pending confirmation of code availability (Q-04).
-
-**Context:** SLC-HELM is the base of the main method, but its code has not been shared. Only the mHELMNet repository is available.
-
-**Decision:** Implement the SLC pooling layer from the paper's description. Use the building blocks of mHELMNet (`Linear`, `BatchNorm`, `GraphSizeNorm`) as the style reference.
-
-**Alternatives discarded:** Wait for the code. It would block the main method without a date.
-
-**Consequences:** Task T13 has more risk, because every interpretation of the paper must be recorded and tested on synthetic partitions. If the code becomes available, this decision should be revisited, which would reduce rework.
-
-**Affects:** T12, T13.
-
-## D-18 — Unsupervised training objective
+## D-17 — Unsupervised training objective
 
 **Date:** not decided. **Status:** Open (see Q-03 in architecture.md).
 
@@ -274,7 +258,7 @@ The word "baseline" is not used alone. Documents say "HieTaSumm baseline", or na
 
 **Affects:** T13.
 
-## D-19 — After the graph, the proposed method uses no combinatorial step from HieTaSumm
+## D-18 — After the graph, the proposed method uses no combinatorial step from HieTaSumm
 
 **Date:** 2026-10. **Status:** Locked, stated by the researcher.
 

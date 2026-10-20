@@ -6,7 +6,7 @@ Related to: [phases.md](./phases.md), [project.md](./project.md), [references.md
 
 # Project status
 
-Last verified: 2026-10-19, repository commit 2cd2f59, as reported by the read-only inspection of that date.
+Last verified: 2026-10-20, repository commit 2eef760, as reported by the read-only inspection of that date.
 
 This file says where the project stands. What each task requires is in [phases.md](./phases.md). Why the project is built this way is in [decisions.md](./decisions.md). Each open question is defined in [architecture.md](./architecture.md), and only its blocking effect is recorded below.
 
@@ -18,9 +18,9 @@ T01, validate the time-aware graph and save the evidence.
 
 - **Validated:** none yet.
 - **Implemented, not validated:** T01.
-- **In progress:** T02, and T03 (the documentation files exist; acceptance is pending).
+- **In progress:** T02, and T03 (the documentation files exist, and it closes when an inspection reports no high-severity finding).
 - **Blocked:** T11 (Q-01).
-- **Planned:** T04 to T10, T12 to T18. For T10, the VSUMM files are already downloaded locally; the adapter and the τ and ρ decision are pending.
+- **Planned:** T04 to T10 and T12 to T19 (T20 and T21 were removed). For T10, the VSUMM files are already downloaded locally; the adapter and the τ and ρ decision are pending.
 
 A task becomes validated only when its output is saved in [evidence/](./evidence/) and linked from this file. The rule is in [principles.md](./principles.md), principle 3.
 
@@ -28,15 +28,13 @@ A task becomes validated only when its output is saved in [evidence/](./evidence
 
 - **Q-01:** blocks T11 and the τ and ρ part of T10. Owner: advisor.
 - **Q-02:** blocks T13.
-- **Q-03:** blocks T13 (see D-18). Owner: advisor.
-- **Q-04:** affects T13 (see D-17). Owner: advisor.
+- **Q-03:** blocks T13 (see D-17). Owner: advisor.
+- **Q-04:** affects T13. Owner: advisor.
 - **Q-06:** affects T05 and TCC2. Owner: advisor.
 - **Q-08:** from T13 onward.
-- **Q-09:** before T18.
+- **Q-09:** affects T19 and T18.
 
-Q-05 and Q-07 were closed. The numbering keeps the gaps so that existing references stay valid.
-
-## Local state (git-ignored, reported by the inspection)
+## Local state
 
 - `data/raw/vsumm/` holds the four official VSUMM archives and two extracted videos (v21 and v29).
 - `data/processed/vsumm/` holds extracted frames and a `features_teste.npy` file for v21 and v29.
@@ -50,7 +48,6 @@ None saved in [evidence/](./evidence/) yet.
 
 These results were reported, but no saved output exists in the repository, so they do not count as validated.
 
-- `pytest` in an isolated copy of the repository on 2026-10-19: 5 passed, 0 skipped. The output was not saved.
 - Equivalence of the time-aware graph with Leonardo's `Frame.py`: 945 matching edges and zero weight difference, reported on 2026-09-29. Needs a saved run of `experiments/validate_graph.py`.
 - Correlation of 0.97 between edge weight and temporal distance on a third video, with the torchvision extractor. Needs a saved run of the sanity check.
 

@@ -6,11 +6,11 @@ Related to: [status.md](./status.md), [phases.md](./phases.md)
 
 # References and their role in the work
 
-This document explains how the literature enters the project. For each work, it says what the thesis takes from it, which component it justifies, and which task (T01 to T18, as defined in [phases.md](./phases.md)) uses it. Read it when you need to know why a component exists, or where a design choice came from.
+This document explains how the literature enters the project. For each work, it says what the thesis takes from it, which component it justifies, and which task (T01 to T19, as defined in [phases.md](./phases.md)) uses it. Read it when you need to know why a component exists, or where a design choice came from.
 
 Works are grouped into three roles. Base works supply the method itself: the thesis either implements them or adapts their code, so they must be read in full before the related task starts. Comparison works supply baselines, metrics or design ideas that the thesis measures itself against or borrows from, without being the foundation. Auxiliary works are read and may be used, but the thesis does not depend on them. Each entry below notes whether the work is already cited in the Overleaf document, where the bibliography is maintained. The numbering [1] to [5] refers to the citation order in that document.
 
-As of 16 October 2026, five works are cited in the thesis: HieTaSumm [1], HELMNet [2], HRG/HRGNet [3], mHELMNet [4] and SLC-HELM [5]. The other works listed here still have to be added to the bibliography.
+The citation marks below were last checked against the Overleaf bibliography on 2026-10-16, and this date must be updated whenever they are checked again. At that check, five works were cited: HieTaSumm [1], HELMNet [2], HRG/HRGNet [3], mHELMNet [4] and SLC-HELM [5]. The other works listed here still had to be added to the bibliography.
 
 ## Base works
 
@@ -20,7 +20,7 @@ Cardoso, Gomes, Guimarães and Patrocínio Júnior, BRACIS 2023. Cited as [1].
 
 This is the foundation of the whole thesis. It provides two things. The first is the time-aware sparse graph, in which each video frame is a node and only temporally close frames are connected. The second is the fixed hierarchy, built as a minimum spanning tree and cut by area, which is used only for comparison: the original HieTaSumm method is the baseline. Its reference implementation, the `HieTaSumm-lib` submodule, is the ground truth for validation: the graph built in this repository must reproduce its output, and that is the purpose of T01. The same library is used for the SumMe data in T05. The method is evaluated on VSUMM with F-score, which is the metric the thesis keeps as its primary result.
 
-Used in: T01, T05, T06, T07.
+Used in: T01, T05, T06, T07, T19.
 
 ### SLC-HELM
 
@@ -50,9 +50,9 @@ Used in: T15, T16, and as the reference for code style and dependencies across t
 
 Lopes, Batisteli, Guimarães and Patrocínio Júnior, CIARP 2025. Cited as [3].
 
-This work is a supporting base rather than a core one. It shows that the hierarchical multigraph framework applies to 3D shapes as well as images, which supports the claim that the design is not specific to one domain. More importantly for the thesis, it establishes a comparison pattern: a model using only the base graph is compared against the full hierarchical model. The thesis reuses this pattern to compare the SLC hierarchy with the base graph in T16, and the SLC hierarchy against the MST hierarchy in T18.
+This work is a supporting base rather than a core one. It shows that the hierarchical multigraph framework applies to 3D shapes as well as images, which supports the claim that the design is not specific to one domain. More importantly for the thesis, it establishes a comparison pattern: a model using only the base graph is compared against the full hierarchical model. The thesis reuses the idea of comparing the full model against reduced or fixed alternatives in the comparison of results (T18), and later in the ablation planned for the second phase.
 
-Used in: T16 and T18, as the experimental design pattern.
+Used in: T18, as the experimental design pattern.
 
 ## Comparison works
 
@@ -64,7 +64,7 @@ Chaves and Tripathi, 2024, arXiv:2404.10539. Not yet cited.
 
 VideoSAGE is the closest prior work that builds a graph in the same way: frames are nodes, edges join temporally close frames, and a lightweight graph neural network is applied. It is the main reference for the rank correlation metrics, Kendall's tau and Spearman's rho, which the thesis plans to report alongside the F-score. This matters because VSUMM does not give a per-frame importance score, so how these metrics are computed on VSUMM is an open decision (T11). VideoSAGE is also the natural comparison point in the discussion of results in T18.
 
-Used in: T10, T11, and the discussion in T18.
+Used in: T10, T11, T19, and the discussion in T18.
 
 ### VOGNet
 
@@ -110,4 +110,4 @@ Used in: T02 (must be read), T12 (justification of the choice).
 
 ## Gaps to close in T02
 
-T02 is due for the PC3 checkpoint on 21 October and is not finished. Four items remain. First, the thesis needs at least one survey of video summarisation, to place the work in the field. Second, it needs literature on hierarchical readout in graph neural networks, to justify the adaptation of RGR. Third, the details of VOGNet, RSGN and DMoN-DPR must be checked against the primary sources, because the project notes give incomplete or differing author information for them. Fourth, the six works that are not yet cited must be added to the Overleaf bibliography, and DiffPool and MinCutPool must be read and summarised.
+T02 closes when the four items below are done, and it is needed for PC3. First, the thesis needs at least one survey of video summarisation, to place the work in the field. Second, it needs literature on hierarchical readout in graph neural networks, to justify the adaptation of RGR. Third, the details of VOGNet, RSGN and DMoN-DPR must be checked against the primary sources, because the project notes give incomplete or differing author information for them. Fourth, the six works that are not yet cited must be added to the Overleaf bibliography, and DiffPool and MinCutPool must be read and summarised.

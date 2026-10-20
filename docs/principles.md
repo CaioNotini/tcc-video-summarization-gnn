@@ -12,7 +12,7 @@ Each principle below states the rule, explains what it means for this project, a
 
 ## 1. Context before execution
 
-Before changing anything, the agent must understand the objective, the current state and the constraints. In this project, that means reading [status.md](./status.md) to find the active task, then the task's entry in [phases.md](./phases.md), and then the parts of `architecture.md` that the task touches. The agent should not assume that the existing code represents the intended design. The code may be an unfinished step, and [architecture.md](./architecture.md) is the reference for what is planned.
+Before changing anything, the agent must understand the objective, the current state and the constraints. The order in which the documents are read is defined in [CLAUDE.md](../CLAUDE.md), and it is not repeated here. The agent should not assume that the existing code represents the intended design. The code may be an unfinished step, and [architecture.md](./architecture.md) is the reference for what is planned.
 
 In practice, the agent states the active task and its acceptance criterion before opening any source file. If [status.md](./status.md) and the code disagree about the state of a task, the agent reports the disagreement and does not silently choose one.
 
@@ -20,13 +20,13 @@ In practice, the agent states the active task and its acceptance criterion befor
 
 A non-trivial task must be specified before it is coded. The specification covers the objective, the scope, what is explicitly out of scope, the technical constraints, the acceptance criteria and the tests that will prove the criteria are met. Ambiguities that would force an irreversible decision must be raised before the implementation starts.
 
-For this thesis, the specification lives in [phases.md](./phases.md), under the task's entry, or in a dedicated document linked from there. The MST hierarchy (T04), for example, must have its input, output, cut rule and test cases written before T06 starts. The specification for the SLC pooling (T12) must define the distance threshold approach before T13 is coded, because that threshold is an open question.
+For this thesis, the specification lives in [phases.md](./phases.md), under the task's entry, or in a dedicated document linked from there. The MST hierarchy (T04), for example, must have its input, output, cut rule and test cases written before T06 starts. The specification for the SLC pooling (T12) must define the distance threshold approach before T13 is coded, because that threshold is an open question. The evaluation protocol (T19) must be written before the first result is produced (D-13).
 
 ## 3. Autonomy with validation
 
 The agent implements the smallest solution that meets the criterion, then checks the result before declaring the task complete. Checking means running the test suite or the validation script and keeping the actual output. Saying that something works is not enough. The output must be real, reproducible and saved where the status can point to it.
 
-This principle also defines how the state of a task changes. A task is "implemented but not validated" once the code exists. It becomes "validated" only when the evidence is saved in [evidence/](./evidence/) and linked from [status.md](./status.md). Results recalled from memory, or from earlier conversations, are not evidence. The graph validation against the reference implementation (T01) is an example: the comparison has been reported, but until its output is saved, the task is not validated.
+This principle also defines how the state of a task changes. A task is "implemented but not validated" once the code exists. It becomes "validated" only when the evidence is saved in [evidence/](./evidence/) and linked from [status.md](./status.md). Results recalled from memory, or from earlier conversations, are not evidence. The graph validation against the reference implementation (T01) is an example: a comparison that was only reported, and whose output was never saved, does not validate the task.
 
 ## 4. Small and traceable changes
 
@@ -36,13 +36,13 @@ Each change should be small enough to explain in a sentence, and it should be po
 
 ## 5. Recorded decisions
 
-Relevant decisions are recorded in [decisions.md](./decisions.md), with their context, the alternatives that were considered, the decision taken, the justification and the consequences. A decision is anything that changes how the method works or how it is evaluated. Examples are the choice of the MST as the baseline, the choice of higra as the hierarchy library, and the choice of torchvision in place of TensorFlow for feature extraction.
+Relevant decisions are recorded in [decisions.md](./decisions.md), with their context, the alternatives that were considered, the decision taken, the justification and the consequences. A decision is anything that changes how the method works or how it is evaluated. Examples are the choice of the original HieTaSumm method as the baseline, the choice of higra as the hierarchy library, and the choice of torchvision in place of TensorFlow for feature extraction.
 
 The agent must not create abstractions for cases that might happen later. If a piece of code is needed only for the current task, it should be written for that task. Generality is added when a second real use appears, and the reason for it is recorded.
 
 ## 6. Connected documentation
 
-The documents form a graph of knowledge, and each important fact lives in one place, with links to it from the places that need it. The rule for navigation is the three-jump rule described below. The rule for duplication is that a fact has a single source. When the same information appears in two documents, one of them must become a link to the other.
+The documents form a graph of knowledge, and each important fact lives in one place, with links to it from the places that need it. The rule for navigation is the three-jump rule: any operational information must be reachable from [status.md](./status.md) in at most three links. The rule for duplication is that a fact has a single source. When the same information appears in two documents, one of them must become a link to the other.
 
 For example, the list of works behind a component belongs in [references.md](./references.md). [phases.md](./phases.md) links to it rather than repeating the titles. [architecture.md](./architecture.md) links to the component and the task, and does not restate the paper's method.
 
@@ -56,7 +56,7 @@ In this thesis, the decision to learn the hierarchy with SLC pooling, instead of
 
 Agents may investigate, propose and implement within the scope of a task. They may not make methodological decisions or change the scope of the thesis without a justification and the approval of the person responsible for the project. This is the boundary that protects the thesis from drift.
 
-Concretely, the following require explicit approval before they are done: changing the datasets or the evaluation metrics, adding a supervised training objective to the main method, adding any dependency that changes how the experiments are reproduced, and moving work from the guaranteed scope into the extensions. The open decisions in [phases.md](./phases.md) (T11, and the choice of the unsupervised objective before T13) are examples of decisions that belong to the researcher and advisor, not to the agent.
+The list of what needs explicit approval is in the Approvals section of [CLAUDE.md](../CLAUDE.md), and it is not repeated here. Open decisions such as T11 in [phases.md](./phases.md) and D-17 in [decisions.md](./decisions.md) are examples of decisions that belong to the researcher and the advisor, not to the agent.
 
 ## 9. Lean documentation
 
@@ -68,9 +68,4 @@ The agent should prefer updating [status.md](./status.md) and the relevant secti
 
 Problems should be found as early as possible: implementation errors, methodological inconsistencies, failures to reproduce the reference work, and missing evidence. A test that runs early is worth more than a long implementation that is checked only at the end.
 
-This is why the graph is validated before anything is built on top of it (T01), why the MST baseline runs end to end on SumMe before the learned model is written (T07), and why the first GNN layer runs on a real video before the SLC pooling depends on it (T09). When a validation fails, the agent reports the failure and its probable cause before continuing, and it does not work around the failure silently.
-
-## Checklist before closing a task
-
-Before a task is reported as complete, the agent confirms the following. The acceptance criterion in [phases.md](./phases.md)
-is met. The tests or the validation were run, and their real output is saved in [evidence/](./evidence/). [status.md](./status.md) is updated with the new state, the date and a link to the evidence. Any decision taken during the task is recorded in `decisions.md`. Any reference used is linked from [references.md](./references.md), and any change to the structure of the system is reflected in [architecture.md](./architecture.md). Open questions that the task raised are added to [status.md](./status.md) under blockers, not left in the conversation.
+This is why the graph is validated before anything is built on top of it (T01), why the HieTaSumm baseline runs end to end on SumMe before the learned model is written (T07), and why the first GNN layer runs on a real video before the SLC pooling depends on it (T09). When a validation fails, the agent reports the failure and its probable cause before continuing, and it does not work around the failure silently.

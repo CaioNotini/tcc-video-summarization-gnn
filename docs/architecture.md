@@ -14,7 +14,7 @@ Decisions are identified as D-01, D-02 and so on, and open questions as Q-01, Q-
 
 ## The proposal and its comparisons
 
-The proposed method is the SLC hierarchy followed by a GNN that scores the frames and picks the keyframes. After the graph, nothing from the combinatorial part of HieTaSumm is used in it (D-19). The other two paths below exist only for comparison. The terms are defined once, in the Terminology section of [decisions.md](./decisions.md).
+The proposed method is the SLC hierarchy followed by a GNN that scores the frames and picks the keyframes. After the graph, nothing from the combinatorial part of HieTaSumm is used in it (D-18). The original HieTaSumm method exists in the project only for comparison. The terms are defined once, in the Terminology section of [decisions.md](./decisions.md).
 
 The HieTaSumm baseline shares only the graph with the proposed method. Running an MST hierarchy through the same network is not part of the evaluation; it may be used only as an early development check (D-01).
 
@@ -22,7 +22,7 @@ The HieTaSumm baseline shares only the graph with the proposed method. Running a
 
 ```
 src/tcc_gnn/
-├── graph/        [exists]    frame.py: time-aware graph            (T01: validation not yet saved)
+├── graph/        [exists]    frame.py: time-aware graph            (T01)
 ├── features/     [exists]    features.py, frame_extraction.py      (no tests yet)
 │                             tf_resnet_extractor.py                (validation only)
 ├── data/         [planned]   base.py is empty                      (T05, T10)
@@ -100,7 +100,7 @@ Each frame is described by a 2048-dimensional vector: the global average pooling
 
 ## Graph attention over the base graph (step 3, planned, T09)
 
-A GATv2 layer from PyTorch Geometric (`GATv2Conv`) updates each frame's features from its direct temporal neighbours. Attention weights are learned per pair of nodes. Because the graph has only temporal edges, the attention is always local. The layer is not implemented from scratch, and the edge distance may be passed as an edge attribute. Planned location: [`src/tcc_gnn/models/`](../src/tcc_gnn/models/).
+A GATv2 layer from PyTorch Geometric (`GATv2Conv`) updates each frame's features from its direct temporal neighbours. Attention weights are learned per pair of nodes. Because the graph has only temporal edges, the attention is always local. The layer is not implemented from scratch, and the edge distance may be passed as an edge attribute. Planned location: `src/tcc_gnn/models/`.
 
 ## Hierarchy (step 4, planned)
 
@@ -150,7 +150,7 @@ Following mHELMNet, the features of the edges are fixed after the initial embedd
 
 ## Readout and keyframe selection (step 6, planned, T17)
 
-The readout is adapted from the region graph readout (RGR) of HELMNet. It produces an importance weight for each level. Inside each level, frame-level attention, following VOGNet, scores each frame. The keyframe of a group is the frame with the highest combined score in the most important level that covers it. Both sets of scores come from learned layers, so no combinatorial rule from HieTaSumm is used to pick keyframes in the proposed method (D-19).
+The readout is adapted from the region graph readout (RGR) of HELMNet. It produces an importance weight for each level. Inside each level, frame-level attention, following VOGNet, scores each frame. The keyframe of a group is the frame with the highest combined score in the most important level that covers it. Both sets of scores come from learned layers, so no combinatorial rule from HieTaSumm is used to pick keyframes in the proposed method (D-18).
 
 ```
  level 2 ──► importance β2 ──┐
@@ -162,11 +162,11 @@ The readout is adapted from the region graph readout (RGR) of HELMNet. It produc
  summary            = keyframes, in their original temporal order
 ```
 
-Planned location: [`src/tcc_gnn/models/`](../src/tcc_gnn/models/).
+Planned location: `src/tcc_gnn/models/`.
 
 ## Training (planned, objective open)
 
-Training is unsupervised: no human summary is used. The objective is still open (Q-03). The candidates are graph reconstruction, as in VOGNet and RSGN, diversity regularisation between keyframes, as in DMoN-DPR, or a combination. The decision must be recorded in [`decisions.md`](./decisions.md) before T13 is finished.
+Training is unsupervised: no human summary is used. The objective is still open (Q-03). The candidates are graph reconstruction, as in VOGNet and RSGN, diversity regularisation between keyframes, as in DMoN-DPR, or a combination. The decision must be recorded in [decisions.md](./decisions.md) before T13 is finished.
 
 ```
  frame graph ──► model ──► hierarchy + keyframes
@@ -175,11 +175,11 @@ Training is unsupervised: no human summary is used. The objective is still open 
                          no human labels at any point
 ```
 
-Training loops go in [`src/tcc_gnn/training/`](../src/tcc_gnn/training/), and the experiments that run them in [`experiments/`](../experiments/)`, tracked with mlflow.
+Training loops go in `src/tcc_gnn/training/`, and the experiments that run them in [`experiments/`](../experiments/), tracked with mlflow.
 
 ## Data layer (planned, T05 and T10)
 
-Each dataset has its own adapter in [`src/tcc_gnn/data/`](../src/tcc_gnn/data/). An adapter lists the videos and converts the ground truth into one common format, so that evaluation does not depend on the dataset. The formats differ: SumMe and TVSum give importance scores from several annotators, while VSUMM gives five sets of selected keyframes per video, without a continuous score. This difference is the reason the rank metrics do not apply directly to VSUMM (Q-01).
+Each dataset has its own adapter in `src/tcc_gnn/data/`. An adapter lists the videos and converts the ground truth into one common format, so that evaluation does not depend on the dataset. The formats differ: SumMe and TVSum give importance scores from several annotators, while VSUMM gives five sets of selected keyframes per video, without a continuous score. This difference is the reason the rank metrics do not apply directly to VSUMM (Q-01).
 
 ```
  VSUMM ──► adapter_vsumm ──┐
@@ -189,16 +189,16 @@ Each dataset has its own adapter in [`src/tcc_gnn/data/`](../src/tcc_gnn/data/).
  TVSum ──► adapter_tvsum ──┘
 ```
 
-The base class in [`src/tcc_gnn/data/base.py`](../src/tcc_gnn/data/base.py) is empty and will define the common interface. SumMe is the first dataset used, and its data comes from the HieTaSumm library submodule.
+The base class in `src/tcc_gnn/data/base.py` is empty and will define the common interface. SumMe is the first dataset used, and its data comes from the HieTaSumm library submodule.
 
-## Evaluation (step 7, planned, T07 and T18)
+## Evaluation (step 7, planned, T19, T07 and T18)
 
-Every compared method is run through the same evaluation code and the same protocol. The protocol, covering how keyframes become a summary and how the F-score is computed, is fixed in a written specification before any result is produced (D-13, Principle 3).
+Every compared method is run through the same evaluation code and the same protocol. The protocol, covering how keyframes become a summary and how the F-score is computed, is fixed in a written specification before any result is produced (D-13, task T19).
 
 ```
- experiments/run_eval.py
+ experiments/run_eval.py (planned)
 
- video ──► method (proposed, HieTaSumm, ablation, simple) ──► keyframes ──► summary
+ video ──► method (proposed, HieTaSumm) ──► keyframes ──► summary
                                                                                       │
  ground truth ──► adapter ──────────────────────────────────────────────────────────►  ├──► F-score
                                                                                       ├──► tau, rho  (where available)
@@ -207,7 +207,7 @@ Every compared method is run through the same evaluation code and the same proto
                                                                                    mlflow
 ```
 
-The comparison covers four cells, and each cell changes one factor at a time:
+The full comparison covers four cells, and each cell changes one factor at a time:
 
 ```
                        WITHOUT LEARNING              WITH LEARNING
@@ -222,7 +222,7 @@ The comparison covers four cells, and each cell changes one factor at a time:
              └──────────────────────────┘   └──────────────────────────────┘
 ```
 
-All four cells belong to TCC1 (D-16). The cell with a graph and without learning is the original HieTaSumm method, and the cell with a graph and with learning is the proposed method.
+The cell with a graph and without learning is the original HieTaSumm method, and the cell with a graph and with learning is the proposed method. The two cells without a graph, the ablation and the simple baselines (uniform sampling, k-means), are left for TCC2 (D-16).
 
 ## Code structure
 
@@ -231,6 +231,7 @@ The package is [`src/tcc_gnn/`](../src/tcc_gnn/). Directories marked as planned 
 ```
 tcc-video-summarization-gnn/
 ├── README.md                   # human-facing overview
+├── CLAUDE.md                   # agent instructions and entry point for agents
 ├── pyproject.toml              # dependencies and optional extras (tf-validation)
 ├── configs/
 │   └── default.yaml
@@ -247,7 +248,7 @@ tcc-video-summarization-gnn/
 ├── tests/                      # test_frame_graph.py, test_smoke.py        [exists]
 ├── experiments/                # validate_graph.py, validate_graph_torchvision.py  [exists]
 ├── references/                 # submodules: HieTaSumm-lib, mHELMNet      [exists, read-only]
-└── data/                       # raw and processed data, git-ignored       [exists, empty]
+└── data/                       # raw and processed data, git-ignored       [exists, local files only]
 ```
 
 The dependency direction is one-way. Code in a lower layer never imports from a higher one, which keeps each piece testable on its own.
@@ -297,13 +298,13 @@ Open questions are blockers or pending decisions. Each one names the task it aff
 | Q-04 | Whether the SLC-HELM code can be shared; otherwise implement from the paper                                                                     | T13        | Advisor    |
 | Q-06 | TVSum scope: adapter in TCC1 and experiments in TCC2, or a single decision                                                                      | T05, TCC2  | Advisor    |
 | Q-08 | Training hardware: local GPU or cloud notebook                                                                                                  | T13 onward | Researcher |
-| Q-09 | Hardware specification used to measure running time and memory                                                                                  | T18        | Researcher |
+| Q-09 | Hardware specification used to measure running time and memory                                                                                  | T19, T18   | Researcher |
 
 ## Risks
 
 | Risk                                                 | Impact                                 | Mitigation                                                                                          |
 | ---------------------------------------------------- | -------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| The GNN does not beat the non-learned baselines      | High: weakens the thesis claim         | Report the result as it is; the four-cell matrix shows where the gain is missing                    |
+| The GNN does not beat the non-learned baselines      | High: weakens the thesis claim         | Report the result as it is; the comparison matrix shows where the gain is missing                   |
 | SLC cannot be reproduced without the original code   | High for T13                           | Implement from the paper; test on synthetic partitions; record every interpretation in decisions.md |
 | VSUMM is small (50 videos), so the model may overfit | Medium                                 | Unsupervised training; SumMe and TVSum as further checks                                            |
 | F-score and rank correlation disagree                | Medium: changes the reading of results | Report both and discuss divergent cases (see project.md)                                            |
@@ -312,4 +313,4 @@ Open questions are blockers or pending decisions. Each one names the task it aff
 
 ## Invariants
 
-These rules hold in every change to the code. Edges join only frames within the temporal window, so the graph stays sparse and local. Clusters produced by SLC pooling are contiguous segments of the video, which holds only because the edges are temporal. Feature vectors have 2048 dimensions and come from the same extractor for every compared method. The graph construction keeps producing the output validated in T01; any change to it is followed by the validation again. The HieTaSumm baseline and the proposed method receive the same graph (D-14). Every compared method uses the same evaluation code and protocol, and produces summaries of the same length (D-16).
+These rules hold in every change to the code. Edges join only frames within the temporal window, so the graph stays sparse and local. Clusters produced by SLC pooling are contiguous segments of the video, which holds only because the edges are temporal. Feature vectors have 2048 dimensions and come from the same extractor for every compared method. The graph construction keeps producing the output validated in T01; any change to it is followed by the validation again. The HieTaSumm baseline and the proposed method receive the same graph (D-14). Every compared method uses the same evaluation code and protocol, and produces summaries of the same length (D-13).

@@ -14,8 +14,6 @@ data/processed/*
 
 # Experimentos / tracking
 mlruns/
-reports/*
-!reports/.gitkeep
 
 # Notebooks checkpoints
 .ipynb_checkpoints/

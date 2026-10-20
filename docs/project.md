@@ -1,5 +1,5 @@
 ```
-Role: Complete description of the thesis project: problem, objective, research question, method, evaluation plan, scope, constraints and supervision. Read it after status.md, for the context of the work.
+Role: Complete description of the thesis project: problem, objective, research question, method, evaluation plan, scope, constraints and supervision. Read it for the context of the work.
 Entry: docs/status.md
 Related to: [status.md](./status.md), [phases.md](./phases.md), [architecture.md](./architecture.md), [references.md](./references.md), [decisions.md](./decisions.md), [principles.md](./principles.md), [evidence/](./evidence/)
 ```
@@ -8,7 +8,7 @@ Related to: [status.md](./status.md), [phases.md](./phases.md), [architecture.md
 
 This project is an undergraduate thesis (TCC) in Computer Science at PUC Minas, written by Caio Notini and supervised by Prof. Zenilton Kleber Patrocínio Júnior. It studies unsupervised video summarisation with graph neural networks. This document describes the project as a whole. It does not record progress, which lives in [status.md](./status.md), nor the detailed tasks, which live in [phases.md](./phases.md).
 
-The README of the repository is written for human visitors and summarises the project for them. This document is the complete reference, and it is the one that agents and contributors should read. It is written to be self-contained, so that someone who has never seen the project can understand it from this file alone.
+The README, which is still to be written, will be a short overview for human visitors. This document is the complete reference, and it is the one that agents and contributors should read. It is written to be self-contained, so that someone who has never seen the project can understand it from this file alone.
 
 ## The proposal in short
 
@@ -42,7 +42,7 @@ The comparison is structured as two separate questions, because the word "graph"
 
 ## Method
 
-The method takes a video and turns it into a sequence of frames. Each frame is described by a feature vector from a ResNet50 pre-trained on ImageNet, using the global average pooling output. The frames form a time-aware graph, with edges only between frames within a temporal window. A graph attention layer (GATv2) first updates the frame features using their direct temporal neighbours. Then single-link clustering pooling groups the frames into a hierarchy: two frames join the same cluster when a path of low-distance edges connects them, so every cluster is a continuous segment of the video. Each level of the hierarchy is kept, and the levels are processed together by a multigraph with two kinds of edges: temporal edges within a level and hierarchical edges between a node and its parent. A readout weights the levels by importance, and attention inside each level picks the keyframe. Both the level weights and the frame scores come from learned layers, and no combinatorial rule from HieTaSumm is used after the graph (D-19). The only fixed steps are taking the highest-scored frame of each group and ordering the keyframes in time. The keyframes, in their original order, are the summary.
+The method takes a video and turns it into a sequence of frames. Each frame is described by a feature vector from a ResNet50 pre-trained on ImageNet, using the global average pooling output. The frames form a time-aware graph, with edges only between frames within a temporal window. A graph attention layer (GATv2) first updates the frame features using their direct temporal neighbours. Then single-link clustering pooling groups the frames into a hierarchy: two frames join the same cluster when a path of low-distance edges connects them, so every cluster is a continuous segment of the video. Each level of the hierarchy is kept, and the levels are processed together by a multigraph with two kinds of edges: temporal edges within a level and hierarchical edges between a node and its parent. A readout weights the levels by importance, and attention inside each level picks the keyframe. Both the level weights and the frame scores come from learned layers, and no combinatorial rule from HieTaSumm is used after the graph (D-18). The only fixed steps are taking the highest-scored frame of each group and ordering the keyframes in time. The keyframes, in their original order, are the summary.
 
 Training is unsupervised. No human summary is used to train the model. The training objective is still to be decided: it may be graph reconstruction, diversity regularisation between keyframes, or a combination of both. Human summaries are used only to evaluate the output.
 
@@ -60,7 +60,7 @@ Effectiveness in ranking frames is measured by Kendall's tau and Spearman's rho,
 
 The functional criteria are measured by the running time and the memory use of the full pipeline, reported per video and in total, on the same hardware for every compared method. These numbers are part of the claim that the method is functional, because the related work reports efficiency gains and the thesis must test them.
 
-Every number needs a reference point. Two are reported alongside the methods: a random selection baseline, which on TVSum already reaches a high F-score and therefore shows what chance achieves, and the human agreement on SumMe, where the dataset provides it. Without these references, a score does not show whether the method is better than chance or close to human performance.
+Every number needs a reference point. The human agreement on SumMe, where the dataset provides it, is reported alongside the methods. A random selection baseline, which on TVSum already reaches a high F-score and therefore shows what chance achieves, is added in the second phase with the other baselines that use no graph. Without these references, a score does not show whether the method is better than chance or close to human performance.
 
 F-score and rank correlation can disagree. The VideoSAGE results show this: its F1 on SumMe is below that of A2Summ and PGL-Sum, while its Kendall's tau and Spearman's rho are higher. The thesis therefore reports both families and discusses the cases where they diverge, rather than choosing the one that favours the method.
 
@@ -68,9 +68,9 @@ Published numbers from other papers are used only as context, not as direct comp
 
 ## Scope
 
-The first thesis phase (TCC1) ends on 9 December 2026. It covers the literature review with at least ten works, the time-aware graph reproduced and validated against the reference implementation, the HieTaSumm baseline (graph, MST hierarchy and rule-based keyframe choice) run end to end, the SLC pooling integrated with the multigraph modules (the minimum for the fourth checkpoint), an initial version of the readout, and preliminary results. It also covers the two baselines that use no graph, uniform sampling and k-means over the frame features, and the ablation of the proposed network without message passing. With these, the first phase compares all four cells of the evaluation matrix. It also covers the methodology section of the thesis text.
+The first thesis phase (TCC1) ends on 9 December 2026. It covers the literature review with at least ten works, the time-aware graph reproduced and validated against the reference implementation, the HieTaSumm baseline (graph, MST hierarchy and rule-based keyframe choice) run end to end, the SLC pooling integrated with the multigraph modules (the minimum for the fourth checkpoint), an initial version of the readout, and preliminary results. It also covers the written evaluation protocol. With it, the first phase compares the proposed method with the HieTaSumm baseline. The ablation of the proposed network without message passing and the baselines that use no graph (uniform sampling, k-means and random selection) are left for the second phase, so the first phase cannot yet separate the effect of the graph from the effect of learning, and the text says so. It also covers the methodology section of the thesis text.
 
-The second phase (TCC2) is planned for 2027, and its date is not yet confirmed. It covers the complete SLC pooling, the training objective, the full comparison on all three datasets, extending the four-cell comparison started in the first phase, the final writing and the defence.
+The second phase (TCC2) is planned for 2027, and its date is not yet confirmed. It covers the complete SLC pooling, the training objective, the full comparison on all three datasets, adding the ablation and the baselines that use no graph to complete the four-cell comparison, the final writing and the defence.
 
 Two extensions are outside the guaranteed scope, and they are added only if the schedule allows and only after a decision is recorded. The first is a supervised version trained on the VSUMM human summaries, used as an upper bound for comparison. The second is unsupervised pre-training on a larger collection of videos, followed by evaluation on the other datasets, to test generalisation.
 
@@ -92,6 +92,6 @@ The thesis has four advisor checkpoints. PC3 is on 21 October 2026, and it requi
 
 ## How to read this project
 
-An agent starting a session should read [status.md](./status.md) first, to find the active task, then this file for the context of the work, then the task's entry in [phases.md](./phases.md). Before writing code, it should read [architecture.md](./architecture.md) for the structure and the rules that must not be broken, [principles.md](./principles.md) for the working principles, and [decisions.md](./decisions.md) for the reasons behind the existing choices. The works behind each component are in [references.md](./references.md).
+The mandatory reading order for agents is defined in `CLAUDE.md` and is not repeated here. This file gives the context of the work.
 
 Terms used throughout the project have specific meanings. A frame is one image of the video. A graph is the structure whose nodes are frames and whose edges join frames that are close in time. A cluster is a group of frames that the method treats as redundant with each other. A keyframe is the frame chosen to represent a cluster. A GNN is a neural network that learns from a graph structure. Single-link clustering groups nodes that are connected through low-distance edges. A multigraph has more than one kind of edge. The MST is the minimum spanning tree, the fixed hierarchy used by HieTaSumm.
