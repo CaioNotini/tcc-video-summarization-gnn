@@ -69,6 +69,8 @@ This section applies principle 8, and it is the only place where the list of app
 12. Do not create empty folders, and do not create abstractions, folders or files for hypothetical cases (principles 5 and 9).
 13. Do not open, print or expose secrets such as `.env` files, tokens or credentials.
 14. Never commit, push, reset, revert, amend, rebase, stash or checkout without an explicit request. Report the pending files and let the researcher commit.
+15. The thesis text and bibliography are maintained on Overleaf, outside this repository (see [docs/references.md](docs/references.md)). The edit link is sensitive, because this repository is public, and must never be written into a file tracked by git. Only open or edit the Overleaf project when the researcher explicitly asks for it in that conversation, and only alter the section requested, which by default is the references and bibliography section.
+16. Evidence in [docs/evidence/](docs/evidence/) is written in Markdown, with the real command output or a factual description of what was done. Do not add screenshots or other images by default. Only add one when the researcher explicitly asks for it and confirms it for that task. When evidence is updated, rewrite the file so it stays accurate; do not leave references to material that was removed.
 
 ## Tests
 
@@ -100,5 +102,5 @@ Related to: <relative links>
 - Link a document or a code file with a relative path on its first mention in a section, and do not repeat the content of what is linked (principle 6). Do not add a Links section.
 - Every file in `docs/` must be reachable from [docs/status.md](docs/status.md) in at most three links (principle 6).
 - Identifiers are never renumbered or reused. Tasks are T-xx and live in [docs/phases.md](docs/phases.md). Decisions are D-xx and live in [docs/decisions.md](docs/decisions.md). Open questions are Q-xx and live in [docs/architecture.md](docs/architecture.md).
-- Use the terms defined in the Terminology section of [docs/decisions.md](docs/decisions.md). The word "baseline" is not used alone.
+- Use the terms defined in the Terminology section of [docs/decisions.md](docs/decisions.md).
 - Keep apart verified facts, approved decisions, hypotheses, open questions and planned work.

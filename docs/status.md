@@ -6,19 +6,19 @@ Related to: [phases.md](./phases.md), [project.md](./project.md), [references.md
 
 # Project status
 
-Last verified: 2026-10-20, repository commit 2eef760, as reported by the read-only inspection of that date.
+Last verified: 2026-10-20, repository commit 3d1f6ac, as reported by the read-only inspection of that date.
 
 This file says where the project stands. What each task requires is in [phases.md](./phases.md). Why the project is built this way is in [decisions.md](./decisions.md). Each open question is defined in [architecture.md](./architecture.md), and only its blocking effect is recorded below.
 
 ## Active task
 
-T01, validate the time-aware graph and save the evidence.
+None. T01 to T03 (Stage 1) are all validated; the next task by dependency order is T04 or T05, both of which need researcher confirmation before work starts (see Next step).
 
 ## Task states
 
-- **Validated:** none yet.
-- **Implemented, not validated:** T01.
-- **In progress:** T02, and T03 (the documentation files exist, and it closes when an inspection reports no high-severity finding).
+- **Validated:** T01, T02, T03.
+- **Implemented, not validated:** none.
+- **In progress:** none.
 - **Blocked:** T11 (Q-01).
 - **Planned:** T04 to T10 and T12 to T19 (T20 and T21 were removed). For T10, the VSUMM files are already downloaded locally; the adapter and the τ and ρ decision are pending.
 
@@ -33,6 +33,7 @@ A task becomes validated only when its output is saved in [evidence/](./evidence
 - **Q-06:** affects T05 and TCC2. Owner: advisor.
 - **Q-08:** from T13 onward.
 - **Q-09:** affects T19 and T18.
+- **Q-05 and Q-07 gap:** these identifiers are skipped in the Q-xx sequence with no recorded reason, unlike T20/T21 which has an explicit removal note. Does not block any task. Needs the researcher to say whether they were ever assigned, so a note can be added or the gap confirmed as never used.
 
 ## Local state
 
@@ -42,23 +43,23 @@ A task becomes validated only when its output is saved in [evidence/](./evidence
 
 ## Verified evidence
 
-None saved in [evidence/](./evidence/) yet.
+- T01: [evidence/t01-graph-validation.md](./evidence/t01-graph-validation.md). `pytest` passes (5/5), and `experiments/validate_graph.py` matches Leonardo's reference exactly on v21 (742 edges) and v29 (427 edges), with zero weight difference, using `delta_t=8` from [`configs/default.yaml`](../configs/default.yaml).
+- T02: [evidence/t02-bibliography-update.md](./evidence/t02-bibliography-update.md). Ten verified bibliography entries ([6] to [15]) added to the Overleaf bibliography, with two corrections found during verification (VideoSAGE's published venue, RSGN's actual publication year), DiffPool and MinCutPool read and summarised against SLC pooling, and `\cite{}` markers inserted in the thesis body (motivation paragraph and all five specific-objectives bullets) so all 15 works are actually cited, not just listed. [references.md](./references.md) updated to match. Recompiled twice in Overleaf with no error.
+- T03: [evidence/t03-documentation-inspection.md](./evidence/t03-documentation-inspection.md). Inspection of every file in `docs/` and `CLAUDE.md`: headers, the three-link rule, all relative links, D/T/Q identifier continuity, and code-vs-documentation consistency. No high-severity finding; one medium finding (the Q-05/Q-07 gap above).
 
 ## Reported, not yet evidence
 
 These results were reported, but no saved output exists in the repository, so they do not count as validated.
 
-- Equivalence of the time-aware graph with Leonardo's `Frame.py`: 945 matching edges and zero weight difference, reported on 2026-09-29. Needs a saved run of `experiments/validate_graph.py`.
 - Correlation of 0.97 between edge weight and temporal distance on a third video, with the torchvision extractor. Needs a saved run of the sanity check.
 
 ## Next step
 
-**T01.** The acceptance criterion is in [phases.md](./phases.md). Run the steps in this order:
+Stage 1 ([phases.md](./phases.md)) is complete: T01, T02 and T03 are all validated. [project.md](./project.md)
+records PC3 as 21 October 2026, requiring the graph validation (T01) and the literature review
+(T02), both now validated.
 
-1. Check the arguments of `experiments/validate_graph.py` with `--help`.
-2. Run `pytest` and keep the full output.
-3. Run `experiments/validate_graph.py` on the existing feature files of v21 and v29, and keep the full output.
-4. Create `evidence/` and save both outputs in one file named for T01.
-5. Update this file: move T01 to validated and link the saved file.
-
-T01 comes first because every later task depends on the graph, and PC3 on 21 October requires it.
+Stage 2 starts next: T04 (specify the MST hierarchy) and T05 (SumMe adapter), both depending only
+on T03. Neither has been started. Both are non-trivial and need a specification, with the
+researcher's confirmation, before implementation (principle 2, [CLAUDE.md](../CLAUDE.md) task
+flow).
