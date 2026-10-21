@@ -102,6 +102,8 @@ Each frame is described by a 2048-dimensional vector: the global average pooling
 
 A GATv2 layer from PyTorch Geometric (`GATv2Conv`) updates each frame's features from its direct temporal neighbours. Attention weights are learned per pair of nodes. Because the graph has only temporal edges, the attention is always local. The layer is not implemented from scratch, and the edge distance may be passed as an edge attribute. Planned location: `src/tcc_gnn/models/`.
 
+The layer follows the first graph processing block of SLC-HELM (eqs. 1–2). Its source is recorded in [references.md](./references.md).
+
 ## Hierarchy (step 4, planned)
 
 Both implementations produce the same kind of output: a set of levels, each a partition of the frames into groups, with each node linked to its parent group. The MST hierarchy serves the HieTaSumm baseline. Because the output has the same shape, it can also stand in for SLC in an early development check of steps three, five and six before SLC exists, but that is not part of the final evaluation (D-01).
@@ -127,7 +129,7 @@ A hierarchy built by either method looks like this. Each group is a contiguous s
  level 0    1  2  3  4  5    6  7  8  9  10  11  12
 ```
 
-The SLC threshold is still open (Q-02). The MST hierarchy uses higra, the library the HieTaSumm code and the lab's multigraph code also use (D-05).
+The SLC threshold is still open (Q-02). The proposed rule, taken from SLC-HELM, is the 50th percentile of the pairwise distances at the current scale, and it is not approved yet (D-19). Each cluster is represented by the mean of its members' features. The MST hierarchy uses higra, the library the HieTaSumm code and the lab's multigraph code also use (D-05).
 
 ## Multigraph processing (step 5, planned, T15 and T16)
 
@@ -146,7 +148,7 @@ At each level, the graph has two kinds of edges. Temporal edges join nodes withi
    hierarchical edges  ──► branch H ──┘
 ```
 
-Following mHELMNet, the features of the edges are fixed after the initial embedding and are not updated in each layer (D-08). The processing is repeated each time a new level is added, so the model keeps every level, not only the last. The building blocks follow mHELMNet's style: `Linear`, `BatchNorm` and `GraphSizeNorm`, and a gated graph convolution layer as the reference for the branch design.
+Following mHELMNet, the features of the edges are fixed after the initial embedding and are not updated in each layer (D-08). This is under review: the GATv2 branches of SLC-HELM compute attention from node features and do not update edge features, so D-08 must be checked against the MGP design before T15. The processing is repeated each time a new level is added, so the model keeps every level, not only the last. The building blocks follow mHELMNet's style: `Linear`, `BatchNorm` and `GraphSizeNorm`. The branch design follows SLC-HELM, which uses one GATv2 branch per relation type, each with a residual connection and batch normalization, rather than the gated graph convolution of mHELMNet (D-06, D-07).
 
 ## Readout and keyframe selection (step 6, planned, T17)
 
@@ -290,15 +292,15 @@ The decisions that shape this architecture are recorded in [decisions.md](./deci
 
 Open questions are blockers or pending decisions. Each one names the task it affects. The owner says who has to answer.
 
-| ID   | Question                                                                                                                                        | Affects    | Owner      |
-| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ---------- |
-| Q-01 | How to report Kendall's tau and Spearman's rho on VSUMM, which lacks per-frame scores: F-score only, or a derived score from the five summaries | T10, T11   | Advisor    |
-| Q-02 | Value of the SLC distance threshold; choose empirically and record                                                                              | T12, T13   | Researcher |
-| Q-03 | Unsupervised objective: reconstruction, diversity, or both                                                                                      | T13        | Advisor    |
-| Q-04 | Whether the SLC-HELM code can be shared; otherwise implement from the paper                                                                     | T13        | Advisor    |
-| Q-06 | TVSum scope: adapter in TCC1 and experiments in TCC2, or a single decision                                                                      | T05, TCC2  | Advisor    |
-| Q-08 | Training hardware: local GPU or cloud notebook                                                                                                  | T13 onward | Researcher |
-| Q-09 | Hardware specification used to measure running time and memory                                                                                  | T19, T18   | Researcher |
+| ID   | Question                                                                                                                                                 | Affects    | Owner      |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ---------- |
+| Q-01 | How to report Kendall's tau and Spearman's rho on VSUMM, which lacks per-frame scores: F-score only, or a derived score from the five summaries          | T10, T11   | Advisor    |
+| Q-02 | Value of the SLC distance threshold; proposed rule is the 50th percentile of pairwise distances at the current scale (SLC-HELM), pending approval (D-19) | T12, T13   | Researcher |
+| Q-03 | Unsupervised objective: reconstruction, diversity, or both                                                                                               | T13        | Advisor    |
+| Q-04 | Whether the SLC-HELM code can be used; the paper gives a repository link that is not yet confirmed; otherwise implement from the paper                   | T13        | Advisor    |
+| Q-06 | TVSum scope: adapter in TCC1 and experiments in TCC2, or a single decision                                                                               | T05, TCC2  | Advisor    |
+| Q-08 | Training hardware: local GPU or cloud notebook                                                                                                           | T13 onward | Researcher |
+| Q-09 | Hardware specification used to measure running time and memory                                                                                           | T19, T18   | Researcher |
 
 ## Risks
 

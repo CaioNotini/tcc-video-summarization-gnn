@@ -6,21 +6,21 @@ Related to: [phases.md](./phases.md), [project.md](./project.md), [references.md
 
 # Project status
 
-Last verified: 2026-10-20, repository commit 3d1f6ac, as reported by the read-only inspection of that date.
+Last verified: 2026-10-21, repository commit 6fcb61b, as reported by the read-only inspection of that date.
 
 This file says where the project stands. What each task requires is in [phases.md](./phases.md). Why the project is built this way is in [decisions.md](./decisions.md). Each open question is defined in [architecture.md](./architecture.md), and only its blocking effect is recorded below.
 
 ## Active task
 
-None. T01 to T03 (Stage 1) are all validated; the next task by dependency order is T04 or T05, both of which need researcher confirmation before work starts (see Next step).
+None. T01 to T04 are all validated; the next task by dependency order is T06 (MST hierarchy, depends on T04) or T05 (SumMe adapter, depends only on T03). Neither has started (see Next step).
 
 ## Task states
 
-- **Validated:** T01, T02, T03.
+- **Validated:** T01, T02, T03, T04.
 - **Implemented, not validated:** none.
 - **In progress:** none.
 - **Blocked:** T11 (Q-01).
-- **Planned:** T04 to T10 and T12 to T19 (T20 and T21 were removed). For T10, the VSUMM files are already downloaded locally; the adapter and the τ and ρ decision are pending.
+- **Planned:** T05, T06 to T10, T12 to T19 (T20 and T21 were removed). For T10, the VSUMM files are already downloaded locally; the adapter and the τ and ρ decision are pending.
 
 A task becomes validated only when its output is saved in [evidence/](./evidence/) and linked from this file. The rule is in [principles.md](./principles.md), principle 3.
 
@@ -43,9 +43,7 @@ A task becomes validated only when its output is saved in [evidence/](./evidence
 
 ## Verified evidence
 
-- T01: [evidence/t01-graph-validation.md](./evidence/t01-graph-validation.md). `pytest` passes (5/5), and `experiments/validate_graph.py` matches Leonardo's reference exactly on v21 (742 edges) and v29 (427 edges), with zero weight difference, using `delta_t=8` from [`configs/default.yaml`](../configs/default.yaml).
-- T02: [evidence/t02-bibliography-update.md](./evidence/t02-bibliography-update.md). Ten verified bibliography entries ([6] to [15]) added to the Overleaf bibliography, with two corrections found during verification (VideoSAGE's published venue, RSGN's actual publication year), DiffPool and MinCutPool read and summarised against SLC pooling, and `\cite{}` markers inserted in the thesis body (motivation paragraph and all five specific-objectives bullets) so all 15 works are actually cited, not just listed. [references.md](./references.md) updated to match. Recompiled twice in Overleaf with no error.
-- T03: [evidence/t03-documentation-inspection.md](./evidence/t03-documentation-inspection.md). Inspection of every file in `docs/` and `CLAUDE.md`: headers, the three-link rule, all relative links, D/T/Q identifier continuity, and code-vs-documentation consistency. No high-severity finding; one medium finding (the Q-05/Q-07 gap above).
+- T04: [evidence/t04-mst-hierarchy-spec.md](./evidence/t04-mst-hierarchy-spec.md). Specifies the input (the T01 graph), the output (one partition from the single cut, not a multi-level hierarchy), the cut rule (`cutNumber`, with its two possible sources) and the test cases of the MST hierarchy, checked line by line against the `HieTaSumm-lib` submodule (`Graph.py`, `Summary.py`, `options.json`). By the researcher's decision, T06 implements only this single final cut; the "set of levels" shared interface in [architecture.md](./architecture.md) applies only to SLC pooling, not to the MST hierarchy. Approved by the researcher on 2026-10-21. This specification lives in `docs/evidence/t04-mst-hierarchy-spec.md`, not in `phases.md`, by the researcher's explicit instruction; `phases.md`'s T04 acceptance criterion still says "written in this file," which this evidence file satisfies in substance (input, output, cut criteria and test cases are all specified) but not in its literal location. This discrepancy is reported here rather than resolved by editing `phases.md`.
 
 ## Reported, not yet evidence
 
@@ -55,11 +53,8 @@ These results were reported, but no saved output exists in the repository, so th
 
 ## Next step
 
-Stage 1 ([phases.md](./phases.md)) is complete: T01, T02 and T03 are all validated. [project.md](./project.md)
-records PC3 as 21 October 2026, requiring the graph validation (T01) and the literature review
-(T02), both now validated.
-
-Stage 2 starts next: T04 (specify the MST hierarchy) and T05 (SumMe adapter), both depending only
-on T03. Neither has been started. Both are non-trivial and need a specification, with the
-researcher's confirmation, before implementation (principle 2, [CLAUDE.md](../CLAUDE.md) task
-flow).
+Stage 2 continues: T04's specification is validated and approved, so T06 (implement the MST
+hierarchy with higra, per T04's specification) can start next. T05 (SumMe adapter) depends only on
+T03 and has not been started either; it does not depend on T04 and can be worked on independently,
+in either order. T07 still depends on T05, T06 and T19 (the evaluation protocol, also not yet
+specified).

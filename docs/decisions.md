@@ -96,7 +96,7 @@ Two terms are used in every document, and each has one meaning.
 
 ## D-06 — The GNN layer is GATv2 from PyTorch Geometric
 
-**Date:** not recorded. **Status:** Decided, from the architecture proposal. Not yet validated in code.
+**Date:** not recorded. **Status:** Decided. Sources: Brody, Alon and Yahav (2022), which defines GATv2 ([references.md](./references.md)), and SLC-HELM, whose graph processing block and multigraph branches use it (eqs. 1–4). Not yet validated in code.
 
 **Context:** The base of the model needs attention over temporal neighbours, with weights that depend on each pair of frames.
 
@@ -110,7 +110,7 @@ Two terms are used in every document, and each has one meaning.
 
 ## D-07 — The multigraph has two edge types, processed in separate branches and merged by an MLP
 
-**Date:** not recorded. **Status:** Decided, from HELMNet.
+**Date:** not recorded. **Status:** Decided, from HELMNet. SLC-HELM applies the same separation in its MGP, with one GATv2 branch per relation type (eqs. 3–4).
 
 **Context:** The hierarchy creates two kinds of relations: between frames within a level, and between a node and its parent group.
 
@@ -124,7 +124,7 @@ Two terms are used in every document, and each has one meaning.
 
 ## D-08 — Edge features are fixed after the initial embedding
 
-**Date:** not recorded. **Status:** Decided, from mHELMNet, first version only.
+**Date:** not recorded. **Status:** Decided, from mHELMNet, first version only. Under review: the GATv2 branches of SLC-HELM do not use edge features, so this decision may not apply to the MGP as now designed.
 
 **Context:** Updating edge features at each layer adds computation, and the stability of training matters for a first version.
 
@@ -271,3 +271,17 @@ Two terms are used in every document, and each has one meaning.
 **Consequences:** The comparison with the HieTaSumm baseline measures learning over the graph. The readout and the attention (T17) are required for the method to produce a summary at all.
 
 **Affects:** T13, T15, T16, T17, T18.
+
+## D-19 — Threshold rule for SLC pooling
+
+**Date:** 2026-10-21. **Status:** Open. The proposed rule is recorded here but not approved.
+
+**Context:** SLC pooling merges frames along edges whose feature distance is below a threshold. The configuration leaves the threshold undefined, and T12 and T13 need one rule before they start.
+
+**Decision:** Pending. The proposed rule is the 50th percentile of the pairwise distances at the current scale, following SLC-HELM. The paper does not say whether the percentile is taken over all pairs of nodes or only over the edges of the graph. On a sparse temporal graph the two choices give different thresholds, so the choice must be made and recorded.
+
+**Alternatives discarded:** None yet. Options to be decided are the percentile over all pairs or over the edges, and any other fixed value.
+
+**Consequences:** Once approved, T12 and T13 can proceed. Until then no threshold is fixed. The HieTaSumm baseline does not use this rule.
+
+**Affects:** T12, T13.
