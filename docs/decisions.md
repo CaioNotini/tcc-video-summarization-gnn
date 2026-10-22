@@ -230,7 +230,7 @@ Two terms are used in every document, and each has one meaning.
 
 **Alternatives discarded:** A single format for all datasets. It hides the real differences between the ground truths.
 
-**Consequences:** Evaluation code depends only on the common format. The difference in VSUMM ground truth raises the open question on rank metrics (Q-01).
+**Consequences:** Evaluation code depends only on the common format. The difference in VSUMM ground truth raises the open question on rank metrics (Q-01). The common format was made concrete in T05: the `GroundTruth` dataclass (`video_id`, `n_frames`, `keyframes`, `scores: ScoreSeries | None`, `change_points: np.ndarray | None`) and the `ScoreSeries` dataclass (`values`, `frame_indices`), in `src/tcc_gnn/data/base.py`. For SumMe, `keyframes` maps to `user_summary`, `scores` maps to `gtscore`/`picks` with no padding, interpolation or zero-filling for frames without a score, and `change_points` maps to `change_points`.
 
 **Affects:** T05, T10.
 

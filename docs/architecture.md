@@ -25,7 +25,7 @@ src/tcc_gnn/
 ├── graph/        [exists]    frame.py: time-aware graph            (T01)
 ├── features/     [exists]    features.py, frame_extraction.py      (no tests yet)
 │                             tf_resnet_extractor.py                (validation only)
-├── data/         [planned]   base.py is empty                      (T05, T10)
+├── data/         [exists]    base.py, summe.py (T05); VSUMM/TVSum  (T10 planned)
 ├── hierarchy/    [planned]   MST hierarchy, SLC pooling              (T06, T13)
 ├── models/       [planned]   GATv2, MGP, readout                   (T09, T15, T17)
 ├── training/     [planned]   unsupervised loops                    (after T13, objective open)
@@ -179,7 +179,7 @@ Training is unsupervised: no human summary is used. The objective is still open 
 
 Training loops go in `src/tcc_gnn/training/`, and the experiments that run them in [`experiments/`](../experiments/), tracked with mlflow.
 
-## Data layer (planned, T05 and T10)
+## Data layer (partial: T05 exists, T10 planned)
 
 Each dataset has its own adapter in `src/tcc_gnn/data/`. An adapter lists the videos and converts the ground truth into one common format, so that evaluation does not depend on the dataset. The formats differ: SumMe and TVSum give importance scores from several annotators, while VSUMM gives five sets of selected keyframes per video, without a continuous score. This difference is the reason the rank metrics do not apply directly to VSUMM (Q-01).
 
@@ -187,11 +187,11 @@ Each dataset has its own adapter in `src/tcc_gnn/data/`. An adapter lists the vi
  VSUMM ──► adapter_vsumm ──┐
                            │
  SumMe ──► adapter_summe ──┼──► common format ──► evaluation/
-                           │    (keyframes, scores)
+                           │    (keyframes, scores, change_points)
  TVSum ──► adapter_tvsum ──┘
 ```
 
-The base class in `src/tcc_gnn/data/base.py` is empty and will define the common interface. SumMe is the first dataset used, and its data comes from the HieTaSumm library submodule.
+The common interface is defined in `src/tcc_gnn/data/base.py`: a `GroundTruth` dataclass (`video_id`, `n_frames`, `keyframes`, `scores: ScoreSeries | None`, `change_points: np.ndarray | None`) and a `ScoreSeries` dataclass (`values`, `frame_indices`) for a continuous score defined only on a subset of frames, plus the `DatasetAdapter` protocol (`list_videos`, `load_ground_truth`). SumMe is the first dataset used, and `src/tcc_gnn/data/summe.py` implements `DatasetAdapter` over the HieTaSumm library submodule's data (T05): `keyframes` maps to `user_summary`, `scores` maps to `gtscore`/`picks` with no padding or interpolation, and `change_points` maps to `change_points`. The VSUMM and TVSum adapters are still planned (T10).
 
 ## Evaluation (step 7, planned, T19, T07 and T18)
 
@@ -242,7 +242,8 @@ tcc-video-summarization-gnn/
 │   ├── graph/                  # frame.py                                  [exists]
 │   ├── features/               # features.py, frame_extraction.py,          [exists]
 │   │                           # tf_resnet_extractor.py (validation only)
-│   ├── data/                   # base.py (empty), one adapter per dataset  [planned]
+│   ├── data/                   # base.py, summe.py (T05)                  [exists]
+│   │                           # VSUMM/TVSum adapters                     [planned]
 │   ├── hierarchy/              # MST hierarchy, SLC pooling                  [planned]
 │   ├── models/                 # GATv2 base, MGP modules, readout          [planned]
 │   ├── training/               # unsupervised loops                        [planned]
