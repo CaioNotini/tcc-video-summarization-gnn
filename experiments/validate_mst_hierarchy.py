@@ -42,7 +42,18 @@ for _name, _mod in _stubs.items():
 
 from HieTaSumm.Frame import Frame  # noqa: E402
 from HieTaSumm.Graph import Graph  # noqa: E402
+from HieTaSumm.Summary import Summary  # noqa: E402
 from tcc_gnn.hierarchy.mst import compute_hierarchy, cut_graph, partition_from_cut  # noqa: E402
+
+
+def features_path_for_video(video: str) -> Path:
+    """Caminho padrão de features_teste.npy para um vídeo do VSUMM (--video v21/v29)."""
+    return _REPO_ROOT / "data" / "processed" / "vsumm" / video / "features_teste.npy"
+
+
+def frames_dir_for_video(video: str) -> Path:
+    """Caminho padrão da pasta de frames (jpg) de um vídeo do VSUMM, usada por bestCutNumber."""
+    return _REPO_ROOT / "data" / "processed" / "vsumm" / video / "frames"
 
 
 class _TripleCollector:
@@ -110,6 +121,65 @@ def canonical_partition(frame_to_cluster: dict[int, int]) -> dict[int, int]:
     )
     relabel = {c: i for i, c in enumerate(by_min_frame)}
     return {f: relabel[c] for f, c in frame_to_cluster.items()}
+
+
+def segment_sizes(partition: dict[int, int]) -> list[int]:
+    """Tamanho de cada cluster (nº de frames), do maior pro menor."""
+    sizes: dict[int, int] = {}
+    for cluster in partition.values():
+        sizes[cluster] = sizes.get(cluster, 0) + 1
+    return sorted(sizes.values(), reverse=True)
+
+
+def reference_best_cut_number(frames_dir: Path, delta_t: int, alpha: int = 75) -> dict:
+    """Chama Summary.bestCutNumber (HieTaSumm-lib) direto, sem instanciar Summary via __init__
+    (que extrai frames, carrega um modelo TensorFlow, etc.) — usa Summary.__new__ e só define os
+    dois atributos (`frames_path`, `delta_t`) que bestCutNumber/calc_end/rgbSim/spatialSim leem,
+    igual à convenção já usada pra Frame/Graph em build_graph_via_frame_direct e
+    reference_compute_hierarchy. `alpha=75` é o default de options.json (Summary.py:52-59)."""
+    summary = Summary.__new__(Summary)
+    summary.frames_path = str(frames_dir) + os.sep
+    summary.delta_t = delta_t
+
+    best_cut_number_raw = float(summary.bestCutNumber())
+    cut_number_ref = int(best_cut_number_raw * (alpha / 100))
+    if cut_number_ref <= 2:
+        cut_number_ref = 3
+
+    return {
+        "best_cut_number_raw": best_cut_number_raw,
+        "alpha": alpha,
+        "cut_number_ref": cut_number_ref,
+    }
+
+
+def merge_csv_rows(
+    csv_path: Path,
+    new_rows: list[dict],
+    fieldnames: list[str],
+    key_fields: list[str],
+) -> None:
+    """Escreve `new_rows` em `csv_path`, substituindo só as linhas existentes cuja combinação de
+    `key_fields` bate com alguma linha nova (pra reexecução idempotente — ex.: rerodar o mesmo
+    vídeo/cutNumber não duplica linha), preservando as demais já no arquivo."""
+    new_keys = {tuple(str(row[k]) for k in key_fields) for row in new_rows}
+
+    existing_rows: list[dict] = []
+    if csv_path.exists():
+        with open(csv_path, newline="") as f:
+            for row in csv.DictReader(f):
+                existing_rows.append(row)
+
+    kept_rows = [
+        row for row in existing_rows if tuple(str(row.get(k, "")) for k in key_fields) not in new_keys
+    ]
+    combined = kept_rows + new_rows
+
+    csv_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(csv_path, "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(combined)
 
 
 if __name__ == "__main__":

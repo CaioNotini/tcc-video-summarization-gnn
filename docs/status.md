@@ -12,15 +12,15 @@ This file says where the project stands. What each task requires is in [phases.m
 
 ## Active task
 
-None. T01 to T05 are all validated; the next task by dependency order is T06 (MST hierarchy, depends on T04). It has not started (see Next step).
+None. T01 to T06 are all validated; the next task by dependency order is T07. It has not started (see Next step).
 
 ## Task states
 
-- **Validated:** T01, T02, T03, T04, T05.
+- **Validated:** T01, T02, T03, T04, T05, T06
 - **Implemented, not validated:** none.
 - **In progress:** none.
 - **Blocked:** T11 (Q-01).
-- **Planned:** T06 to T10, T12 to T19 (T20 and T21 were removed). For T10, the VSUMM files are already downloaded locally; the adapter and the τ and ρ decision are pending.
+- **Planned:** T07 to T10, T12 to T19 (T20 and T21 were removed). For T10, the VSUMM files are already downloaded locally; the adapter and the τ and ρ decision are pending.
 
 A task becomes validated only when its output is saved in [evidence/](./evidence/) and linked from this file. The rule is in [principles.md](./principles.md), principle 3.
 
@@ -45,6 +45,7 @@ A task becomes validated only when its output is saved in [evidence/](./evidence
 
 - T04: [evidence/t04-mst-hierarchy-spec.md](./evidence/t04-mst-hierarchy-spec.md). Specifies the input (the T01 graph), the output (one partition from the single cut, not a multi-level hierarchy), the cut rule (`cutNumber`, with its two possible sources) and the test cases of the MST hierarchy, checked line by line against the `HieTaSumm-lib` submodule (`Graph.py`, `Summary.py`, `options.json`). By the researcher's decision, T06 implements only this single final cut; the "set of levels" shared interface in [architecture.md](./architecture.md) applies only to SLC pooling, not to the MST hierarchy. Approved by the researcher on 2026-10-21. This specification lives in `docs/evidence/t04-mst-hierarchy-spec.md`, not in `phases.md`, by the researcher's explicit instruction; `phases.md`'s T04 acceptance criterion still says "written in this file," which this evidence file satisfies in substance (input, output, cut criteria and test cases are all specified) but not in its literal location. This discrepancy is reported here rather than resolved by editing `phases.md`.
 - T05: [evidence/t05-summe-adapter.md](./evidence/t05-summe-adapter.md). The SumMe adapter (`src/tcc_gnn/data/summe.py`) lists the 25 SumMe videos and returns their ground truth in the common format (`GroundTruth`/`ScoreSeries`, `src/tcc_gnn/data/base.py`). A test checks `video_1` field by field against the raw `.h5` file from the `HieTaSumm-lib` submodule. `pytest` passes (8 tests, no regression).
+- T06: Validated. Evidence: `docs/evidence/t06-mst-hierarchy.md`, `docs/evidence/t06-additional-verification.md`, `docs/evidence/sheets/` and `docs/evidence/images/`. Baseline with `int()` truncation and cutNumber = 5 (D-20). Identical to the HieTaSumm-lib reference on v29 (0 frames differ). The v21 case is degenerate (all edges truncate to 0) and is recorded as such. Next task: T07, which depends on T05 and T19 and needs the frames on disk for `bestCutNumber`.
 
 ## Reported, not yet evidence
 
@@ -55,5 +56,4 @@ These results were reported, but no saved output exists in the repository, so th
 ## Next step
 
 Stage 2 continues: T04's specification is validated and approved, and T05 (SumMe adapter) is now
-validated too, so T06 (implement the MST hierarchy with higra, per T04's specification) can start
-next. T07 still depends on T05, T06 and T19 (the evaluation protocol, also not yet specified).
+validated too, and also T06 (implement the MST hierarchy with higra). T07 still depends on T05, T06 and T19 (the evaluation protocol, also not yet specified).

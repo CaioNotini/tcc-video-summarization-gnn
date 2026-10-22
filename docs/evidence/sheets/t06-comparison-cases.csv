@@ -1,0 +1,5 @@
+video,delta_t,cut_number,cutnumber_fonte,n_frames,tree_matches,n_frames_diferentes,n_clusters_implementacao,n_clusters_referencia,particoes_identicas,tamanhos_segmentos,frames_diferentes_escalado_vs_referencia_escalada,frames_diferentes_escalado_vs_int
+v21,8,5,mao,110,True,0,6,6,True,105;1;1;1;1;1,0,101
+v21,8,50,mao,110,True,0,51,51,True,60;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1;1,0,104
+v29,8,20,mao,65,True,0,21,21,True,12;7;7;5;5;5;4;3;3;3;1;1;1;1;1;1;1;1;1;1;1,0,31
+v29,8,5,bestCutNumber(alpha=75),65,True,0,6,6,True,18;16;9;8;7;7,0,0

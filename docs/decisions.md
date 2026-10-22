@@ -285,3 +285,17 @@ Two terms are used in every document, and each has one meaning.
 **Consequences:** Once approved, T12 and T13 can proceed. Until then no threshold is fixed. The HieTaSumm baseline does not use this rule.
 
 **Affects:** T12, T13.
+
+# D-20 — Corte da baseline MST: cutNumber calculado pela referência
+
+**Status:** Decided.
+
+**Context:** Na T06, o cutNumber foi inicialmente fixado à mão em 20. A referência do HieTaSumm-lib calcula o valor por `Summary.bestCutNumber`, que não usa o grafo nem o ground truth: lê os frames em disco, converte cada um para pixels RGB crus e calcula o desvio padrão da similaridade de cosseno entre pares. Com `alpha = 75` (options.json), o resultado no v29 é `cutNumber = int(7.0 × 75 / 100) = 5`.
+
+**Decision:** A baseline usa `cutNumber = 5`, reproduzindo o cálculo da referência. O valor 20 fica apenas como caso de teste de sensibilidade.
+
+**Alternatives discarded:** cutNumber = 20 (valor manual, sem origem no original); usar o ground truth para escolher o corte (vazaria informação de avaliação, contra a proposta não supervisionada).
+
+**Consequences:** A T07 precisa fornecer os frames em disco para o cálculo de `bestCutNumber`. O cálculo usa pixels crus, não o ResNet de D-03, e isso fica explícito na baseline. O número de clusters depende do corte, e o tamanho do resumo será fixado na T19.
+
+**Affects:** T06, T07, T19.
