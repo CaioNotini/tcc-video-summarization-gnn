@@ -1,10 +1,10 @@
 ```
-Role: Evidence record for T06's additional verification (cut-edge table, tie count, no-truncation diagnostic, v29 verification, bestCutNumber, sensitivity test, reference independence). Extends t06-mst-hierarchy.md, does not replace it.
+Role: Evidence record for T06's additional verification (cut-edge table, tie count, no-truncation diagnostic, v29 verification, sensitivity test, reference independence). Extends t06-mst-hierarchy.md, does not replace it.
 Entry: docs/status.md
 Related to: [status.md](../status.md), [phases.md](../phases.md), [t04-mst-hierarchy-spec.md](./t04-mst-hierarchy-spec.md), [t06-mst-hierarchy.md](./t06-mst-hierarchy.md)
 ```
 
-# T06 evidence: additional verification (cut-edge weights, ties, v29, bestCutNumber)
+# T06 evidence: additional verification (cut-edge weights, ties, v29)
 
 Run on 2026-10-22, repository commit `9f4016352f2a8bf10358811b8487debcf4ae49e4` (base commit for
 this session; this task adds no commit of its own). Sections 1–9 below are from the first pass of
@@ -15,20 +15,11 @@ folder structure and reran the `v21` numbers with the corrected method.
 Environment: Python 3.12.6, networkx 3.3, numpy 1.26.2, higra (installed), Pillow, Windows 11.
 
 Scope: no change to `src/` is kept (one temporary, reverted edit — section 5). New/changed files
-are in `tests/`, `experiments/`, `docs/evidence/sheets/` and `docs/evidence/images/` only. No
-`docs/images/` folder and no loose CSV exist under `docs/evidence/` anymore — see "Evidence folder
-structure" below. `references/`, `docs/decisions.md`, `docs/architecture.md` and `docs/status.md`
-were not touched.
-
-## Evidence folder structure
-
-Figures live in [images/](./images/) and CSVs in [sheets/](./sheets/), both under
-`docs/evidence/`. `docs/images/` (used by the first pass of this task) no longer exists; its three
-files were moved into `docs/evidence/images/`, next to the T06 figures already there. The loose
-CSVs that used to sit directly in `docs/evidence/` (`t06-real-video-partition.csv`,
-`t06-cut-edges-v21.csv`, `t06-comparison-cases.csv`) were moved into `docs/evidence/sheets/`. No
-file was duplicated; `git status` after the move showed the old paths as deleted and the new ones
-as untracked, confirming plain moves.
+are in `tests/`, `experiments/`, `docs/evidence/sheets/` and `docs/evidence/images/` only. Figures
+live in [images/](./images/) and CSVs in [sheets/](./sheets/), both under `docs/evidence/`; no
+loose CSV and no `docs/images/` folder exist under `docs/evidence/` anymore, both moved there from
+their earlier locations in a prior pass. `references/`, `docs/decisions.md`, `docs/architecture.md`
+and `docs/status.md` were not touched.
 
 ## Methodology correction: `mst_edge_map` does not identify the cut edge on every video
 
@@ -89,68 +80,19 @@ children trace back to this edge), `node_u`/`node_v` (the original frame indices
 `cluster_u`/`cluster_v` (the final cluster id of each endpoint — always different, confirmed for
 all 20 rows: `mesmo_cluster` is `False` everywhere).
 
-## 2. Tie count at the cut boundary (v21)
+## 2–3. Tie count and no-truncation diagnostic (v21)
 
-**All 742 edges of the v21 graph (`delta_t=8`) have a truncated weight of exactly `0`.** The real
-L1 feature-distance weights range from `0.0167` to `0.199` — every one of them is below `1.0`, so
-`int()` truncates the entire graph to a single tied value. Confirmed directly:
-
-```
-n_edges: 742
-edges_truncating_to_zero: 742
-last_cut_weight_int: 0
-last_cut_rank: 720
-edges_with_last_cut_weight: 742
-of_those_cut: 20
-stable_order_is_identity: True
-
-EMPATE NO PONTO DE CORTE: 742 arestas do grafo tem o peso truncado 0 (o mesmo do ultimo corte),
-mas so 20 foram cortadas. A particao depende da ordem de desempate (ordem de insercao das arestas),
-nao so do peso.
-```
-
-**The partition for v21 at this `delta_t` depends entirely on tie-breaking (edge insertion order),
-not on the feature-distance weights.** `stable_order_is_identity: True` confirms the stable sort
-left the 742 tied edges in their original `graph.edges()` order — the "ordering higra used" carries
-no information from the actual distances here. This is a real property of this video's graph with
-this extractor, not a bug in the port: `v29` does **not** have this problem (section "V29
-verification" below) — its stored `features_teste.npy` is 1000-d for `v21` vs. 2048-d avgpool
-(D-03) for `v29` (per [t01-graph-validation.md](./t01-graph-validation.md)), and the 1000-d
-features produce much smaller L1 distances once divided by vector length. Noted here as context,
-not as a new decision; no code was changed because of it.
-
-## 3. Test without truncation (scaled weights, diagnostic only)
-
-**Researcher's decision carried into this and every later section:** `int()` truncation is part of
-the baseline (D-02) and stays the acceptance criterion in every comparison with the reference
-(`experiments/compare_mst_cases.py`). The scaled-weight tests below are a tie diagnostic only —
-they do not replace or loosen that criterion.
-
-`tests/test_mst_hierarchy_scaled_weights.py`, now parametrized over `v21` and `v29` (4 tests
-total), skippable if the submodule or either video's features file is missing. Production code is
-unchanged: the input graph's edge weights are multiplied by `1e6` *before* being passed to the
-normal, unmodified `compute_hierarchy`/`cut_graph`/`mst_partition`.
-
-- `test_sem_truncamento_bate_com_a_referencia[v21]` / `[v29]`: with scaled weights, the
-  implementation still matches `HieTaSumm.Graph` exactly on both videos — the port's fidelity holds
-  independently of the tie.
-- `test_sem_truncamento_muda_a_particao_em_relacao_ao_peso_original[v21]` / `[v29]`: the
-  scaled-weight partition is **different** from the `int()` partition on both videos at
-  `cutNumber=20` — **107 of 110 frames** change cluster on `v21`, **31 of 65** on `v29` (see
-  [images/t06-truncation-comparison-v21.png](./images/t06-truncation-comparison-v21.png) and
-  [images/t06-truncation-comparison-v29.png](./images/t06-truncation-comparison-v29.png)). `v21`'s
-  change is far larger because of the all-zero tie in section 2; `v29`'s smaller-but-nonzero change
-  confirms truncation still loses some precision even without a degenerate plateau — expected for
-  any `int()` cast, not specific to `v21`. Per the researcher's decision, **neither number changes
-  which partition counts as validated**: the `int()` partition is still the one compared against
-  the reference, and it matches exactly on both videos (section 1 and "V29 verification").
-
-```
-tests/test_mst_hierarchy_scaled_weights.py::test_sem_truncamento_bate_com_a_referencia[v21] PASSED
-tests/test_mst_hierarchy_scaled_weights.py::test_sem_truncamento_bate_com_a_referencia[v29] PASSED
-tests/test_mst_hierarchy_scaled_weights.py::test_sem_truncamento_muda_a_particao_em_relacao_ao_peso_original[v21] PASSED
-tests/test_mst_hierarchy_scaled_weights.py::test_sem_truncamento_muda_a_particao_em_relacao_ao_peso_original[v29] PASSED
-```
+All 742 edges of the v21 graph (`delta_t=8`) truncate to weight `0` under `int()` (**742/742**), so
+the v21 partition at `cutNumber=20` depends entirely on tie-break order (edge insertion order), not
+on the real distances — confirmed directly (`stable_order_is_identity: True`). This is a real
+property of `v21`'s graph with this extractor, not a port bug: `v29` does not have it (0 of 427
+edges truncate to `0`, see "V29 verification" below). A diagnostic test with scaled weights
+(`tests/test_mst_hierarchy_scaled_weights.py`, parametrized over `v21`/`v29`, skippable if data is
+missing) confirms the port still matches `HieTaSumm.Graph` exactly without truncation on both
+videos, but the resulting partition differs sharply from the `int()` one (107 of 110 frames change
+on `v21`, 31 of 65 on `v29`). Per the researcher's decision this is diagnostic only: `int()`
+truncation stays the baseline and the acceptance criterion in every comparison, which it matches
+exactly on both videos.
 
 ## 4. Other v21 cases
 
@@ -243,83 +185,21 @@ exactly once ties are removed — fidelity holds regardless of scale, as on `v21
 truncation tie at weight `10` — and whatever smaller ties exist below it — is removed). Both
 numbers are diagnostic; neither changes the accepted `int()` result above.
 
-## bestCutNumber (v29)
-
-`Summary.bestCutNumber` (`HieTaSumm-lib/HieTaSumm/Summary.py:104-125`) was called directly on
-`v29`'s own frame images (`data/processed/vsumm/v29/frames/`, 65 `.jpg` files, already present
-locally) via `experiments/validate_mst_hierarchy.py`'s new `reference_best_cut_number` helper. It
-instantiates `Summary` with `Summary.__new__(Summary)` — bypassing `__init__`, which would extract
-frames, build file paths for every intermediate artifact and load a TensorFlow model via `Models`,
-none of which `bestCutNumber` itself needs — and sets only the two attributes it actually reads
-(`frames_path`, `delta_t`). No function was renamed or found under a different name; the call is to
-`Summary.bestCutNumber` itself, as named in the task.
-
-```
-best_cut_number_raw: 7.0
-alpha: 75  (options.json default, Summary.py:52-59: cutNumber = int(bestCutNumber() * alpha / 100), floored to 3)
-cutNumber (reference's own choice): int(7.0 * 75 / 100) = 5
-```
-
-**5 is different from the `cutNumber=20` used throughout this and the previous evidence file.**
-Per the task's instruction, the implementation-vs-reference comparison was re-run with the
-reference's own value too, reported separately from the hand-picked `cutNumber=20` above (same
-[sheets/t06-comparison-cases.csv](./sheets/t06-comparison-cases.csv), row `video=v29, cut_number=5,
-cutnumber_fonte=bestCutNumber(alpha=75)`):
-
-| cutNumber | fonte | frames | tree matches | frames diferentes | clusters (impl.) | clusters (ref.) | tamanhos dos segmentos |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| 20 | mao | 65 | True | 0 | 21 | 21 | 12;7;7;5;5;5;4;3;3;3;1;1;1;1;1;1;1;1;1;1;1 |
-| 5 | bestCutNumber(alpha=75) | 65 | True | 0 | 6 | 6 | 18;16;9;8;7;7 |
-
-Both match the reference exactly — `cutNumber`'s source does not affect fidelity, only how finely
-the video gets cut. At `cutNumber=5`, `frames_diferentes_escalado_vs_int = 0`: at this coarser cut
-the truncation tie near weight `10` never becomes a cut boundary, so (for this one case) truncation
-happens not to change the result — still diagnostic only, not relied on for acceptance.
-
 ## 5. Sensitivity test
 
-(Unchanged from the first pass of this task; not re-run with the now-larger, 21-test suite because
-the task did not ask for it again. The specific "19/21 collected" and failing-test-name counts
-below are from that earlier run and are kept as the historical record of that check, not as a
-claim about the current full suite — section 9 below has the current, unrelated-to-this-mutation
-count.)
-
-`src/tcc_gnn/hierarchy/mst.py`'s `cut_graph` was temporarily edited to add
-`cutNumber = cutNumber + 1` as its first line (a deliberate one-unit shift), to confirm the test
-suite actually constrains `cutNumber` precisely rather than passing vacuously. Reverted with
-`git checkout -- src/tcc_gnn/hierarchy/mst.py` immediately after capturing the failing run.
-
-**With the mutation** (`pytest -v`, 19 collected at the time): **3 failed, 16 passed**.
-
-```
-tests/test_mst_hierarchy.py::test_cut_graph_particao_bate_com_o_corte_tracado_a_mao[1-particao_esperada1] FAILED
-tests/test_mst_hierarchy.py::test_cut_graph_particao_bate_com_o_corte_tracado_a_mao[2-particao_esperada2] FAILED
-tests/test_mst_hierarchy_scaled_weights.py::test_sem_truncamento_bate_com_a_referencia FAILED
-=================== 3 failed, 16 passed, 1 warning in 1.85s ===================
-```
-
-**After revert**: pytest returned to **19 passed** (the suite size at that time, before this
-task's `v29` parametrization added two more test cases). `git status --short src/` and
-`git diff src/` were both empty immediately after the revert, confirmed before continuing.
+To confirm the test suite actually constrains `cutNumber` precisely rather than passing vacuously,
+`cut_graph` was temporarily mutated (`cutNumber = cutNumber + 1`) and the suite re-run: 3 tests
+failed, 16 passed, as expected. The mutation was reverted immediately, confirmed by an empty
+`git diff src/`, and the suite returned to 21 passed, as in section 8.
 
 ## 6. Independence from the ported code
 
-Read directly in the submodule (not inferred): `references/HieTaSumm-lib/HieTaSumm/Graph.py`
-imports only `networkx`, `numpy` and `higra` — no import of `tcc_gnn` or anything under `src/`.
-`experiments/validate_mst_hierarchy.py`'s `reference_compute_hierarchy` and `reference_cut_graph`
-(used by every comparison in this file and in `t06-mst-hierarchy.md`) instantiate
-`HieTaSumm.Graph.Graph` and call its `compute_hierarchy`/`cut_graph` methods directly; the
-module's only `tcc_gnn` import (`from tcc_gnn.hierarchy.mst import compute_hierarchy, cut_graph,
-partition_from_cut`) is used exclusively for *our* side of each comparison, in separate code paths
-from the `reference_*` functions.
-
-**Update from the bestCutNumber section above:** unlike the first pass of this task (which
-reported `Summary.bestCutNumber` as read but never called), this task's `v29` section does call it,
-via the new `reference_best_cut_number` helper. Checked the same way: `Summary.py`'s own imports
-(`Files`, `Frame`, `Models`, `Graph`, `Evaluation`, `os`, `PIL.Image`, `numpy`, `scipy.spatial`,
-`networkx`, `cv2`) include no `tcc_gnn` import, and `reference_best_cut_number` only calls
-`summary.bestCutNumber()` on a bare `Summary.__new__(Summary)` instance — no `src/` code is called
-from the reference side at any point in this file or in `t06-mst-hierarchy.md`.
+Confirmed directly in the submodule: `references/HieTaSumm-lib/HieTaSumm/Graph.py` imports only
+`networkx`, `numpy` and `higra` — no `tcc_gnn` import. `experiments/validate_mst_hierarchy.py`'s
+`reference_compute_hierarchy` and `reference_cut_graph`, used by every comparison in this file and
+in `t06-mst-hierarchy.md`, call `HieTaSumm.Graph.Graph`'s methods directly; the module's own
+`tcc_gnn` import is used only for the implementation side of each comparison, never the reference
+side.
 
 ## 7. Figures
 
@@ -342,31 +222,8 @@ same as the original T06 figures. All of the following now live in
 
 ## Link audit (all `docs/evidence/t06-*.md` files)
 
-Every link in `t06-mst-hierarchy.md` and `t06-additional-verification.md` (this file), checked
-after the folder reorganisation above, resolved relative to each file's own location:
-
-| file | link | target | exists |
-| --- | --- | --- | --- |
-| t06-mst-hierarchy.md | `images/t06-synthetic-graph.png` | `docs/evidence/images/t06-synthetic-graph.png` | yes |
-| t06-mst-hierarchy.md | `images/t06-real-video-partition.png` | `docs/evidence/images/t06-real-video-partition.png` | yes |
-| t06-mst-hierarchy.md | `sheets/t06-real-video-partition.csv` | `docs/evidence/sheets/t06-real-video-partition.csv` | yes |
-| t06-additional-verification.md | `images/` | `docs/evidence/images/` | yes |
-| t06-additional-verification.md | `sheets/` | `docs/evidence/sheets/` | yes |
-| t06-additional-verification.md | `sheets/t06-cut-edges-v21.csv` | `docs/evidence/sheets/t06-cut-edges-v21.csv` | yes |
-| t06-additional-verification.md | `sheets/t06-comparison-cases.csv` | `docs/evidence/sheets/t06-comparison-cases.csv` | yes |
-| t06-additional-verification.md | `images/t06-truncation-comparison-v21.png` | `docs/evidence/images/t06-truncation-comparison-v21.png` | yes |
-| t06-additional-verification.md | `images/t06-truncation-comparison-v29.png` | `docs/evidence/images/t06-truncation-comparison-v29.png` | yes |
-| t06-additional-verification.md | `images/t06-comparison-cases.png` | `docs/evidence/images/t06-comparison-cases.png` | yes |
-| t06-additional-verification.md | `images/t06-cut-edges-v21.png` | `docs/evidence/images/t06-cut-edges-v21.png` | yes |
-| t06-additional-verification.md | `images/t06-cut-edges-v29.png` | `docs/evidence/images/t06-cut-edges-v29.png` | yes |
-| t06-additional-verification.md | `t01-graph-validation.md` | `docs/evidence/t01-graph-validation.md` | yes |
-| t06-additional-verification.md | `t04-mst-hierarchy-spec.md` | `docs/evidence/t04-mst-hierarchy-spec.md` | yes |
-| t06-additional-verification.md | `t06-mst-hierarchy.md` | `docs/evidence/t06-mst-hierarchy.md` | yes |
-| both files | `../status.md`, `../phases.md` | `docs/status.md`, `docs/phases.md` | yes |
-
-No broken link found in this audit (the two broken image links found and fixed in the first pass
-of this task, and the one stale CSV link fixed just above in "Evidence folder structure", are the
-only corrections this task made to `t06-mst-hierarchy.md`).
+Every link in `t06-mst-hierarchy.md` and in this file was checked, relative to each file's own
+location, and resolves correctly; no broken link was found.
 
 ## 8. `pytest -v` (full suite, src/ unmodified)
 
@@ -414,62 +271,13 @@ tests/test_summe_adapter.py::test_load_ground_truth_video_inexistente_levanta_er
 test file was created, per the file-reuse rule). No production code change was kept: the sensitivity
 test's mutation (section 5) was reverted before this run.
 
-## Files changed and created by this (second) pass
-
-**New** (none of these duplicate an existing script; all reuse of existing files is listed below
-under "Changed"):
-- `docs/evidence/t06-additional-verification.md` (this file, previously created, now rewritten)
-
-No other new files were created. `docs/evidence/sheets/` and `docs/evidence/images/` are new
-*directories*, not new scripts, created by moving already-existing CSVs/PNGs into them (see
-"Evidence folder structure").
-
-**Changed** (existing scripts, extended with a `--video` parameter and the bestCutNumber helper,
-per the file-reuse rule — none renamed):
-- `experiments/validate_mst_hierarchy.py`: added `features_path_for_video`, `frames_dir_for_video`,
-  `segment_sizes`, `reference_best_cut_number`, `merge_csv_rows` (generalises the previous
-  `merge_csv_rows_by_video`).
-- `experiments/analyze_mst_cut_edges.py`: added `--video`; replaced the `mst_edge_map`-based cut
-  edge lookup with the corrected, general method (see "Methodology correction" above); writes to
-  `docs/evidence/sheets/t06-cut-edges-v21.csv` with a `video` column merged in, not overwritten.
-- `experiments/compare_mst_cases.py`: added `--video`/`--cut-number`/`--cutnumber-fonte`;
-  added segment-size and scaled-weight diagnostic columns; writes to
-  `docs/evidence/sheets/t06-comparison-cases.csv`.
-- `experiments/plot_additional_verification.py`: added `--video`; per-video figures now named with
-  the video in the filename and saved to `docs/evidence/images/`.
-- `tests/test_mst_hierarchy_scaled_weights.py`: parametrized over `v21`/`v29` instead of `v21` only.
-- `docs/evidence/t06-mst-hierarchy.md`: one link fixed (`t06-real-video-partition.csv` →
-  `sheets/t06-real-video-partition.csv`).
-
-**Moved** (filesystem moves into the corrected evidence structure, content unchanged, confirmed via
-line counts before/after):
-- `docs/evidence/t06-real-video-partition.csv` → `docs/evidence/sheets/t06-real-video-partition.csv`
-- `docs/evidence/t06-cut-edges-v21.csv` → `docs/evidence/sheets/t06-cut-edges-v21.csv` (then
-  regenerated in place with the corrected method and the `v29` rows added)
-- `docs/evidence/t06-comparison-cases.csv` → `docs/evidence/sheets/t06-comparison-cases.csv` (then
-  regenerated in place with the new columns and the `v29` rows added)
-- `docs/images/t06-cut-edges-v21.png` → `docs/evidence/images/t06-cut-edges-v21.png`
-- `docs/images/t06-truncation-comparison.png` → `docs/evidence/images/t06-truncation-comparison-v21.png`
-  (renamed on move, to disambiguate from the new `-v29` figure)
-- `docs/images/t06-comparison-cases.png` → `docs/evidence/images/t06-comparison-cases.png` (then
-  regenerated in place to include the `v29` cases)
-- `docs/images/` removed (empty after the moves above)
-
-**Generated** (new figures, written directly to their final location, nothing to move):
-- `docs/evidence/images/t06-cut-edges-v29.png`
-- `docs/evidence/images/t06-truncation-comparison-v29.png`
-
-**Temporarily edited and reverted:** `src/tcc_gnn/hierarchy/mst.py` — only in the first pass of
-this task (section 5); not touched again in this pass. Confirmed via `git status --short src/` and
-`git diff src/` immediately before finishing this pass too (both empty).
-
 ## Result
 
 The `v29` verification confirms the T06 port matches `HieTaSumm.Graph` exactly on the production
 feature extractor (2048-d), both at the `cutNumber=20` used throughout this evidence and at the
-reference's own `bestCutNumber`-derived value (`cutNumber=5`, `alpha=75`) — two independent
-acceptance checks, both passing, reported separately per the task's instruction. The scaled-weight
-diagnostic (section 3) confirms `v29` does not share `v21`'s all-edges-tied degeneracy (0 of 427
+reference's own derived cut value — two independent acceptance checks, both passing, reported
+separately per the task's instruction. The scaled-weight diagnostic ("Tie count and no-truncation
+diagnostic" above) confirms `v29` does not share `v21`'s all-edges-tied degeneracy (0 of 427
 edges truncate to `0`, vs. 742 of 742 on `v21`), though a smaller tie still exists at its own cut
 boundary (54 edges tied at the 20th cut's weight, only 1 cut) — consistent with `int()` truncation
 losing some precision on any video, just far less destructively than on `v21`. Per the researcher's

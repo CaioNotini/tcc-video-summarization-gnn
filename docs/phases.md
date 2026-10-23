@@ -73,8 +73,8 @@ This stage has five tasks: T04, T05, T19, T06 and T07. It builds the evaluation 
 
 - **Depends on:** T05.
 - **Basis:** D-13, and the evaluation sections of the VideoSAGE and HieTaSumm papers.
-- **Goal:** fix in writing, before any result is produced, how keyframes become a summary, the summary length used for every method, how the F-score is computed for each dataset, how a per-frame score is derived where it is needed (Q-01), and how running time and memory are measured (Q-09).
-- **Acceptance criterion:** the specification is saved as `docs/evaluation-protocol.md`, linked from this file and from [architecture.md](./architecture.md), and approved by the researcher. Points that depend on the advisor are listed in it as open.
+- **Goal:** fix in writing, before any result is produced, how keyframes become a summary, the summary length used for every method, how the F-score is computed for each dataset, how a per-frame score is derived where it is needed (Q-01, decided in D-22), and how running time and memory are measured (Q-09).
+- **Acceptance criterion:** the specification is saved as [docs/evaluation-protocol.md](./evaluation-protocol.md), linked from this file and from [architecture.md](./architecture.md), and approved by the researcher. Points that depend on the advisor are listed in it as open.
 
 ### T06: MST hierarchy
 
@@ -89,6 +89,7 @@ This stage has five tasks: T04, T05, T19, T06 and T07. It builds the evaluation 
 - **Basis:** the HieTaSumm paper and library.
 - **Goal:** run the original HieTaSumm method, which is the graph, the MST hierarchy and the rule-based keyframe choice, on SumMe, from video to summary. This also implements the F-score in `src/tcc_gnn/evaluation/`, under the protocol of T19, so that later tasks reuse the same evaluation code. This is the first complete result of the work and the reference point for the proposed method.
 - **Acceptance criterion:** summaries are produced for the SumMe videos, the F-score is computed under the written protocol, and the results are saved in `evidence/`.
+- **Note:** for T07, `Summary.bestCutNumber` from HieTaSumm-lib, applied to v29 with alpha=75, returned `cutNumber=5` (reference). Check the implementation against this value when executing T07.
 
 ## Stage 3: Graph neural network base
 
@@ -117,7 +118,7 @@ This stage has four tasks, T08 to T11. Its basis is the PyTorch Geometric implem
 
 ### T11: Decide the rank metrics on VSUMM
 
-- **Depends on:** none. The decision belongs to the advisor (Q-01).
+- **Depends on:** none. The decision belonged to the advisor (Q-01), decided in D-22.
 - **Basis:** the VideoSAGE paper, which uses Kendall's tau and Spearman's rho.
 - **Goal:** decide whether, for VSUMM, the thesis reports only the F-score or also derives Kendall's tau and Spearman's rho from the frequency with which each frame was chosen by the five users. The decision does not block implementation work in later stages, but it blocks the completion of T10.
 - **Acceptance criterion:** the decision is recorded in [decisions.md](./decisions.md).
@@ -169,7 +170,7 @@ This stage has two tasks: T17 and T18. Its basis is the region graph readout (RG
 
 - **Depends on:** T16.
 - **Basis:** HELMNet for the readout by scale, and VOGNet for the attention by frame (D-18).
-- **Goal:** add the readout that chooses the keyframes. It has two parts. The first scores each level of the hierarchy, using the region graph readout (RGR), which weights the levels by importance. The second scores each frame inside its level using attention. Both sets of scores come from learned layers, and no combinatorial rule from HieTaSumm is used to pick keyframes. The only fixed step is taking the highest-scored frame of each group. This is an initial version, meant to produce keyframes at every level so the method can be evaluated.
+- **Goal:** add the readout that chooses the keyframes. It has two parts. The first scores each level of the hierarchy, using the region graph readout (RGR), which weights the levels by importance. The second scores each frame inside its level using attention. A segment's score aggregates its frame scores, and the segments are selected by a 0/1 knapsack under a 15% duration budget (D-21). Both sets of scores come from learned layers, and no combinatorial rule from HieTaSumm is used to pick frames or segments; the knapsack selection is a standard rule, not one inherited from HieTaSumm (D-18). This is an initial version, meant to produce a summary at every level so the method can be evaluated.
 - **Acceptance criterion:** the model produces keyframes for a real video, its tests pass, and the output is saved in `evidence/`.
 
 ### T18: Comparison of the methods

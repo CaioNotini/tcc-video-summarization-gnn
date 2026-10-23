@@ -292,7 +292,7 @@ Two terms are used in every document, and each has one meaning.
 
 **Context:** HieTaSumm chooses its cut with `Summary.bestCutNumber`, which depends on the frames on disk, not on the graph or the ground truth. Because of this, the number of keyframes varies from video to video.
 
-**Decision:** The baseline uses `bestCutNumber` unchanged, computed per video with `alpha = 75` (options.json). There is no fixed value. The resulting summary is subject to the same 15% duration budget as every method (D-21). How to treat summaries that exceed the budget is an open point of D-22.
+**Decision:** The baseline uses `bestCutNumber` unchanged, computed per video with `alpha = 75` (options.json). There is no fixed value. The resulting summary is subject to the same 15% duration budget as every method (D-21). How to treat summaries that exceed the budget is an open point of D-21.
 
 **Alternatives discarded:** A fixed cut value, which does not reproduce the original for other videos. Choosing the cut with the ground truth, which leaks evaluation information.
 
@@ -313,3 +313,17 @@ Two terms are used in every document, and each has one meaning.
 **Consequences:** The F-score depends on summary length, so the report includes the mean length and, for the proposed method, the rank metrics (Kendall and Spearman). Two points remain open: the unit of segments used by the knapsack in the proposed method (learned SLC clusters or KTS shots), and the treatment of baseline summaries that exceed 15%. The second point should be settled after measuring how many of the 25 SumMe videos exceed the budget.
 
 **Affects:** T06, T07, T17, T18, T19.
+
+## D-22 — VSUMM reports F-score only; rank metrics are not derived
+
+**Date:** 2026-10-23. **Status:** Decided.
+
+**Context:** T11 asked whether, for VSUMM, the thesis reports only the F-score or also derives Kendall's tau and Spearman's rho from the frequency with which each frame was chosen by the five users (Q-01).
+
+**Decision:** VSUMM is evaluated with F-score only. Rank metrics are not reported on VSUMM.
+
+**Alternatives discarded:** Deriving a per-frame score from how often each frame was chosen by the five annotators, to compute Kendall's tau and Spearman's rho on VSUMM.
+
+**Consequences:** Rank metrics are reported only on SumMe and TVSum, where a per-frame importance score exists. T10's F-score part does not depend on this decision; its rank-metric part is no longer blocked by it.
+
+**Affects:** T10, T11, T19.

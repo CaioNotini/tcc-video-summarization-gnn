@@ -6,7 +6,7 @@ Related to: [status.md](./status.md), [phases.md](./phases.md), [decisions.md](.
 
 # Evaluation protocol (T19)
 
-**Status: Draft, not approved.** This is the specification required by [phases.md](./phases.md) T19. It is not yet approved by the researcher. Points marked **OPEN** below are not decided and must not be resolved by an agent.
+**Status: Approved (2026-10-23).** This is the specification required by [phases.md](./phases.md) T19, approved by the researcher. Points marked **OPEN** below are not decided and must not be resolved by an agent.
 
 ## Scope and principle
 
@@ -61,7 +61,7 @@ Every results table reports the mean summary length as a percentage of the origi
 
 ## VSUMM
 
-Metric: F-score, computed against the five user-selected keyframe sets, with the mean over annotators, since VSUMM provides no continuous importance score (D-15; common format in `src/tcc_gnn/data/base.py`). Summary length follows the 15% duration budget (D-22).
+Metric: F-score, computed against the five user-selected keyframe sets, with the mean over annotators, since VSUMM provides no continuous importance score (D-15; common format in `src/tcc_gnn/data/base.py`). Summary length follows the 15% duration budget (D-21).
 
 Rank metrics (Kendall's tau and Spearman's rho) are not reported on VSUMM. The derivation of a per-frame score from the user keyframes is therefore not needed for this dataset. Rank metrics are reported only on SumMe and TVSum, where a per-frame importance score exists.
 

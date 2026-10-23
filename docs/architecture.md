@@ -185,7 +185,7 @@ Training loops go in `src/tcc_gnn/training/`, and the experiments that run them 
 
 ## Data layer (partial: T05 exists, T10 planned)
 
-Each dataset has its own adapter in `src/tcc_gnn/data/`. An adapter lists the videos and converts the ground truth into one common format, so that evaluation does not depend on the dataset. The formats differ: SumMe and TVSum give importance scores from several annotators, while VSUMM gives five sets of selected keyframes per video, without a continuous score. Rank metrics are not reported on VSUMM, which is evaluated with F-score only (VSUMM metric decision; Q-01 is closed).
+Each dataset has its own adapter in `src/tcc_gnn/data/`. An adapter lists the videos and converts the ground truth into one common format, so that evaluation does not depend on the dataset. The formats differ: SumMe and TVSum give importance scores from several annotators, while VSUMM gives five sets of selected keyframes per video, without a continuous score. Rank metrics are not reported on VSUMM, which is evaluated with F-score only (VSUMM metric decision, D-22; Q-01 is closed).
 
 ```
  VSUMM ──► adapter_vsumm ──┐
@@ -199,7 +199,7 @@ The common interface is defined in `src/tcc_gnn/data/base.py`: a `GroundTruth` d
 
 ## Evaluation (step 7, planned, T19, T07 and T18)
 
-Every compared method is run through the same evaluation code and the same protocol. The protocol, covering how keyframes become a summary and how the F-score is computed, is fixed in a written specification before any result is produced (D-13, task T19).
+Every compared method is run through the same evaluation code and the same protocol. The protocol, covering how keyframes become a summary and how the F-score is computed, is fixed in a written specification ([evaluation-protocol.md](./evaluation-protocol.md)) before any result is produced (D-13, task T19).
 
 ```
  experiments/run_eval.py (planned)
@@ -288,7 +288,7 @@ Submodules are read-only references. They must be populated with `git submodule 
 | Tests                | pytest                                          | Unit tests per module                                                                |
 | Code style           | PEP 8, type hints                               | Modern style; ported logic keeps original names (D-10)                               |
 
-Training and all timing and memory measurements run on the desktop GPU (GeForce GTX 1550) (D-22). Feature extraction and graph construction run on CPU. Training details remain open (Q-08).
+Training and all timing and memory measurements run on the desktop GPU (GeForce GTX 1550). Feature extraction and graph construction run on CPU. Training details remain open (Q-08).
 
 ## Decisions
 
@@ -300,13 +300,13 @@ Open questions are blockers or pending decisions. Each one names the task it aff
 
 | ID   | Question                                                                                                                                                                                            | Affects    | Owner      |
 | ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ---------- |
-| Q-01 | Closed: F-score only on VSUMM; rank metrics are not reported there                                                                                                                                  | T10, T11   | Advisor    |
+| Q-01 | Closed: F-score only on VSUMM; rank metrics are not reported there (D-22)                                                                                                                           | T10, T11   | Advisor    |
 | Q-02 | Value of the SLC distance threshold; proposed rule is the 50th percentile of pairwise distances at the current scale (SLC-HELM), pending approval (D-19)                                            | T12, T13   | Researcher |
 | Q-03 | Unsupervised objective: reconstruction, diversity, or both                                                                                                                                          | T13        | Advisor    |
 | Q-04 | Whether the SLC-HELM code can be used; the paper gives a repository link that is not yet confirmed; otherwise implement from the paper. The paper gives a repository link that is not yet confirmed | T13        | Advisor    |
 | Q-06 | TVSum scope: adapter in TCC1 and experiments in TCC2, or a single decision                                                                                                                          | T05, TCC2  | Advisor    |
-| Q-08 | Partly answered by D-22: training on the desktop GPU; training details still open                                                                                                                   | T13 onward | Researcher |
-| Q-09 | Closed by D-22 (desktop, GeForce GTX 1550)                                                                                                                                                          | T19, T18   | Researcher |
+| Q-08 | Training on the desktop GPU; training details still open                                                                                                                                            | T13 onward | Researcher |
+| Q-09 | Closed (desktop, GeForce GTX 1550)                                                                                                                                                                  | T19, T18   | Researcher |
 | Q-10 | Baseline summaries above 15% of the duration: how many of the 25 SumMe videos exceed the budget, and how they are treated                                                                           | T07, T19   | Researcher |
 | Q-11 | SLC level used as the segmentation; must be fixed in the protocol before results                                                                                                                    | T13, T19   | Researcher |
 
