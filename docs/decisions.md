@@ -206,17 +206,17 @@ Two terms are used in every document, and each has one meaning.
 
 **Affects:** T19, T07, T18, and every evaluation task.
 
-## D-14 — The HieTaSumm baseline and the proposed method receive the same graph
+## D-14 — The graph is shared by both methods; the baseline's cut statistic is the exception
 
-**Date:** not recorded. **Status:** Locked.
+**Date:** not recorded. **Status:** Locked (revised 2026-10-21).
 
 **Context:** To attribute a difference in results to the method, the input must not differ between the methods.
 
-**Decision:** Both methods are built from the same time-aware graph, with the same features, from the same extractor.
+**Decision:** Both methods are built on the same time-aware graph, with the same node features from the same extractor (D-03). The HieTaSumm baseline computes its cut with the original statistic (D-20), which works on raw pixels of the frames. That statistic belongs to the baseline, not to the graph, and it is recorded here as an explicit exception.
 
-**Alternatives discarded:** Let each method build its own graph. It would confound the effect of the method with the effect of the input.
+**Alternatives discarded:** Letting each method build its own graph, which confounds the effect of the method with the effect of the input.
 
-**Consequences:** The comparison is controlled. Any change to the shared graph affects both methods and must be validated once.
+**Consequences:** The graph comparison is controlled. Any change to the shared graph affects both methods and is validated once. The exception for the cut statistic is reported explicitly.
 
 **Affects:** T06, T13, T18.
 
@@ -234,19 +234,19 @@ Two terms are used in every document, and each has one meaning.
 
 **Affects:** T05, T10.
 
-## D-16 — Which comparison cells belong to TCC1
+## D-16 — In TCC1, the proposed method is compared only with the HieTaSumm baseline
 
-**Date:** 2026-10, revised 2026-10-20. **Status:** Decided, by the researcher.
+**Date:** 2026-10. **Status:** Decided (revised 2026-10-21).
 
-**Context:** The full comparison has four cells: with or without graph, with or without learning. Two of them need methods that sit outside the proposal: the simple baselines that use no graph and no learning, and the ablation of the network without message passing.
+**Context:** The thesis has two stages with limited time. TCC1 needs preliminary results, and the remaining comparisons require their own runs under the protocol.
 
-**Decision:** In TCC1 the proposed method is compared only with the HieTaSumm baseline. The ablation without message passing and the uniform sampling, k-means and random selection baselines are left for TCC2, which also extends the complete comparison to all three datasets. The first version of this decision put the uniform and k-means baselines and the ablation in TCC1. The researcher removed them on 2026-10-20 because they are outside the scope of the proposal and the first phase only needs preliminary results.
+**Decision:** In TCC1, the proposed method is compared only with the original HieTaSumm baseline, under the protocol of D-21. The graph-free baselines (uniform sampling, k-means) and the ablation without message passing are left for TCC2. The comparison with VideoSAGE, VOGNet, SumGraph and RSGN is also left for TCC2, unless it is run under the same protocol.
 
-**Alternatives discarded:** Keep the ablation in TCC1. It would let the first phase separate the effect of the graph from the effect of learning, but it needs a definition of what is removed and a full run of the modified network, which preliminary results do not need.
+**Alternatives discarded:** Comparing with published numbers in TCC1, because each paper uses its own protocol. Those numbers may appear in the literature review, with that caveat.
 
-**Consequences:** The only evaluation task is T19, the protocol. Tasks T20 and T21 were removed. The first phase cannot separate the effect of the graph from the effect of learning, nor show whether the proposed method beats a method with no graph and no learning, and the thesis text must say so. Before the ablation is implemented in TCC2, a decision must record what it removes: the GATv2 layer only, or also the neighbour aggregation in the multigraph branches, and whether the SLC hierarchy is kept. All compared methods produce summaries of the same length, defined by the protocol (D-13).
+**Consequences:** The TCC1 results cover one method and one baseline.
 
-**Affects:** T19, T18.
+**Affects:** T18, T19, the TCC1/TCC2 scope.
 
 ## D-17 — Unsupervised training objective
 
@@ -264,7 +264,7 @@ Two terms are used in every document, and each has one meaning.
 
 **Context:** HieTaSumm uses a graph but no learning. The contribution of the thesis is learning over the graph, so mixing rule-based steps into the proposed method would blur what is being tested.
 
-**Decision:** In the proposed method, only the graph construction comes from HieTaSumm. The hierarchy comes from SLC pooling, and the processing of the hierarchy and the choice of keyframes are done by GNN layers. The MST, the cut by area and the rule-based keyframe choice appear only in the HieTaSumm baseline. If a learned step turns out not to be plausible, the replacement is recorded here as a new decision and is never made silently.
+**Decision:** In the proposed method, only the graph construction comes from HieTaSumm. The hierarchy comes from SLC pooling, and the processing of the hierarchy and the choice of keyframes are done by GNN layers. The MST, the cut by area and the rule-based keyframe choice appear only in the HieTaSumm baseline. If a learned step turns out not to be plausible, the replacement is recorded here as a new decision and is never made silently. The knapsack selection of segments used by the proposed method (D-21) is a standard selection rule applied after the learned scores. It is not a step of HieTaSumm, so this decision remains valid.
 
 **Alternatives discarded:** Reuse the HieTaSumm keyframe choice on the learned hierarchy. It would make it unclear whether the results come from learning.
 
@@ -286,16 +286,30 @@ Two terms are used in every document, and each has one meaning.
 
 **Affects:** T12, T13.
 
-# D-20 — Corte da baseline MST: cutNumber calculado pela referência
+## D-20 — The baseline keeps the original cut rule (bestCutNumber)
 
-**Status:** Decided.
+**Date:** 2026-10-21. **Status:** Decided.
 
-**Context:** Na T06, o cutNumber foi inicialmente fixado à mão em 20. A referência do HieTaSumm-lib calcula o valor por `Summary.bestCutNumber`, que não usa o grafo nem o ground truth: lê os frames em disco, converte cada um para pixels RGB crus e calcula o desvio padrão da similaridade de cosseno entre pares. Com `alpha = 75` (options.json), o resultado no v29 é `cutNumber = int(7.0 × 75 / 100) = 5`.
+**Context:** HieTaSumm chooses its cut with `Summary.bestCutNumber`, which depends on the frames on disk, not on the graph or the ground truth. Because of this, the number of keyframes varies from video to video.
 
-**Decision:** A baseline usa `cutNumber = 5`, reproduzindo o cálculo da referência. O valor 20 fica apenas como caso de teste de sensibilidade.
+**Decision:** The baseline uses `bestCutNumber` unchanged, computed per video with `alpha = 75` (options.json). There is no fixed value. The resulting summary is subject to the same 15% duration budget as every method (D-21). How to treat summaries that exceed the budget is an open point of D-22.
 
-**Alternatives discarded:** cutNumber = 20 (valor manual, sem origem no original); usar o ground truth para escolher o corte (vazaria informação de avaliação, contra a proposta não supervisionada).
+**Alternatives discarded:** A fixed cut value, which does not reproduce the original for other videos. Choosing the cut with the ground truth, which leaks evaluation information.
 
-**Consequences:** A T07 precisa fornecer os frames em disco para o cálculo de `bestCutNumber`. O cálculo usa pixels crus, não o ResNet de D-03, e isso fica explícito na baseline. O número de clusters depende do corte, e o tamanho do resumo será fixado na T19.
+**Consequences:** T07 must provide the frames on disk for the computation. The statistic uses raw pixels, not the graph features, as recorded in D-14.
 
 **Affects:** T06, T07, T19.
+
+## D-21 — Summary length: 15% of the video duration, with variable size
+
+**Date:** 2026-10-21. **Status:** Decided.
+
+**Context:** In the SumMe and TVSum literature, summary length is a duration budget of 15% of the original video, not a number of frames or keyframes. Methods produce summaries of variable size within this budget, and the F-score is computed on the generated summary.
+
+**Decision:** Each summary has a duration of at most 15% of the original video duration, measured in seconds. Summaries may be shorter. The proposed method selects segments with a 0/1 knapsack under the budget. The HieTaSumm baseline keeps its cut rule (D-20), and its summary must respect the same budget. The F-score is computed on the generated summary against the ground truth: maximum over annotators on SumMe, and mean over annotators on TVSum. Each table reports the mean summary length as a percentage of the video duration.
+
+**Alternatives discarded:** A fixed number of frames or keyframes for all methods, which imposes a budget that is not natural for methods without per-segment scores. A method-native size without a budget, which breaks comparability.
+
+**Consequences:** The F-score depends on summary length, so the report includes the mean length and, for the proposed method, the rank metrics (Kendall and Spearman). Two points remain open: the unit of segments used by the knapsack in the proposed method (learned SLC clusters or KTS shots), and the treatment of baseline summaries that exceed 15%. The second point should be settled after measuring how many of the 25 SumMe videos exceed the budget.
+
+**Affects:** T06, T07, T17, T18, T19.

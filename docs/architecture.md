@@ -14,9 +14,9 @@ Decisions are identified as D-01, D-02 and so on, and open questions as Q-01, Q-
 
 ## The proposal and its comparisons
 
-The proposed method is the SLC hierarchy followed by a GNN that scores the frames and picks the keyframes. After the graph, nothing from the combinatorial part of HieTaSumm is used in it (D-18). The original HieTaSumm method exists in the project only for comparison. The terms are defined once, in the Terminology section of [decisions.md](./decisions.md).
+The proposed method is the SLC hierarchy followed by a GNN that scores the frames, aggregates the scores into segments and selects the segments with a 0/1 knapsack under a 15% duration budget (D-21). After the graph, nothing from the combinatorial part of HieTaSumm is used in it (D-18). The original HieTaSumm method exists in the project only for comparison. The terms are defined once, in the Terminology section of [decisions.md](./decisions.md).
 
-The HieTaSumm baseline shares only the graph with the proposed method. Running an MST hierarchy through the same network is not part of the evaluation; it may be used only as an early development check (D-01).
+The HieTaSumm baseline shares only the graph with the proposed method. Its MST hierarchy produces one partition, at the cut chosen by `bestCutNumber` (D-20), and has no levels.
 
 ## Where things stand
 
@@ -26,19 +26,23 @@ src/tcc_gnn/
 ├── features/     [exists]    features.py, frame_extraction.py      (no tests yet)
 │                             tf_resnet_extractor.py                (validation only)
 ├── data/         [exists]    base.py, summe.py (T05); VSUMM/TVSum  (T10 planned)
-├── hierarchy/    [planned]   MST hierarchy, SLC pooling              (T06, T13)
+├── hierarchy/    [partial]   mst.py: MST cut, validated (T06); SLC pooling planned (T13)
 ├── models/       [planned]   GATv2, MGP, readout                   (T09, T15, T17)
 ├── training/     [planned]   unsupervised loops                    (after T13, objective open)
 └── evaluation/   [planned]   F-score, tau, rho, time, memory       (T07, T18)
 
-experiments/      [exists]    validate_graph.py, validate_graph_torchvision.py
-tests/            [exists]    test_frame_graph.py, test_smoke.py
+experiments/      [exists]    validate_graph*.py, validate_mst_hierarchy.py,
+                              analyze_mst_cut_edges.py, compare_mst_cases.py,
+                              plot_additional_verification.py
+tests/            [exists]    test_frame_graph.py, test_mst_hierarchy.py,
+                              test_mst_hierarchy_scaled_weights.py,
+                              test_summe_adapter.py, test_smoke.py
 references/       [exists]    git submodules: HieTaSumm-lib, mHELMNet (read-only)
 ```
 
 ## Pipeline
 
-The method takes a video and returns a summary, through seven steps. The first step is the graph construction, which is the base of everything else. The second is the feature extraction, which gives each node its initial description. The third applies graph attention over the temporal neighbours, so that each frame's features reflect its immediate context. The fourth builds the hierarchy, which is the learned SLC pooling. The fifth processes the hierarchy as a multigraph with two kinds of edges, using separate branches that are merged by a perceptron. The sixth reads the hierarchy at each scale, weights the levels by importance, and picks one keyframe per group using frame-level attention. The seventh assembles the keyframes in their original order and evaluates the result.
+The method takes a video and returns a summary, through seven steps. The first step is the graph construction, which is the base of everything else. The second is the feature extraction, which gives each node its initial description. The third applies graph attention over the temporal neighbours, so that each frame's features reflect its immediate context. The fourth builds the hierarchy, which is the learned SLC pooling. The fifth processes the hierarchy as a multigraph with two kinds of edges, using separate branches that are merged by a perceptron. The sixth reads the hierarchy at each scale, weights the levels by importance, and scores each frame with frame-level attention. The seventh aggregates the frame scores per segment, selects the segments with a 0/1 knapsack under the 15% duration budget (D-21), and evaluates the resulting summary.
 
 The seven steps describe the proposed method. The original HieTaSumm baseline is a separate path that shares only step one.
 
@@ -61,10 +65,10 @@ The seven steps describe the proposed method. The original HieTaSumm baseline is
  [5] multigraph (MGP) ►  temporal + hierarchical edges  planned
    │
    ▼
- [6] readout + attention ► one keyframe per group       planned
+  [6] readout + attention ► frame scores, level weights     planned
    │
    ▼
- [7] summary + evaluation ► F-score, tau, rho, time     planned
+  [7] knapsack (15%) + evaluation ► F-score, tau, rho, time planned
 ```
 
 ## Graph construction (step 1, exists)
@@ -106,7 +110,7 @@ The layer follows the first graph processing block of SLC-HELM (eqs. 1–2). Its
 
 ## Hierarchy (step 4, planned)
 
-Both implementations produce the same kind of output: a set of levels, each a partition of the frames into groups, with each node linked to its parent group. The MST hierarchy serves the HieTaSumm baseline. Because the output has the same shape, it can also stand in for SLC in an early development check of steps three, five and six before SLC exists, but that is not part of the final evaluation (D-01).
+The two methods produce different outputs. The SLC hierarchy is a set of levels, each a partition of the frames into groups, with each node linked to its parent group. The MST baseline produces one partition, at the cut chosen by `bestCutNumber` (D-20), and it has no levels. The MST output is not used as a stand-in for SLC in the final design.
 
 ```
  MST hierarchy (T06)                          SLC pooling, main method (T13)
@@ -114,14 +118,14 @@ Both implementations produce the same kind of output: a set of levels, each a pa
  graph ──► minimum spanning tree             graph ──► learned features
            │                                            │
            ▼                                            ▼
- cut by area (HieTaSumm rule, fixed)         merge frames joined by a path of
+ cut by area (HieTaSumm rule; number of groups from bestCutNumber, D-20)         merge frames joined by a path of
            │                                 edges below a distance threshold
            ▼                                            │
- hierarchy (levels fixed by rule)            ▼
+ one partition (no levels)            ▼
                                              hierarchy (levels learned in training)
 ```
 
-A hierarchy built by either method looks like this. Each group is a contiguous segment of the video, which holds because the edges join only temporally close frames:
+The SLC hierarchy looks like this. Each group is a contiguous segment of the video, which holds because the edges join only temporally close frames:
 
 ```
  level 2   [────────────────── group A ──────────────────]
@@ -152,16 +156,16 @@ Following mHELMNet, the features of the edges are fixed after the initial embedd
 
 ## Readout and keyframe selection (step 6, planned, T17)
 
-The readout is adapted from the region graph readout (RGR) of HELMNet. It produces an importance weight for each level. Inside each level, frame-level attention, following VOGNet, scores each frame. The keyframe of a group is the frame with the highest combined score in the most important level that covers it. Both sets of scores come from learned layers, so no combinatorial rule from HieTaSumm is used to pick keyframes in the proposed method (D-18).
+The readout is adapted from the region graph readout (RGR) of HELMNet. It produces an importance weight for each level. Inside each level, frame-level attention, following VOGNet, scores each frame. Each frame receives a combined score. A segment's score is the aggregation of its frame scores (the aggregation rule is fixed in the evaluation protocol). Segments are the SLC clusters of the level fixed in the evaluation protocol (Q-11), and they are selected by a 0/1 knapsack under the 15% duration budget (D-21). Both sets of scores come from learned layers, so no combinatorial rule from HieTaSumm is used to pick frames or segments in the proposed method (D-18).
 
 ```
  level 2 ──► importance β2 ──┐
  level 1 ──► importance β1 ──┼──► weights per level
  level 0 ──► importance β0 ──┘
 
- inside each level:  frame-level attention scores each frame in the group
- keyframe of a group = frame with the highest combined score
- summary            = keyframes, in their original temporal order
+ inside each level:  frame-level attention scores each frame
+ segment score     = aggregation of its frame scores
+ summary            = selected segments under 15%, in their original temporal order
 ```
 
 Planned location: `src/tcc_gnn/models/`.
@@ -181,7 +185,7 @@ Training loops go in `src/tcc_gnn/training/`, and the experiments that run them 
 
 ## Data layer (partial: T05 exists, T10 planned)
 
-Each dataset has its own adapter in `src/tcc_gnn/data/`. An adapter lists the videos and converts the ground truth into one common format, so that evaluation does not depend on the dataset. The formats differ: SumMe and TVSum give importance scores from several annotators, while VSUMM gives five sets of selected keyframes per video, without a continuous score. This difference is the reason the rank metrics do not apply directly to VSUMM (Q-01).
+Each dataset has its own adapter in `src/tcc_gnn/data/`. An adapter lists the videos and converts the ground truth into one common format, so that evaluation does not depend on the dataset. The formats differ: SumMe and TVSum give importance scores from several annotators, while VSUMM gives five sets of selected keyframes per video, without a continuous score. Rank metrics are not reported on VSUMM, which is evaluated with F-score only (VSUMM metric decision; Q-01 is closed).
 
 ```
  VSUMM ──► adapter_vsumm ──┐
@@ -200,7 +204,7 @@ Every compared method is run through the same evaluation code and the same proto
 ```
  experiments/run_eval.py (planned)
 
- video ──► method (proposed, HieTaSumm) ──► keyframes ──► summary
+ video ──► method (proposed, HieTaSumm) ──► segments ──► summary
                                                                                       │
  ground truth ──► adapter ──────────────────────────────────────────────────────────►  ├──► F-score
                                                                                       ├──► tau, rho  (where available)
@@ -224,7 +228,7 @@ The full comparison covers four cells, and each cell changes one factor at a tim
              └──────────────────────────┘   └──────────────────────────────┘
 ```
 
-The cell with a graph and without learning is the original HieTaSumm method, and the cell with a graph and with learning is the proposed method. The two cells without a graph, the ablation and the simple baselines (uniform sampling, k-means), are left for TCC2 (D-16).
+The cell with a graph and without learning is the original HieTaSumm method, and the cell with a graph and with learning is the proposed method. The two cells without a graph, the ablation and the simple baselines (uniform sampling, k-means), are left for TCC2 (D-16). In TCC1, only the HieTaSumm cell and the proposed cell are run.
 
 ## Code structure
 
@@ -244,12 +248,13 @@ tcc-video-summarization-gnn/
 │   │                           # tf_resnet_extractor.py (validation only)
 │   ├── data/                   # base.py, summe.py (T05)                  [exists]
 │   │                           # VSUMM/TVSum adapters                     [planned]
-│   ├── hierarchy/              # MST hierarchy, SLC pooling                  [planned]
+│   ├── hierarchy/              # mst.py (T06)                              [partial]
+│   │                           # SLC pooling (T13)                        [planned]
 │   ├── models/                 # GATv2 base, MGP modules, readout          [planned]
 │   ├── training/               # unsupervised loops                        [planned]
 │   └── evaluation/             # F-score, tau, rho, time, memory           [planned]
-├── tests/                      # test_frame_graph.py, test_smoke.py        [exists]
-├── experiments/                # validate_graph.py, validate_graph_torchvision.py  [exists]
+├── tests/                      # test_frame_graph.py, test_mst_hierarchy.py, test_summe_adapter.py, test_smoke.py  [exists]
+├── experiments/                # validate_graph*.py, validate_mst_hierarchy.py, analyze_mst_cut_edges.py  [exists]
 ├── references/                 # submodules: HieTaSumm-lib, mHELMNet      [exists, read-only]
 └── data/                       # raw and processed data, git-ignored       [exists, local files only]
 ```
@@ -283,7 +288,7 @@ Submodules are read-only references. They must be populated with `git submodule 
 | Tests                | pytest                                          | Unit tests per module                                                                |
 | Code style           | PEP 8, type hints                               | Modern style; ported logic keeps original names (D-10)                               |
 
-Whether training runs on a local GPU or a cloud notebook is open (Q-08). Feature extraction and graph construction run on CPU.
+Training and all timing and memory measurements run on the desktop GPU (GeForce GTX 1550) (D-22). Feature extraction and graph construction run on CPU. Training details remain open (Q-08).
 
 ## Decisions
 
@@ -293,27 +298,30 @@ The decisions that shape this architecture are recorded in [decisions.md](./deci
 
 Open questions are blockers or pending decisions. Each one names the task it affects. The owner says who has to answer.
 
-| ID   | Question                                                                                                                                                 | Affects    | Owner      |
-| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ---------- |
-| Q-01 | How to report Kendall's tau and Spearman's rho on VSUMM, which lacks per-frame scores: F-score only, or a derived score from the five summaries          | T10, T11   | Advisor    |
-| Q-02 | Value of the SLC distance threshold; proposed rule is the 50th percentile of pairwise distances at the current scale (SLC-HELM), pending approval (D-19) | T12, T13   | Researcher |
-| Q-03 | Unsupervised objective: reconstruction, diversity, or both                                                                                               | T13        | Advisor    |
-| Q-04 | Whether the SLC-HELM code can be used; the paper gives a repository link that is not yet confirmed; otherwise implement from the paper                   | T13        | Advisor    |
-| Q-06 | TVSum scope: adapter in TCC1 and experiments in TCC2, or a single decision                                                                               | T05, TCC2  | Advisor    |
-| Q-08 | Training hardware: local GPU or cloud notebook                                                                                                           | T13 onward | Researcher |
-| Q-09 | Hardware specification used to measure running time and memory                                                                                           | T19, T18   | Researcher |
+| ID   | Question                                                                                                                                                                                            | Affects    | Owner      |
+| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ---------- |
+| Q-01 | Closed: F-score only on VSUMM; rank metrics are not reported there                                                                                                                                  | T10, T11   | Advisor    |
+| Q-02 | Value of the SLC distance threshold; proposed rule is the 50th percentile of pairwise distances at the current scale (SLC-HELM), pending approval (D-19)                                            | T12, T13   | Researcher |
+| Q-03 | Unsupervised objective: reconstruction, diversity, or both                                                                                                                                          | T13        | Advisor    |
+| Q-04 | Whether the SLC-HELM code can be used; the paper gives a repository link that is not yet confirmed; otherwise implement from the paper. The paper gives a repository link that is not yet confirmed | T13        | Advisor    |
+| Q-06 | TVSum scope: adapter in TCC1 and experiments in TCC2, or a single decision                                                                                                                          | T05, TCC2  | Advisor    |
+| Q-08 | Partly answered by D-22: training on the desktop GPU; training details still open                                                                                                                   | T13 onward | Researcher |
+| Q-09 | Closed by D-22 (desktop, GeForce GTX 1550)                                                                                                                                                          | T19, T18   | Researcher |
+| Q-10 | Baseline summaries above 15% of the duration: how many of the 25 SumMe videos exceed the budget, and how they are treated                                                                           | T07, T19   | Researcher |
+| Q-11 | SLC level used as the segmentation; must be fixed in the protocol before results                                                                                                                    | T13, T19   | Researcher |
 
 ## Risks
 
-| Risk                                                 | Impact                                 | Mitigation                                                                                          |
-| ---------------------------------------------------- | -------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| The GNN does not beat the non-learned baselines      | High: weakens the thesis claim         | Report the result as it is; the comparison matrix shows where the gain is missing                   |
-| SLC cannot be reproduced without the original code   | High for T13                           | Implement from the paper; test on synthetic partitions; record every interpretation in decisions.md |
-| VSUMM is small (50 videos), so the model may overfit | Medium                                 | Unsupervised training; SumMe and TVSum as further checks                                            |
-| F-score and rank correlation disagree                | Medium: changes the reading of results | Report both and discuss divergent cases (see project.md)                                            |
-| The port drifts from the reference implementation    | High for credibility                   | T01 validation saved; any change to the graph code is validated again                               |
-| Task cadence is not met before PC4                   | High for the schedule                  | Linear order by dependency; the first candidate to rescope is T08, which is learning, not method    |
+| Risk                                                       | Impact                                 | Mitigation                                                                                          |
+| ---------------------------------------------------------- | -------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| The GNN does not beat the non-learned baselines            | High: weakens the thesis claim         | Report the result as it is; the comparison matrix shows where the gain is missing                   |
+| SLC cannot be reproduced without the original code         | High for T13                           | Implement from the paper; test on synthetic partitions; record every interpretation in decisions.md |
+| VSUMM is small (50 videos), so the model may overfit       | Medium                                 | Unsupervised training; SumMe and TVSum as further checks                                            |
+| F-score and rank correlation disagree                      | Medium: changes the reading of results | Report both and discuss divergent cases (see project.md)                                            |
+| The port drifts from the reference implementation          | High for credibility                   | T01 validation saved; any change to the graph code is validated again                               |
+| Task cadence is not met before PC4                         | High for the schedule                  | Linear order by dependency; the first candidate to rescope is T08, which is learning, not method    |
+| Segments are learned, so they change between training runs | Medium: changes the F-score per run    | Report mean and standard deviation over seeds                                                       |
 
 ## Invariants
 
-These rules hold in every change to the code. Edges join only frames within the temporal window, so the graph stays sparse and local. Clusters produced by SLC pooling are contiguous segments of the video, which holds only because the edges are temporal. Feature vectors have 2048 dimensions and come from the same extractor for every compared method. The graph construction keeps producing the output validated in T01; any change to it is followed by the validation again. The HieTaSumm baseline and the proposed method receive the same graph (D-14). Every compared method uses the same evaluation code and protocol, and produces summaries of the same length (D-13).
+These rules hold in every change to the code. Edges join only frames within the temporal window, so the graph stays sparse and local. Clusters produced by SLC pooling are contiguous segments of the video, which holds only because the edges are temporal. Feature vectors have 2048 dimensions and come from the same extractor for every compared method. The graph construction keeps producing the output validated in T01; any change to it is followed by the validation again. The HieTaSumm baseline and the proposed method receive the same graph (D-14). Every compared method uses the same evaluation code and protocol, and produces summaries within the same 15% duration budget, with variable size (D-21; protocol in D-13). The HieTaSumm baseline uses `bestCutNumber`, computed per video, with no fixed value (D-20).
