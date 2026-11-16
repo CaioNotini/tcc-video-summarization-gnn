@@ -2,7 +2,9 @@
 
 Pipeline por vídeo: frames a rate=4 fps (frame_extraction.py), features ResNet50/avgpool (mesmos
 pesos e preprocessamento de features.py, com batch e GPU se houver), grafo time-aware (frame.py),
-cutNumber = int(bestCutNumber() * alpha/100) com piso 3 (Summary.py:57-59, via o submódulo real),
+cutNumber = int(bestCutNumber() * alpha/100) com piso 3 (Summary.py:57-59), via a porta best_cut.py
+(equivalente ao Summary.bestCutNumber do submódulo, validada em experiments/validate_best_cut.py e
+validate_best_cut_keyshots.py),
 hierarquia e corte portados (mst.py), e contagem dos frames de keyshot reproduzindo exatamente a
 aritmética de Summary.group_central_frames (Summary.py:167-192): len_shot total =
 round(n_disk * 15/100) - 1 (Summary.py:56), dividido por len(S) componentes (Summary.py:170);
@@ -28,7 +30,7 @@ from torchvision.models import ResNet50_Weights, resnet50
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_REPO_ROOT / "experiments"))
 
-from validate_mst_hierarchy import reference_best_cut_number  # noqa: E402
+from tcc_gnn.hierarchy.best_cut import best_cut_number, cut_number_from_best  # noqa: E402
 from tcc_gnn.features.frame_extraction import extract_frames  # noqa: E402
 from tcc_gnn.graph.frame import build_time_aware_graph  # noqa: E402
 from tcc_gnn.hierarchy.mst import compute_hierarchy, cut_graph  # noqa: E402
@@ -131,10 +133,11 @@ def run_video(video_path: Path, frames_root: Path, delta_ts: list[int], device: 
 
     rows = []
     for delta_t in delta_ts:
-        best = reference_best_cut_number(frames_dir, delta_t, alpha=ALPHA)
+        best_cut_number_raw = best_cut_number(frames_dir, delta_t)
+        cut_number = cut_number_from_best(best_cut_number_raw, alpha=ALPHA)
         graph = build_time_aware_graph(features, delta_t)
         triples, leaf_list, _altitudes = compute_hierarchy(graph)
-        cut = cut_graph(triples, best["cut_number_ref"])
+        cut = cut_graph(triples, cut_number)
         n_keyshot, n_components, len_shot_total = count_keyshot_frames(cut, leaf_list, n_disk)
 
         summary_s = n_keyshot / RATE_FPS
@@ -145,8 +148,8 @@ def run_video(video_path: Path, frames_root: Path, delta_ts: list[int], device: 
                 "video_duration_s": round(duration_s, 2),
                 "n_frames_extracted": n_disk,
                 "delta_t": delta_t,
-                "best_cut_number_raw": best["best_cut_number_raw"],
-                "cut_number": best["cut_number_ref"],
+                "best_cut_number_raw": best_cut_number_raw,
+                "cut_number": cut_number,
                 "n_components": n_components,
                 "len_shot_total": len_shot_total,
                 "n_keyshot_frames": n_keyshot,

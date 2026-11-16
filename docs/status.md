@@ -31,7 +31,7 @@ A task becomes validated only when its output is saved in [evidence/](./evidence
 - **Q-04:** affects T13. Owner: advisor.
 - **Q-06:** affects the scope of the TVSum adapter: whether it is written in TCC1 or left for TCC2 with the TVSum experiments. Owner: advisor.
 - **Q-08:** from T13 onward.
-- **Q-10:** blocks T07 and affects T19. Baseline summaries above 15% of the duration: how many of the 25 SumMe videos exceed the budget, and how they are treated. Owner: researcher.
+- **Q-10:** blocks T07 and affects T19. Baseline summaries above 15% of the duration: how many of the 25 SumMe videos exceed the budget, and how they are treated. Owner: researcher. The per-video measurement (2026-11-16, `delta_t = 32`) stopped at video 7 of 25 and is not evidence yet, for two reasons that need a decision: (1) `src/tcc_gnn/features/frame_extraction.py` samples every `round(fps/4)` native frames (4.17 fps at 25 fps, 4.28 at 29.97, 3.75 at 30), while the HieTaSumm-lib extractor (`HieTaSumm/__init__.py:86-142`) saves one frame every 0.25 s; `measure_q10_budget.py` converts keyshot frames to seconds with `/4`, so the percentages it prints are off by that ratio (two videos printed above 15% that are below it in real duration); (2) the frames on disk for `Car_railcrossing` are a partial extraction (272 of 725, last file truncated), which stopped the run.
 - **Q-11:** affects T13 and T19. SLC level used as the segmentation; must be fixed in the protocol before results. Owner: researcher.
 - **Q-05 and Q-07 gap:** closed. Confirmed (2026-11-16) that the two identifiers were assigned in earlier working versions and discarded without a recorded entry; what they covered was not recovered. The numbers are not reused, and the gap is noted in the questions table of [architecture.md](./architecture.md).
 
@@ -39,7 +39,9 @@ A task becomes validated only when its output is saved in [evidence/](./evidence
 
 - `data/raw/vsumm/` holds the four official VSUMM archives and two extracted videos (v21 and v29).
 - `data/processed/vsumm/` holds extracted frames and a `features_teste.npy` file for v21 and v29.
-- The two submodules, `HieTaSumm-lib` and `mHELMNet`, are populated and in sync.
+- The two submodules, `HieTaSumm-lib` and `mHELMNet`, are populated and in sync (re-populated on 2026-11-16 with `git submodule update --init --recursive`, at the pinned commits).
+- `data/raw/summe/SumMe/` holds the 25 SumMe videos. `data/processed/summe/` holds frames for 8 videos and cached features for 7 of them; the `Car_railcrossing` frames are a partial extraction (see Q-10).
+- Python environment: `.venv/` on drive `D:` (CLAUDE.md rule 17), torch 2.5.1+cu121 on a GeForce GTX 1660 SUPER; `pytest` passes 28 tests.
 
 ## Verified evidence
 
@@ -48,10 +50,11 @@ A task becomes validated only when its output is saved in [evidence/](./evidence
 - T06: Validated. Evidence: `docs/evidence/t06-mst-hierarchy.md`, `docs/evidence/t06-additional-verification.md`, `docs/evidence/sheets/` and `docs/evidence/images/`. Baseline with `int()` truncation and cutNumber = 5 (D-20). Identical to the HieTaSumm-lib reference on v29 (0 frames differ). The v21 case is degenerate (all edges truncate to 0) and is recorded as such. Next task: T07, which depends on T05 and T19 and needs the frames on disk for `bestCutNumber`.
 - T11: Validated. Evidence: [decisions.md](./decisions.md), D-22. The decision — VSUMM reports F-score only, no rank metrics — is recorded as D-22, closing Q-01. T11's acceptance criterion ([phases.md](./phases.md)) only requires the decision to be recorded in `decisions.md`, not a file under `evidence/`.
 - T19: [evaluation-protocol.md](./evaluation-protocol.md). Approved by the researcher on 2026-10-23. Fixes the summary size (15% duration budget, D-21), the F-score computation per dataset, and that VSUMM reports F-score only (D-22). Two points stay open for the advisor/researcher: the knapsack segment unit (Q-11) and the treatment of baseline summaries above the budget (Q-10).
+- bestCutNumber port (`src/tcc_gnn/hierarchy/best_cut.py`): [evidence/best-cut-port-equivalence.md](./evidence/best-cut-port-equivalence.md). Same raw value, `cutNumber` and keyshot list as the HieTaSumm-lib reference on SumMe `Jumps` and `Air_Force_One` with `delta_t = 32`; two intentional divergences (zero standard deviation, `delta_t <= 0`) recorded there. Not linked to a task in [phases.md](./phases.md); it supports the Q-10 measurement and T07.
 
 ## Reported, not yet evidence
 
-None. The 0.97 correlation sanity check that was listed here now has a saved run: [evidence/sanity-check-features.md](./evidence/sanity-check-features.md) (0.9749 on v29, `delta_t = 8`, torchvision features, 2026-11-16).
+None. The 0.97 correlation sanity check that was listed here now has saved runs: [evidence/sanity-check-features.md](./evidence/sanity-check-features.md) (v29, torchvision features, 2026-11-16: 0.9749 with `delta_t = 8`, 0.7937 with `delta_t = 32`).
 
 ## Next step
 
