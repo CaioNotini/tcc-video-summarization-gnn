@@ -70,7 +70,7 @@ This section applies principle 8, and it is the only place where the list of app
 13. Do not open, print or expose secrets such as `.env` files, tokens or credentials.
 14. Never commit, push, reset, revert, amend, rebase, stash or checkout without an explicit request. Report the pending files and let the researcher commit.
 15. The thesis text and bibliography are maintained on Overleaf, outside this repository (see [docs/references.md](docs/references.md)). The edit link is sensitive, because this repository is public, and must never be written into a file tracked by git. Only open or edit the Overleaf project when the researcher explicitly asks for it in that conversation, and only alter the section requested, which by default is the references and bibliography section.
-16. Evidence in [docs/evidence/](docs/evidence/) is written in Markdown, with the real command output or a factual description of what was done. Do not add screenshots or other images by default. Only add one when the researcher explicitly asks for it and confirms it for that task. When evidence is updated, rewrite the file so it stays accurate; do not leave references to material that was removed.
+16. Evidence in [docs/evidence/](docs/evidence/) is written in Markdown, with the real command output or a factual description of what was done. Figures are allowed and live in `docs/evidence/images/`, data sheets in `docs/evidence/sheets/`, both linked from the evidence file that uses them (researcher's decision, 2026-11-16). When evidence is updated, rewrite the file so it stays accurate; do not leave references to material that was removed.
 
 ## Tests
 

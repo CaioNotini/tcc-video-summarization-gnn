@@ -6,7 +6,7 @@ Related to: [phases.md](./phases.md), [project.md](./project.md), [references.md
 
 # Project status
 
-Last verified: 2026-10-21, repository commit 6fcb61b, as reported by the read-only inspection of that date.
+Last verified: 2026-11-16, repository commit 02652a5, updated by the documentation corrections of that date.
 
 This file says where the project stands. What each task requires is in [phases.md](./phases.md). Why the project is built this way is in [decisions.md](./decisions.md). Each open question is defined in [architecture.md](./architecture.md), and only its blocking effect is recorded below.
 
@@ -29,12 +29,11 @@ A task becomes validated only when its output is saved in [evidence/](./evidence
 - **Q-02:** blocks T13.
 - **Q-03:** blocks T13 (see D-17). Owner: advisor.
 - **Q-04:** affects T13. Owner: advisor.
-- **Q-06:** affects T05 and TCC2. Owner: advisor.
+- **Q-06:** affects the scope of the TVSum adapter: whether it is written in TCC1 or left for TCC2 with the TVSum experiments. Owner: advisor.
 - **Q-08:** from T13 onward.
-- **Q-09:** affects T19 and T18.
 - **Q-10:** blocks T07 and affects T19. Baseline summaries above 15% of the duration: how many of the 25 SumMe videos exceed the budget, and how they are treated. Owner: researcher.
 - **Q-11:** affects T13 and T19. SLC level used as the segmentation; must be fixed in the protocol before results. Owner: researcher.
-- **Q-05 and Q-07 gap:** these identifiers are skipped in the Q-xx sequence with no recorded reason, unlike T20/T21 which has an explicit removal note. Does not block any task. Needs the researcher to say whether they were ever assigned, so a note can be added or the gap confirmed as never used.
+- **Q-05 and Q-07 gap:** closed. Confirmed (2026-11-16) that the two identifiers were assigned in earlier working versions and discarded without a recorded entry; what they covered was not recovered. The numbers are not reused, and the gap is noted in the questions table of [architecture.md](./architecture.md).
 
 ## Local state
 
@@ -52,9 +51,7 @@ A task becomes validated only when its output is saved in [evidence/](./evidence
 
 ## Reported, not yet evidence
 
-These results were reported, but no saved output exists in the repository, so they do not count as validated.
-
-- Correlation of 0.97 between edge weight and temporal distance on a third video, with the torchvision extractor. Needs a saved run of the sanity check.
+None. The 0.97 correlation sanity check that was listed here now has a saved run: [evidence/sanity-check-features.md](./evidence/sanity-check-features.md) (0.9749 on v29, `delta_t = 8`, torchvision features, 2026-11-16).
 
 ## Next step
 

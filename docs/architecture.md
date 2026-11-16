@@ -236,7 +236,7 @@ The package is [`src/tcc_gnn/`](../src/tcc_gnn/). Directories marked as planned 
 
 ```
 tcc-video-summarization-gnn/
-├── README.md                   # human-facing overview
+├── README.md                   # human-facing overview (still to be written)
 ├── CLAUDE.md                   # agent instructions and entry point for agents
 ├── pyproject.toml              # dependencies and optional extras (tf-validation)
 ├── configs/
@@ -288,7 +288,7 @@ Submodules are read-only references. They must be populated with `git submodule 
 | Tests                | pytest                                          | Unit tests per module                                                                |
 | Code style           | PEP 8, type hints                               | Modern style; ported logic keeps original names (D-10)                               |
 
-Training and all timing and memory measurements run on the desktop GPU (GeForce GTX 1550). Feature extraction and graph construction run on CPU. Training details remain open (Q-08).
+Training and all timing and memory measurements run on the desktop GPU (GeForce GTX 1650, Q-09). Feature extraction and graph construction run on CPU. Training details remain open (Q-08).
 
 ## Decisions
 
@@ -303,10 +303,11 @@ Open questions are blockers or pending decisions. Each one names the task it aff
 | Q-01 | Closed: F-score only on VSUMM; rank metrics are not reported there (D-22)                                                                                                                           | T10, T11   | Advisor    |
 | Q-02 | Value of the SLC distance threshold; proposed rule is the 50th percentile of pairwise distances at the current scale (SLC-HELM), pending approval (D-19)                                            | T12, T13   | Researcher |
 | Q-03 | Unsupervised objective: reconstruction, diversity, or both                                                                                                                                          | T13        | Advisor    |
-| Q-04 | Whether the SLC-HELM code can be used; the paper gives a repository link that is not yet confirmed; otherwise implement from the paper. The paper gives a repository link that is not yet confirmed | T13        | Advisor    |
+| Q-04 | Whether the SLC-HELM code can be used; the paper gives a repository link that is not yet confirmed; otherwise implement from the paper                                                              | T13        | Advisor    |
+| Q-05, Q-07 | Gap in the sequence: assigned in earlier working versions and discarded without a recorded entry (researcher, 2026-11-16); what they covered was not recovered, and the numbers are not reused | —          | —          |
 | Q-06 | TVSum scope: adapter in TCC1 and experiments in TCC2, or a single decision                                                                                                                          | T05, TCC2  | Advisor    |
-| Q-08 | Training on the desktop GPU; training details still open                                                                                                                                            | T13 onward | Researcher |
-| Q-09 | Closed (desktop, GeForce GTX 1550)                                                                                                                                                                  | T19, T18   | Researcher |
+| Q-08 | Training runs on the local desktop GPU, not on the cloud (researcher, 2026-11-16); the remaining training details are still open                                                                     | T13 onward | Researcher |
+| Q-09 | Closed (researcher, 2026-11-16): timing and memory are measured on the researcher's desktop GPU, a GeForce GTX 1650                                                                                 | T19, T18   | Researcher |
 | Q-10 | Baseline summaries above 15% of the duration: how many of the 25 SumMe videos exceed the budget, and how they are treated                                                                           | T07, T19   | Researcher |
 | Q-11 | SLC level used as the segmentation; must be fixed in the protocol before results                                                                                                                    | T13, T19   | Researcher |
 

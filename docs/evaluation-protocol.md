@@ -67,20 +67,20 @@ Rank metrics (Kendall's tau and Spearman's rho) are not reported on VSUMM. The d
 
 ## Hardware
 
-Not filled in. To be completed once the hardware decision is made (Q-08, Q-09); no field below is to be filled by an agent.
+Decided (researcher, 2026-11-16): every timing and memory measurement runs on the researcher's local desktop, whose GPU is a GeForce GTX 1650. This closes Q-09 and settles the local-versus-cloud part of Q-08; only the training details of Q-08 stay open. The remaining fields below are environment facts, to be recorded at the first measured run; none of them is chosen from results, and no pending field is to be filled by an agent.
 
 | Field                 | Value   |
 | --------------------- | ------- |
 | CPU model (exact)     | pending |
-| GPU model and variant | pending |
+| GPU model and variant | GeForce GTX 1650 |
 | GPU memory (VRAM)     | pending |
 | Operating system      | pending |
 | GPU driver version    | pending |
 | CUDA version          | pending |
 | PyTorch version       | pending |
 
-Source: Q-08 (training hardware: local GPU or cloud notebook, owner Researcher), Q-09 (hardware specification for timing and memory, owner Researcher), both in [architecture.md](./architecture.md), questions table; D-13 (the protocol must cover "the hardware used for timing"); `docs/project.md:61` (time and memory are reported "on the same hardware for every compared method").
+Source: Q-08 (local desktop GPU decided; training details still open, owner Researcher) and Q-09 (closed: GeForce GTX 1650), both in [architecture.md](./architecture.md), questions table; D-13 (the protocol must cover "the hardware used for timing"); `docs/project.md:61` (time and memory are reported "on the same hardware for every compared method").
 
 ## Pending measurements
 
-Running time and memory per pipeline stage, per video and in total, for every compared method. These measurements are pending the hardware decision above (Q-08, Q-09) and are not performed by this document. Source: `docs/project.md:61`, Q-09.
+Running time and memory per pipeline stage, per video and in total, for every compared method. These measurements are pending execution on the hardware above and are not performed by this document. Source: `docs/project.md:61`, Q-09.

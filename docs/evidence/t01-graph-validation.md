@@ -78,3 +78,17 @@ for v29, with `delta_t=8`). Since the earlier claim was never saved as evidence,
 `delta_t` is unknown, this file's numbers are the ones that count as validated, per
 principle 3. The earlier entry should be removed from "Reported, not yet evidence" once
 this file is linked from status.md.
+
+## Note on self-loops in the original `Frame.load` (added 2026-11-16)
+
+The original loop in `Frame.load` (`references/HieTaSumm-lib/HieTaSumm/Frame.py`,
+`for vertex2 in range(vertex1, self.calc_end(...))`) includes the case `vertex2 == vertex1`
+and therefore adds one zero-weight self-loop per frame to its graph. The port
+(`src/tcc_gnn/graph/frame.py`) skips `v1 == v2` and produces no self-loops, and
+`build_leonardo_reference_graph` in `experiments/validate_graph.py` skips the same case, so the
+edge-set comparison above covers the proper edges only. The discard is deliberate: the
+self-loops carry weight 0 and no information, and `Frame.load` itself cannot feed
+`Graph.compute_hierarchy` because of the node-label mismatch documented in
+[t04-mst-hierarchy-spec.md](./t04-mst-hierarchy-spec.md), so the integer-indexed,
+self-loop-free convention established here is the one every later comparison uses. This note
+records the deviation; it does not change the result above.

@@ -139,6 +139,6 @@ Used in: T02 (related work), T17 (justification of the readout design).
 T02 closes when the items below are done, and it is needed for PC3.
 
 1. **Done, 2026-10-20.** A survey of video summarisation, to place the work in the field: added (video summarisation survey [14]).
-2. **Done, 2026-10-20.** Literature on hierarchical readout in graph neural networks, to justify the adaptation of RGR: added (ASAP [15]).
+2. **Done, 2026-10-20.** Literature on hierarchical readout in graph neural networks, to justify the adaptation of RGR: added (ASAP [16]).
 3. **Done, 2026-10-20.** The details of VOGNet, RSGN and DMoN-DPR were checked against the primary sources. VOGNet's author list was confirmed correct. RSGN's publication year was corrected (2022, not 2021). DMoN-DPR's author list, missing before, was filled in.
-4. **Done, 2026-10-20.** The not-yet-cited works were added to the Overleaf bibliography (now entries [6] to [15]), DiffPool and MinCutPool were read and summarised (above), and all ten now have a matching `\cite{}` in the thesis body text (motivation paragraph, specific-objectives bullets), once the researcher explicitly extended the edit authorisation beyond the references section (see [CLAUDE.md](../CLAUDE.md) rule 15). T02's acceptance criterion is met.
+4. **Done, 2026-10-20.** The not-yet-cited works were added to the Overleaf bibliography (now entries [6] to [16]), DiffPool and MinCutPool were read and summarised (above), and all eleven now have a matching `\cite{}` in the thesis body text (motivation paragraph, specific-objectives bullets), once the researcher explicitly extended the edit authorisation beyond the references section (see [CLAUDE.md](../CLAUDE.md) rule 15). T02's acceptance criterion is met.

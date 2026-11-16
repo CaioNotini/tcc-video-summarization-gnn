@@ -48,15 +48,15 @@ Training is unsupervised. No human summary is used to train the model. The train
 
 ## Datasets and metrics
 
-The main dataset is VSUMM, with 50 videos. Each video has five summaries made by different users, each one a set of selected frames. VSUMM does not give a continuous importance score per frame, which matters for the metrics. The F-score is computed against the user summaries. Kendall's tau and Spearman's rho, which rank frames by importance, can only be computed on VSUMM if a per-frame score is derived, for example from how often each frame was chosen by the five users. Whether to report those metrics on VSUMM is an open decision for the advisor.
+The main dataset for the full comparison, planned for TCC2, is VSUMM, with 50 videos. Each video has five summaries made by different users, each one a set of selected frames. VSUMM does not give a continuous importance score per frame, which matters for the metrics. The F-score is computed against the user summaries. Kendall's tau and Spearman's rho, which rank frames by importance, are not reported on VSUMM: D-22 in [decisions.md](./decisions.md) fixes the F-score as the only VSUMM metric.
 
-SumMe is the second dataset. Its importance scores and features come with the HieTaSumm library, so it is the first dataset used to test the pipeline end to end, before VSUMM is ready. TVSum is the third dataset. It provides per-frame importance scores from several annotators, so the rank metrics apply directly. The data layer is designed to support all three from the start, through one adapter per dataset that normalises the ground truth. The full experiments on all three are planned for the second thesis phase.
+SumMe is the dataset of TCC1. Its importance scores and features come with the HieTaSumm library, so it is the first dataset used to test the pipeline end to end, before VSUMM is ready, and the TCC1 comparison between the proposed method and the HieTaSumm baseline runs on SumMe only (D-16). TVSum is the third dataset. It provides per-frame importance scores from several annotators, so the rank metrics apply directly. The data layer is designed to support all three from the start, through one adapter per dataset that normalises the ground truth. The full experiments on all three are planned for the second thesis phase.
 
 The evaluation uses several metrics, applied wherever the ground truth allows. Each one answers a different part of the research question, so they are reported together and no single one is selected for its results.
 
 Effectiveness in choosing the right frames is measured by the F-score, the primary metric on all datasets. It is computed against the human summaries, following the protocol used in the evaluation literature.
 
-Effectiveness in ranking frames is measured by Kendall's tau and Spearman's rho, which compare the importance ordering produced by the method with the scores given by the annotators. They apply to SumMe and TVSum, where a per-frame score exists. On VSUMM they apply only if a per-frame score is derived from the five user summaries, which is the open decision T11.
+Effectiveness in ranking frames is measured by Kendall's tau and Spearman's rho, which compare the importance ordering produced by the method with the scores given by the annotators. They apply to SumMe and TVSum, where a per-frame score exists. On VSUMM they are not reported (T11, decided in D-22).
 
 The functional criteria are measured by the running time and the memory use of the full pipeline, reported per video and in total, on the same hardware for every compared method. These numbers are part of the claim that the method is functional, because the related work reports efficiency gains and the thesis must test them.
 
@@ -78,7 +78,7 @@ The following are explicitly out of scope: real-time or streaming summarisation,
 
 ## Constraints
 
-The project is written in Python 3.10 or later. The graph and hierarchy code uses networkx and higra. The feature extraction and the graph neural network use PyTorch, torchvision and PyTorch Geometric. Experiments are tracked with mlflow, which the lab already uses. The original HieTaSumm code was written for Python 3.5 to 3.8 and uses TensorFlow; it is ported, not run as is. Whether the training runs on a local GPU or on a cloud notebook is still open. Feature extraction and graph construction run on a CPU.
+The project is written in Python 3.10 or later. The graph and hierarchy code uses networkx and higra. The feature extraction and the graph neural network use PyTorch, torchvision and PyTorch Geometric. Experiments are tracked with mlflow, which the lab already uses. The original HieTaSumm code was written for Python 3.5 to 3.8 and uses TensorFlow; it is ported, not run as is. Training runs on the researcher's local GPU, a GeForce GTX 1650; the remaining training details are open (Q-08 in [architecture.md](./architecture.md)). Feature extraction and graph construction run on a CPU.
 
 The method must remain unsupervised in its main form, and the evaluation must use the same protocol for every compared method. No paid service or cloud infrastructure is introduced without explicit authorisation.
 
