@@ -1,16 +1,11 @@
 # Config de experimento — equivalente ao options.json do HieTaSumm-lib (Leonardo),
-# em YAML para ficar consistente com o resto do repo.
-
-data:
-  video_path: "./data/raw/videos"
-  summary_path: "./data/processed/summaries"
-  dataset: "vsumm" # vsumm | summe | tvsum
+# em YAML para ficar consistente com o resto do repo. Lido por src/tcc_gnn/config.py.
 
 graph:
   # janela temporal (em nº de frames) usada por Frame.py no HieTaSumm-lib;
   # 32 = rate * time do options.json (8 s a 4 fps), D-24
   delta_t: 32
-  rate: 4
+  rate: 4 # frames amostrados por segundo, um a cada 0,25 s (D-25)
 
 features:
   backbone: "resnet50" # portado de TensorFlow/Keras para torchvision — ver doc de escopo
@@ -21,6 +16,8 @@ hierarchy:
   # baseline de comparação — mesma lib (higra) usada no HieTaSumm-lib original
   baseline_method: "watershed_hierarchy_by_area"
   is_binary: true
+  alpha: 75 # options.json: cutNumber = int(bestCutNumber * alpha/100) (D-20)
+  percent: 15 # options.json: orçamento de keyshots em % dos frames amostrados (D-21)
 
   # método principal (novo, sem código de referência disponível — SLC-HELM não foi compartilhado)
   slc:
@@ -38,7 +35,7 @@ training:
   batch_size: 1 # um vídeo = um grafo
 
 evaluation:
-  metrics: ["f_score", "kendall_tau", "spearman_rho"]
+  metrics: ["f_score"]
 
 experiment_tracking:
   backend: "mlflow"
