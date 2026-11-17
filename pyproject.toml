@@ -38,6 +38,8 @@ dependencies = [
 
     # Tracking de experimentos (mesmo usado no mHELMNet do lab)
     "mlflow>=2.10",
+    # Pico de memória de CPU nas medições de tempo e memória (evaluation-protocol.md)
+    "psutil>=5.9",
 
     # Config
     "pyyaml>=6.0",

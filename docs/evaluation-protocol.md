@@ -77,15 +77,15 @@ Decided (researcher, 2026-11-16): every timing and memory measurement runs on th
 
 | Field                 | Value                                                                       |
 | --------------------- | --------------------------------------------------------------------------- |
-| CPU model (exact)     | pending                                                                     |
+| CPU model (exact)     | Intel Core i5-8400 @ 2.80 GHz (`Win32_Processor`)                           |
 | GPU model and variant | NVIDIA GeForce GTX 1660 SUPER                                               |
 | GPU memory (VRAM)     | 6 GB (6144 MiB, `nvidia-smi`)                                               |
-| Operating system      | pending                                                                     |
+| Operating system      | Windows 10 Pro 64-bit, version 10.0.19045 (`Win32_OperatingSystem`)         |
 | GPU driver version    | 572.42 (`nvidia-smi`)                                                       |
 | CUDA version          | 12.1 used by PyTorch (`torch.version.cuda`); the driver supports up to 12.8 |
 | PyTorch version       | 2.5.1+cu121                                                                 |
 
-The GPU, driver, CUDA and PyTorch values were read on 2026-11-16 from `nvidia-smi` and from the project environment (`.venv/`).
+The GPU, driver, CUDA and PyTorch values were read on 2026-11-16 from `nvidia-smi` and from the project environment (`.venv/`); the CPU and operating system values were read the same day from Windows (CIM classes named in the table). The machine has 15.9 GB of RAM.
 
 Source: Q-08 (local desktop GPU decided; training details still open, owner Researcher) and Q-09 (closed: GeForce GTX 1660 SUPER, 6 GB), both in [architecture.md](./architecture.md), questions table; D-13 (the protocol must cover "the hardware used for timing"); `docs/project.md:61` (time and memory are reported "on the same hardware for every compared method").
 
