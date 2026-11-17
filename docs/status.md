@@ -12,14 +12,14 @@ This file says where the project stands. What each task requires is in [phases.m
 
 ## Active task
 
-None. T01 to T06, T11 and T19 are all validated; the next task by dependency order is T07. It has not started and is unblocked since Q-10 was closed on 2026-11-16 (D-23; see Next step).
+T07 (HieTaSumm baseline end to end on SumMe): implemented and run on the 25 videos on 2026-11-16, evidence saved; awaiting the researcher's validation (see Next step).
 
 ## Task states
 
 - **Validated:** T01, T02, T03, T04, T05, T06, T11, T19
-- **Implemented, not validated:** none.
+- **Implemented, not validated:** T07. Evidence: [evidence/t07-baseline-summe.md](./evidence/t07-baseline-summe.md). Summaries for the 25 SumMe videos, official F-score 31.20 (D-26, maximum over annotators), supplementary F-score 32.59 under the original HieTaSumm-lib rule, mean length 13.77%. The published SumMe reference is pending (the researcher will check the paper).
 - **In progress:** none.
-- **Blocked:** none. T07 was unblocked on 2026-11-16 (Q-10 closed, D-23).
+- **Blocked:** none.
 - **Planned:** T08 to T10, T12 to T18 (T20 and T21 were removed). For T10, the VSUMM files are already downloaded locally; the adapter is pending. The τ and ρ question for VSUMM is decided: not reported (D-22).
 
 A task becomes validated only when its output is saved in [evidence/](./evidence/) and linked from this file. The rule is in [principles.md](./principles.md), principle 3.
@@ -44,6 +44,7 @@ A task becomes validated only when its output is saved in [evidence/](./evidence
 - The two submodules, `HieTaSumm-lib` and `mHELMNet`, are populated and in sync (re-populated on 2026-11-16 with `git submodule update --init --recursive`, at the pinned commits).
 - `data/raw/summe/SumMe/` holds the 25 SumMe videos. `data/processed/summe/` holds frames (one every 0.25 s, 15,904 in total, none truncated) and ResNet50 avgpool features for all 25, regenerated on 2026-11-16 with the fixed `src/tcc_gnn/features/frame_extraction.py`.
 - Python environment: `.venv/` on drive `D:` (CLAUDE.md rule 17), torch 2.5.1+cu121 on a GeForce GTX 1660 SUPER.
+- mlflow 3.18.0 tracks runs in `mlruns/mlflow.db` (SQLite) with artifacts in `mlruns/`, both git-ignored (`configs/default.yaml`); the file store was refused by this mlflow version (see the T07 evidence).
 - `src/tcc_gnn/features/frame_extraction.py` was fixed on 2026-11-16 to sample one frame every `1/fps` seconds with the rule of the HieTaSumm-lib extractor (`HieTaSumm/__init__.py:86-142`), tested in `tests/test_frame_extraction.py`. Before, it kept one frame every `round(native_fps/fps)` native frames.
 
 ## Verified evidence
@@ -61,4 +62,4 @@ None. The 0.97 correlation sanity check that was listed here now has saved runs:
 
 ## Next step
 
-Stage 2 continues: T04, T05, T06 and T19 are all validated, and T11 is validated too (D-22 closes Q-01). T07 depends on T05, T06 and T19, all satisfied, and Q-10 is closed (D-23), so T07 is unblocked. It has not started.
+Stage 2 continues: T04, T05, T06 and T19 are all validated, and T11 is validated too (D-22 closes Q-01). T07 is implemented and its evidence is saved; it needs the researcher's validation and the published SumMe F-score for the supplementary comparison. Stage 2 closes when T07 is validated. By dependency order the next tasks are T08 (no dependency) and then T09 (T07 and T08).

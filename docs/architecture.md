@@ -26,18 +26,20 @@ src/tcc_gnn/
 ├── features/     [exists]    features.py, frame_extraction.py      (tests: frame_extraction only)
 │                             tf_resnet_extractor.py                (validation only)
 ├── data/         [exists]    base.py, summe.py (T05); VSUMM/TVSum  (T10 planned)
-├── hierarchy/    [partial]   mst.py: MST cut, validated (T06); SLC pooling planned (T13)
+├── hierarchy/    [partial]   mst.py: MST cut, validated (T06); best_cut.py, keyshots.py (T07); SLC pooling planned (T13)
 ├── models/       [planned]   GATv2, MGP, readout                   (T09, T15, T17)
 ├── training/     [planned]   unsupervised loops                    (after T13, objective open)
-└── evaluation/   [planned]   F-score, tau, rho, time, memory       (T07, T18)
+└── evaluation/   [partial]   fscore.py: F-score, D-26 mapping (T07); tau, rho (T18 planned)
 
 experiments/      [exists]    validate_graph*.py, validate_mst_hierarchy.py,
                               analyze_mst_cut_edges.py, compare_mst_cases.py,
-                              plot_additional_verification.py
+                              plot_additional_verification.py, validate_best_cut*.py,
+                              measure_q10_budget.py, run_baseline_summe.py (T07)
 tests/            [exists]    test_frame_graph.py, test_mst_hierarchy.py,
                               test_mst_hierarchy_scaled_weights.py,
                               test_summe_adapter.py, test_smoke.py,
-                              test_best_cut.py, test_frame_extraction.py
+                              test_best_cut.py, test_frame_extraction.py,
+                              test_fscore.py, test_keyshots.py
 references/       [exists]    git submodules: HieTaSumm-lib, mHELMNet (read-only)
 ```
 
@@ -249,13 +251,13 @@ tcc-video-summarization-gnn/
 │   │                           # tf_resnet_extractor.py (validation only)
 │   ├── data/                   # base.py, summe.py (T05)                  [exists]
 │   │                           # VSUMM/TVSum adapters                     [planned]
-│   ├── hierarchy/              # mst.py (T06)                              [partial]
+│   ├── hierarchy/              # mst.py (T06), best_cut.py, keyshots.py    [partial]
 │   │                           # SLC pooling (T13)                        [planned]
 │   ├── models/                 # GATv2 base, MGP modules, readout          [planned]
 │   ├── training/               # unsupervised loops                        [planned]
-│   └── evaluation/             # F-score, tau, rho, time, memory           [planned]
-├── tests/                      # test_frame_graph.py, test_mst_hierarchy.py, test_summe_adapter.py, test_smoke.py, test_best_cut.py, test_frame_extraction.py  [exists]
-├── experiments/                # validate_graph*.py, validate_mst_hierarchy.py, analyze_mst_cut_edges.py  [exists]
+│   └── evaluation/             # fscore.py (T07); tau, rho (T18)           [partial]
+├── tests/                      # test_frame_graph.py, test_mst_hierarchy.py, test_summe_adapter.py, test_smoke.py, test_best_cut.py, test_frame_extraction.py, test_fscore.py, test_keyshots.py  [exists]
+├── experiments/                # validate_graph*.py, validate_mst_hierarchy.py, analyze_mst_cut_edges.py, validate_best_cut*.py, measure_q10_budget.py, run_baseline_summe.py  [exists]
 ├── references/                 # submodules: HieTaSumm-lib, mHELMNet      [exists, read-only]
 └── data/                       # raw and processed data, git-ignored       [exists, local files only]
 ```
