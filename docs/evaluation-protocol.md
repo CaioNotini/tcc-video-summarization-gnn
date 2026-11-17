@@ -37,9 +37,15 @@ Not decided. Two options are on the table, and neither is chosen here:
 
 Source: D-21, consequences ("the unit of segments used by the knapsack ... is open").
 
-## Baseline summaries above the 15% budget — OPEN
+## Baseline summaries and the 15% budget — closed (Q-10, D-23)
 
-Not decided how to treat a HieTaSumm baseline summary that exceeds the 15% budget. One option on the table: measure first how many of the 25 SumMe videos exceed the budget under `bestCutNumber`, before choosing a treatment. Source: D-21 and D-20 (both state this point is open).
+Decided (researcher, 2026-11-16): the HieTaSumm baseline summary is the set of native keyshots of `Summary.group_central_frames`. Measured on the 25 SumMe videos with `delta_t = 32` and frames every 0.25 s, none exceeds the budget (10.53% to 14.58%, mean 13.77%), and summaries below the budget are reported without adjustment. Source: D-23, D-24, D-25; [evidence/q10-baseline-budget.md](./evidence/q10-baseline-budget.md).
+
+## From sampled frames to native frames
+
+Every method selects sampled frames, one every 0.25 s (D-25). For evaluation, the sampled frame `k` stands for exactly the native frames `c` with `0.25 * k <= c / fps < 0.25 * (k + 1)`, `fps` being the native frame rate of the video. The evaluated summary is the union of these native frames over the selected sampled frames, and the F-score below is computed on it. This rule is the same for every compared method. Source: D-26 (Decided, 2026-11-16).
+
+The original rule of `Evaluation.find_corresponding_frames` (`Evaluation.py:62-93`) is not the official rule. It may be used only as a supplementary check of the HieTaSumm baseline against published numbers, reported separately and labelled as such. Source: D-26.
 
 ## F-score
 
@@ -67,19 +73,21 @@ Rank metrics (Kendall's tau and Spearman's rho) are not reported on VSUMM. The d
 
 ## Hardware
 
-Decided (researcher, 2026-11-16): every timing and memory measurement runs on the researcher's local desktop, whose GPU is a GeForce GTX 1650. This closes Q-09 and settles the local-versus-cloud part of Q-08; only the training details of Q-08 stay open. The remaining fields below are environment facts, to be recorded at the first measured run; none of them is chosen from results, and no pending field is to be filled by an agent.
+Decided (researcher, 2026-11-16): every timing and memory measurement runs on the researcher's local desktop, whose GPU is a GeForce GTX 1660 SUPER with 6 GB. This closes Q-09 and settles the local-versus-cloud part of Q-08; only the training details of Q-08 stay open. The remaining fields below are environment facts, to be recorded at the first measured run; none of them is chosen from results, and no pending field is to be filled by an agent.
 
-| Field                 | Value   |
-| --------------------- | ------- |
-| CPU model (exact)     | pending |
-| GPU model and variant | GeForce GTX 1650 |
-| GPU memory (VRAM)     | pending |
-| Operating system      | pending |
-| GPU driver version    | pending |
-| CUDA version          | pending |
-| PyTorch version       | pending |
+| Field                 | Value                                                                       |
+| --------------------- | --------------------------------------------------------------------------- |
+| CPU model (exact)     | pending                                                                     |
+| GPU model and variant | NVIDIA GeForce GTX 1660 SUPER                                               |
+| GPU memory (VRAM)     | 6 GB (6144 MiB, `nvidia-smi`)                                               |
+| Operating system      | pending                                                                     |
+| GPU driver version    | 572.42 (`nvidia-smi`)                                                       |
+| CUDA version          | 12.1 used by PyTorch (`torch.version.cuda`); the driver supports up to 12.8 |
+| PyTorch version       | 2.5.1+cu121                                                                 |
 
-Source: Q-08 (local desktop GPU decided; training details still open, owner Researcher) and Q-09 (closed: GeForce GTX 1650), both in [architecture.md](./architecture.md), questions table; D-13 (the protocol must cover "the hardware used for timing"); `docs/project.md:61` (time and memory are reported "on the same hardware for every compared method").
+The GPU, driver, CUDA and PyTorch values were read on 2026-11-16 from `nvidia-smi` and from the project environment (`.venv/`).
+
+Source: Q-08 (local desktop GPU decided; training details still open, owner Researcher) and Q-09 (closed: GeForce GTX 1660 SUPER, 6 GB), both in [architecture.md](./architecture.md), questions table; D-13 (the protocol must cover "the hardware used for timing"); `docs/project.md:61` (time and memory are reported "on the same hardware for every compared method").
 
 ## Pending measurements
 

@@ -292,7 +292,7 @@ Two terms are used in every document, and each has one meaning.
 
 **Context:** HieTaSumm chooses its cut with `Summary.bestCutNumber`, which depends on the frames on disk, not on the graph or the ground truth. Because of this, the number of keyframes varies from video to video.
 
-**Decision:** The baseline uses `bestCutNumber` unchanged, computed per video with `alpha = 75` (options.json). There is no fixed value. The resulting summary is subject to the same 15% duration budget as every method (D-21). How to treat summaries that exceed the budget is an open point of D-21.
+**Decision:** The baseline uses `bestCutNumber` unchanged, computed per video with `alpha = 75` (options.json). There is no fixed value. The resulting summary is subject to the same 15% duration budget as every method (D-21). The treatment of summaries relative to the budget is settled in D-23.
 
 **Alternatives discarded:** A fixed cut value, which does not reproduce the original for other videos. Choosing the cut with the ground truth, which leaks evaluation information.
 
@@ -310,7 +310,7 @@ Two terms are used in every document, and each has one meaning.
 
 **Alternatives discarded:** A fixed number of frames or keyframes for all methods, which imposes a budget that is not natural for methods without per-segment scores. A method-native size without a budget, which breaks comparability.
 
-**Consequences:** The F-score depends on summary length, so the report includes the mean length and, for the proposed method, the rank metrics (Kendall and Spearman). Two points remain open: the unit of segments used by the knapsack in the proposed method (learned SLC clusters or KTS shots), and the treatment of baseline summaries that exceed 15%. The second point should be settled after measuring how many of the 25 SumMe videos exceed the budget.
+**Consequences:** The F-score depends on summary length, so the report includes the mean length and, for the proposed method, the rank metrics (Kendall and Spearman). Two points remain open: the unit of segments used by the knapsack in the proposed method (learned SLC clusters or KTS shots), and the treatment of baseline summaries that exceed 15%. The second point is settled in D-23: none of the 25 SumMe videos exceeds the budget.
 
 **Affects:** T06, T07, T17, T18, T19.
 
@@ -327,3 +327,59 @@ Two terms are used in every document, and each has one meaning.
 **Consequences:** Rank metrics are reported only on SumMe and TVSum, where a per-frame importance score exists. T10's F-score part does not depend on this decision; its rank-metric part is no longer blocked by it.
 
 **Affects:** T10, T11, T19.
+
+## D-23 — The baseline summary is the native keyshot set; summaries below the budget are reported as they are
+
+**Date:** 2026-11-16. **Status:** Decided, by the researcher. Closes Q-10.
+
+**Context:** D-20 and D-21 left open how to treat HieTaSumm baseline summaries that exceed the 15% budget, to be settled after measuring how many of the 25 SumMe videos exceed it (Q-10).
+
+**Decision:** The HieTaSumm baseline summary is the set of native keyshots produced by `Summary.group_central_frames`, under the 15% duration budget (D-21). Measured on the 25 SumMe videos with `delta_t = 32` (D-24) and frames every 0.25 s (D-25), every summary is below 15%: from 10.53% to 14.58%, mean 13.77%. Summaries below the budget are reported without adjustment. Evidence: [evidence/q10-baseline-budget.md](./evidence/q10-baseline-budget.md).
+
+**Alternatives discarded:** Redefining the baseline summary as the full clusters of the cut, which would no longer be the native output of the method. Stretching or padding the summaries to reach 15%, which changes the baseline after seeing its output.
+
+**Consequences:** No treatment of over-budget summaries is needed for the baseline. Its summaries are shorter than the budget, so the tables report the mean length, as D-21 already requires. The keyshot length is bounded by the reference code (`Summary.py:56`, `Summary.py:170-185`) only when frames are sampled every 0.25 s, so the decision depends on D-25.
+
+**Affects:** T07, T18, T19.
+
+## D-24 — The temporal window is delta_t = 32 frames
+
+**Date:** 2026-11-16. **Status:** Decided, by the researcher.
+
+**Context:** The HieTaSumm-lib sets `delta_t = rate * time` (`Summary.py:15`), which is 32 with `rate = 4` and `time = 8` in `options.json`. The repository's `configs/default.yaml` had `delta_t: 8`, used in the T01 and T06 validations.
+
+**Decision:** `delta_t = 32` frames, which is 8 s at 4 frames per second, as `rate * time` in the original `options.json`.
+
+**Alternatives discarded:** `delta_t = 8` (2 s at 4 frames per second), which does not match the original configuration of the baseline.
+
+**Consequences:** The graph has more edges per frame (1,519 instead of 427 on the 65 frames of v29). The T01 and T06 validations ran with `delta_t = 8`; they compare the port with the reference on the same input, so they stay valid as equivalence checks, but their descriptive numbers refer to `delta_t = 8`. The sanity check is recorded with both values ([evidence/sanity-check-features.md](./evidence/sanity-check-features.md)). `configs/default.yaml` holds the new value.
+
+**Affects:** T07, T09, T13, and every task that builds the graph.
+
+## D-25 — Frames are sampled every 0.25 s with the HieTaSumm-lib rule, for every method
+
+**Date:** 2026-11-16. **Status:** Decided, by the researcher.
+
+**Context:** `src/tcc_gnn/features/frame_extraction.py` kept one frame every `round(native_fps / 4)` native frames, which gives 4.17, 4.28 or 3.75 frames per second depending on the video, so a frame did not stand for 0.25 s. The HieTaSumm-lib extractor (`HieTaSumm/__init__.py:86-142`) saves one frame at each instant `0, 0.25, ...` up to `int(duration)` seconds.
+
+**Decision:** Frames are sampled exactly every 0.25 s, with the same rule as the HieTaSumm-lib extractor, for every compared method. The project's extractor implements this rule, numbering frames from `000000.jpg`.
+
+**Alternatives discarded:** Keep the fixed interval of native frames and convert durations with the real sampling rate. The baseline would then receive different frames from the original, and the bound of D-23 would not hold exactly.
+
+**Consequences:** Each frame stands for 0.25 s, so summary durations are `frames * 0.25 s`. The rule is tested byte for byte against the reference extractor (`tests/test_frame_extraction.py`). All SumMe frames and features were regenerated on 2026-11-16. The VSUMM frames on disk (about one per second) predate this rule and must be extracted again before the VSUMM experiments.
+
+**Affects:** T07, T10, T18, and every task that reads frames.
+
+## D-26 — A sampled frame stands for exactly the native frames of its 0.25 s interval
+
+**Date:** 2026-11-16. **Status:** Decided, by the researcher.
+
+**Context:** Every method selects sampled frames (one every 0.25 s, D-25), while the SumMe ground truth (`user_summary`) is defined per native frame. The protocol did not say how a selection becomes a native-frame summary. The HieTaSumm-lib `Evaluation.find_corresponding_frames` (`Evaluation.py:62-93`) marks 25 native frames from the start of each second that contains a selected frame, whatever the frame rate of the video.
+
+**Decision:** The sampled frame `k` stands for exactly the native frames `c` with `0.25 * k <= c / fps < 0.25 * (k + 1)`, where `fps` is the native frame rate. A summary marks the union of these native frames over its selected sampled frames. The rule is the same for every compared method.
+
+**Alternatives discarded:** The original `find_corresponding_frames`. It marks whole seconds and a fixed 25 native frames, so on 29.97 and 30 fps videos it covers 25 of about 30 frames per second, and a single selected frame counts as one second instead of 0.25 s. It is kept only as a supplementary, non-official check of the baseline F-score.
+
+**Consequences:** The duration of the evaluated summary equals the duration counted for the 15% budget (D-21, D-23). The F-score of the baseline under this rule is not the number the HieTaSumm-lib code would print, so a comparison with published numbers needs the original rule, reported separately.
+
+**Affects:** T07, T17, T18, T19.

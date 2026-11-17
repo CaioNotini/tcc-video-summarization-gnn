@@ -23,7 +23,7 @@ The HieTaSumm baseline shares only the graph with the proposed method. Its MST h
 ```
 src/tcc_gnn/
 ├── graph/        [exists]    frame.py: time-aware graph            (T01)
-├── features/     [exists]    features.py, frame_extraction.py      (no tests yet)
+├── features/     [exists]    features.py, frame_extraction.py      (tests: frame_extraction only)
 │                             tf_resnet_extractor.py                (validation only)
 ├── data/         [exists]    base.py, summe.py (T05); VSUMM/TVSum  (T10 planned)
 ├── hierarchy/    [partial]   mst.py: MST cut, validated (T06); SLC pooling planned (T13)
@@ -36,7 +36,8 @@ experiments/      [exists]    validate_graph*.py, validate_mst_hierarchy.py,
                               plot_additional_verification.py
 tests/            [exists]    test_frame_graph.py, test_mst_hierarchy.py,
                               test_mst_hierarchy_scaled_weights.py,
-                              test_summe_adapter.py, test_smoke.py
+                              test_summe_adapter.py, test_smoke.py,
+                              test_best_cut.py, test_frame_extraction.py
 references/       [exists]    git submodules: HieTaSumm-lib, mHELMNet (read-only)
 ```
 
@@ -253,7 +254,7 @@ tcc-video-summarization-gnn/
 │   ├── models/                 # GATv2 base, MGP modules, readout          [planned]
 │   ├── training/               # unsupervised loops                        [planned]
 │   └── evaluation/             # F-score, tau, rho, time, memory           [planned]
-├── tests/                      # test_frame_graph.py, test_mst_hierarchy.py, test_summe_adapter.py, test_smoke.py  [exists]
+├── tests/                      # test_frame_graph.py, test_mst_hierarchy.py, test_summe_adapter.py, test_smoke.py, test_best_cut.py, test_frame_extraction.py  [exists]
 ├── experiments/                # validate_graph*.py, validate_mst_hierarchy.py, analyze_mst_cut_edges.py  [exists]
 ├── references/                 # submodules: HieTaSumm-lib, mHELMNet      [exists, read-only]
 └── data/                       # raw and processed data, git-ignored       [exists, local files only]
@@ -288,7 +289,7 @@ Submodules are read-only references. They must be populated with `git submodule 
 | Tests                | pytest                                          | Unit tests per module                                                                |
 | Code style           | PEP 8, type hints                               | Modern style; ported logic keeps original names (D-10)                               |
 
-Training and all timing and memory measurements run on the desktop GPU (GeForce GTX 1660, Q-09). Feature extraction and graph construction run on CPU. Training details remain open (Q-08).
+Training and all timing and memory measurements run on the desktop GPU (GeForce GTX 1660 SUPER, 6 GB, Q-09). Feature extraction runs on the GPU. Graph construction runs on CPU. Training details remain open (Q-08).
 
 ## Decisions
 
@@ -307,8 +308,8 @@ Open questions are blockers or pending decisions. Each one names the task it aff
 | Q-05, Q-07 | Gap in the sequence: assigned in earlier working versions and discarded without a recorded entry (researcher, 2026-11-16); what they covered was not recovered, and the numbers are not reused | —          | —          |
 | Q-06       | TVSum scope: adapter in TCC1 and experiments in TCC2, or a single decision                                                                                                                     | T05, TCC2  | Advisor    |
 | Q-08       | Training runs on the local desktop GPU, not on the cloud (researcher, 2026-11-16); the remaining training details are still open                                                               | T13 onward | Researcher |
-| Q-09       | Closed (researcher, 2026-11-16): timing and memory are measured on the researcher's desktop GPU, a GeForce GTX 1660                                                                            | T19, T18   | Researcher |
-| Q-10       | Baseline summaries above 15% of the duration: how many of the 25 SumMe videos exceed the budget, and how they are treated                                                                      | T07, T19   | Researcher |
+| Q-09       | Closed (researcher, 2026-11-16): timing and memory are measured on the researcher's local machine, GPU GeForce GTX 1660 SUPER, 6 GB                                                            | T19, T18   | Researcher |
+| Q-10       | Closed (researcher, 2026-11-16, D-23): 0 of the 25 SumMe videos exceed the budget; baseline summaries are the native keyshots, reported without adjustment                                     | T07, T19   | Researcher |
 | Q-11       | SLC level used as the segmentation; must be fixed in the protocol before results                                                                                                               | T13, T19   | Researcher |
 
 ## Risks

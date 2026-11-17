@@ -89,7 +89,7 @@ This stage has five tasks: T04, T05, T19, T06 and T07. It builds the evaluation 
 - **Basis:** the HieTaSumm paper and library.
 - **Goal:** run the original HieTaSumm method, which is the graph, the MST hierarchy and the rule-based keyframe choice, on SumMe, from video to summary. This also implements the F-score in `src/tcc_gnn/evaluation/`, under the protocol of T19, so that later tasks reuse the same evaluation code. This is the first complete result of the work and the reference point for the proposed method.
 - **Acceptance criterion:** summaries are produced for the SumMe videos, the F-score is computed under the written protocol, and the results are saved in `evidence/`.
-- **Note:** for T07, `Summary.bestCutNumber` from HieTaSumm-lib, applied to v29 with alpha=75, returned `cutNumber=5` (reference). Check the implementation against this value when executing T07.
+- **Note:** for T07, the reference values are per SumMe video, with `delta_t = 32` and `alpha = 75`. `Summary.bestCutNumber` from HieTaSumm-lib returned raw 5.0 and `cutNumber = 3` on `Jumps` and on `Air_Force_One`, identical to the port ([evidence/best-cut-port-equivalence.md](./evidence/best-cut-port-equivalence.md)). The port's `cutNumber` for all 25 videos, on the frames sampled every 0.25 s, is in [evidence/sheets/q10-baseline-budget.csv](./evidence/sheets/q10-baseline-budget.csv). Check the implementation against these values when executing T07.
 
 ## Stage 3: Graph neural network base
 

@@ -7,8 +7,9 @@ data:
   dataset: "vsumm" # vsumm | summe | tvsum
 
 graph:
-  # janela temporal (em nº de frames) usada por Frame.py no HieTaSumm-lib
-  delta_t: 8
+  # janela temporal (em nº de frames) usada por Frame.py no HieTaSumm-lib;
+  # 32 = rate * time do options.json (8 s a 4 fps), D-24
+  delta_t: 32
   rate: 4
 
 features:

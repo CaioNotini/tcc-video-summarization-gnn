@@ -12,14 +12,14 @@ This file says where the project stands. What each task requires is in [phases.m
 
 ## Active task
 
-None. T01 to T06, T11 and T19 are all validated; the next task by dependency order is T07. It has not started and is blocked by Q-10 (see Next step).
+None. T01 to T06, T11 and T19 are all validated; the next task by dependency order is T07. It has not started and is unblocked since Q-10 was closed on 2026-11-16 (D-23; see Next step).
 
 ## Task states
 
 - **Validated:** T01, T02, T03, T04, T05, T06, T11, T19
 - **Implemented, not validated:** none.
 - **In progress:** none.
-- **Blocked:** T07 (Q-10).
+- **Blocked:** none. T07 was unblocked on 2026-11-16 (Q-10 closed, D-23).
 - **Planned:** T08 to T10, T12 to T18 (T20 and T21 were removed). For T10, the VSUMM files are already downloaded locally; the adapter is pending. The τ and ρ question for VSUMM is decided: not reported (D-22).
 
 A task becomes validated only when its output is saved in [evidence/](./evidence/) and linked from this file. The rule is in [principles.md](./principles.md), principle 3.
@@ -31,7 +31,9 @@ A task becomes validated only when its output is saved in [evidence/](./evidence
 - **Q-04:** affects T13. Owner: advisor.
 - **Q-06:** affects the scope of the TVSum adapter: whether it is written in TCC1 or left for TCC2 with the TVSum experiments. Owner: advisor.
 - **Q-08:** from T13 onward.
-- **Q-10:** blocks T07 and affects T19. Baseline summaries above 15% of the duration: how many of the 25 SumMe videos exceed the budget, and how they are treated. Owner: researcher. Measured on 2026-11-16 with `delta_t = 32`: 0 of 25 videos exceed the budget (smallest 10.53%, largest 14.58%), as the structural bound predicts; evidence in [evidence/q10-baseline-budget.md](./evidence/q10-baseline-budget.md). Closing Q-10 and unblocking T07 is the researcher's decision. `delta_t = 8` was not measured.
+- **Q-09:** closed (researcher, 2026-11-16). Timing and memory are measured on the local machine, GPU GeForce GTX 1660 SUPER, 6 GB.
+- **Q-10:** closed (researcher, 2026-11-16, D-23). 0 of 25 SumMe videos exceed the budget with `delta_t = 32` (D-24) and frames every 0.25 s (D-25): 10.53% to 14.58%, mean 13.77%. The baseline summary is the native keyshot set, reported without adjustment. Evidence: [evidence/q10-baseline-budget.md](./evidence/q10-baseline-budget.md).
+- **Pending for TCC2 (VSUMM):** the VSUMM frames on disk (v21, v29) are about one per second, while `configs/default.yaml` has `rate: 4` and D-25 requires one frame every 0.25 s. They must be extracted again, with their features, before the VSUMM experiments (T10). The T01 and T06 equivalence checks do not depend on this; their descriptive numbers and the sanity check refer to the current frames.
 - **Q-11:** affects T13 and T19. SLC level used as the segmentation; must be fixed in the protocol before results. Owner: researcher.
 - **Q-05 and Q-07 gap:** closed. Confirmed (2026-11-16) that the two identifiers were assigned in earlier working versions and discarded without a recorded entry; what they covered was not recovered. The numbers are not reused, and the gap is noted in the questions table of [architecture.md](./architecture.md).
 
@@ -59,4 +61,4 @@ None. The 0.97 correlation sanity check that was listed here now has saved runs:
 
 ## Next step
 
-Stage 2 continues: T04, T05, T06 and T19 are all validated, and T11 is validated too (D-22 closes Q-01). T07 depends on T05, T06 and T19, all satisfied, but is blocked by Q-10 (how to treat HieTaSumm baseline summaries that exceed the 15% budget).
+Stage 2 continues: T04, T05, T06 and T19 are all validated, and T11 is validated too (D-22 closes Q-01). T07 depends on T05, T06 and T19, all satisfied, and Q-10 is closed (D-23), so T07 is unblocked. It has not started.

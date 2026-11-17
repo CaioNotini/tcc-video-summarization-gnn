@@ -36,6 +36,7 @@ _stubs["tensorflow.keras"].models = _stubs["tensorflow.keras.models"]
 _stubs["tensorflow"].keras = _stubs["tensorflow.keras"]
 for _name, _mod in _stubs.items():
     sys.modules.setdefault(_name, _mod)
+sys.dont_write_bytecode = True  # não gravar __pycache__ no submódulo somente leitura
 
 from HieTaSumm.Frame import Frame  # noqa: E402
 from tcc_gnn.graph.frame import build_time_aware_graph  # noqa: E402

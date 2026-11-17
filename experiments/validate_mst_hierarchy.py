@@ -39,6 +39,7 @@ _stubs["tensorflow"].keras = _stubs["tensorflow.keras"]
 for _name, _mod in _stubs.items():
     sys.modules.setdefault(_name, _mod)
 # higra NÃO é stubado: é o pacote real (D-05), precisamos dele calculando de verdade.
+sys.dont_write_bytecode = True  # não gravar __pycache__ no submódulo somente leitura
 
 from HieTaSumm.Frame import Frame  # noqa: E402
 from HieTaSumm.Graph import Graph  # noqa: E402
