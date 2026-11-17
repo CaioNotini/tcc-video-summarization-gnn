@@ -190,6 +190,8 @@ Two terms are used in every document, and each has one meaning.
 
 **Consequences:** Runs are reproducible and comparable across the four cells. The project depends on mlflow.
 
+**Note (researcher, 2026-11-17):** The store is SQLite in `mlruns/`, set by `tracking_uri` in `configs/default.yaml`; mlflow 3.18 refused the file store (see [evidence/t07-baseline-summe.md](./evidence/t07-baseline-summe.md)). mlflow is required for runs that produce results of a method, from T07 on. Port validations (such as `experiments/validate_graph.py` and `experiments/validate_best_cut_keyshots.py`) and measurements such as Q-10 are outside this requirement; their output is kept in [evidence/](./evidence/).
+
 **Affects:** T07, T13, T18.
 
 ## D-13 — The evaluation protocol is fixed in writing before any result is produced

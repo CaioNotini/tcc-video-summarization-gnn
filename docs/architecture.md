@@ -22,7 +22,7 @@ The HieTaSumm baseline shares only the graph with the proposed method. Its MST h
 
 ```
 src/tcc_gnn/
-├── config.py     [exists]    reads configs/default.yaml, the single source of parameters
+├── config.py     [exists]    reads configs/default.yaml, the single source of parameters; data paths
 ├── reference.py  [exists]    validation only: imports HieTaSumm-lib with tensorflow stubs, calls the reference
 ├── graph/        [exists]    frame.py: time-aware graph            (T01)
 ├── features/     [exists]    features.py (extractor, batch, GPU), frame_extraction.py
@@ -43,7 +43,9 @@ tests/            [exists]    one file per module: test_config.py, test_referenc
                               test_frame_graph.py, test_features.py, test_frame_extraction.py,
                               test_data_base.py, test_summe_adapter.py, test_mst_hierarchy.py,
                               test_mst_hierarchy_scaled_weights.py, test_best_cut.py,
-                              test_keyshots.py, test_fscore.py, test_smoke.py
+                              test_keyshots.py, test_fscore.py, test_tf_resnet_extractor.py
+                              (skipped without TensorFlow), test_smoke.py; conftest.py keeps
+                              pytest temporaries in .cache/tmp/pytest and requires TEMP on D:
 references/       [exists]    git submodules: HieTaSumm-lib, mHELMNet (read-only)
 ```
 
@@ -109,7 +111,7 @@ Each frame is described by a 2048-dimensional vector: the global average pooling
  tf_resnet_extractor.py (TensorFlow) ──► used only to check fidelity against the original; not in production
 ```
 
-`frame_extraction.py` saves one frame every `1/rate` s (D-25) with the rule of the HieTaSumm-lib extractor, numbered from 0, and refuses an output folder that is not empty. `features.py` is the single extractor: `extract_features` runs in batches on the given device, and `cached_features` reads the `.npy` next to the frames or writes it.
+`frame_extraction.py` saves one frame every `1/rate` s (D-25) with the rule of the HieTaSumm-lib extractor, numbered from 0, and refuses an output folder that is not empty; `frame_paths` lists a frame folder and refuses any file that is not `NNNNNN.jpg`. `features.py` is the single extractor: `extract_features` runs in batches on the given device, and `cached_features` reads the `.npy` next to the frames, refusing one with another frame count or older than the frames, or writes it.
 
 ## Graph attention over the base graph (step 3, planned, T09)
 

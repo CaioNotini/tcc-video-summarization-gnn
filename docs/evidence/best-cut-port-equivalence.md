@@ -1,5 +1,5 @@
 ```
-Role: Evidence that the vectorised port of Summary.bestCutNumber (src/tcc_gnn/hierarchy/best_cut.py) reproduces the HieTaSumm-lib reference on real SumMe videos, for cutNumber and for the keyshot list, and records its two intentional divergences.
+Role: Evidence that the vectorised port of Summary.bestCutNumber (src/tcc_gnn/hierarchy/best_cut.py) reproduces the HieTaSumm-lib reference on real SumMe videos, for cutNumber and for the keyshot list, and records its three intentional divergences.
 Entry: ../status.md
 Related to: [status.md](../status.md), [q10-baseline-budget.md](./q10-baseline-budget.md), [t06-mst-hierarchy.md](./t06-mst-hierarchy.md)
 ```
@@ -102,8 +102,10 @@ Base jumping delta_t=32 [ref_bestCut=computed]:
   tempos: port=11.0s ref=10.4s
 ```
 
-Both runs exited with code 0. The cache key is `video|delta_t` and does not depend on the frames,
-so a cache entry is only valid for the frames it was computed on.
+Both runs exited with code 0. The cache key was `video|delta_t` and did not depend on the frames,
+so a cache entry was only valid for the frames it was computed on. By the researcher's decision of
+2026-11-17 the cache was removed: the script now always computes the reference `bestCutNumber`,
+and the `--no-cache` option and the `[ref_bestCut=...]` tag in the output no longer exist.
 
 ## Result
 
@@ -117,7 +119,7 @@ frames the same holds for the three videos of the re-run (`Base jumping`: raw 8.
 ## Intentional divergences
 
 The port differs from the reference only on inputs that the HieTaSumm pipeline never produces.
-Both cases raise `ValueError` and are covered by `tests/test_best_cut.py`.
+The three cases raise `ValueError` and are covered by `tests/test_best_cut.py`.
 
 1. **Standard deviation of the weights equal to zero.** The original loop
    `while cut <= 1: cut = cut * 10` (`Summary.py:123-124`) never ends when `cut = 0`, because
@@ -133,3 +135,13 @@ Both cases raise `ValueError` and are covered by `tests/test_best_cut.py`.
    `delta_t = rate * time = 32 > 0` (`Summary.py:15`), the window-free branch is not part of the
    time-aware graph, and reproducing it would mean a dense computation that the port was written to
    avoid.
+3. **A frame whose half-resolution pixels are all zero (all black).** Its norm is zero, so the
+   cosine of every pair that includes it is `0/0`. In the original, `spatial.distance.cosine`
+   returns `nan`, `nan < 20` is false, the weight stays `nan`, `np.std` gives `nan`, the
+   `while cut <= 1` loop is skipped, `bestCutNumber` returns `nan`, and the pipeline fails at
+   `int(nan * alpha/100)` (`Summary.py:57`). Before 2026-11-17 the port dropped those pairs with
+   the same `~isnan` filter that marks the pairs outside the window, and returned a number. It now
+   raises `ValueError` (`test_frame_preto_levanta_erro_como_o_original_falha`, which also checks
+   that the reference fails). Decided by the researcher on 2026-11-17. No result is affected:
+   none of the 16,079 frames on disk on that date (25 SumMe videos and VSUMM v21, v29) is all
+   black at half resolution.

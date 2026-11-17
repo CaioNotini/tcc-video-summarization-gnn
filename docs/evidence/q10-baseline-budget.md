@@ -66,7 +66,7 @@ clusters of the cut, which the scope decision above excludes.
 
 ### Setup
 
-- Script: `experiments/measure_q10_budget.py --videos-dir data/raw/summe/SumMe/videos --delta-t 32`.
+- Script: `experiments/measure_q10_budget.py --videos-dir data/raw/summe/SumMe/videos --delta-t 32`. The column `exceeds_15` compares with `percent` of `configs/default.yaml` (15, D-21); its name is kept from this run (note of 2026-11-17).
 - Videos: the 25 `.mp4` files in `data/raw/summe/SumMe/videos/`.
 - Frames: `src/tcc_gnn/features/frame_extraction.py` with `fps = 4` (one frame every 0.25 s).
   The previous frames and features under `data/processed/summe/` were deleted first, so every
