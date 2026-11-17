@@ -6,7 +6,7 @@ Related to: [status.md](../status.md), [phases.md](../phases.md), [t09-gatv2-spe
 
 # T09 evidence: GATv2 on the time-aware graph of a real video
 
-Run on 2026-11-17, repository commit `ca5ab83` with the uncommitted T09 changes. The block and the
+Run on 2026-11-17, repository commit `0b44754` with a clean working tree. The block and the
 checks follow [t09-gatv2-spec.md](./t09-gatv2-spec.md). Hardware: NVIDIA GeForce GTX 1660 SUPER
 6 GB, Intel Core i5-8400, Windows 10 Pro 10.0.19045, Python 3.12.10, torch 2.5.1+cu121
 (CUDA 12.1), torch_geometric 2.8.1.
@@ -29,11 +29,16 @@ Its output is not a result of the method (D-17 is open), and no mlflow run is ma
 | Locality (CPU): changed nodes equal to the window of 63 nodes             | True                                                                 |
 | Determinism (CPU): block rebuilt with the same seed gives the same output | True                                                                 |
 | GPU against CPU, same weights: largest output difference                  | 2.53e-07                                                             |
-| GPU first call (after moving the block to the GPU)                        | 0.1622 s                                                             |
-| GPU warm forward, mean of 10 after 2 warm-up calls                        | 1.409 ms (std 0.12 ms)                                               |
+| GPU first call (after moving the block to the GPU)                        | 0.1607 s                                                             |
+| GPU warm forward, mean of 10 after 2 warm-up calls                        | 1.474 ms (std 0.155 ms)                                              |
 | GPU peak memory                                                           | 44.9 MB                                                              |
 
 The script exits with `T09 CHECAGENS: OK`.
+
+The GPU attention fields, the smallest change inside the window and the times vary between runs
+at the level of the GPU noise (about 6e-8), while the CPU fields are exact and repeated. A run on
+the same day with the T09 changes not yet committed gave identical CPU fields, differences of at
+most 1.5e-8 in those GPU fields, and times of 0.1622 s and 1.409 ms (std 0.12 ms).
 
 ## GPU noise: why the exact checks run on the CPU
 
@@ -58,7 +63,7 @@ included that start-up; it is not a forward time.
 
 ## Command and output (verbatim)
 
-`python experiments/run_gatv2_real_video.py --json-out .cache/scratch/t09_jumps.json`
+`python experiments/run_gatv2_real_video.py --json-out .cache/scratch/t09_jumps_clean.json`
 
 ```
 {
@@ -113,18 +118,18 @@ included that start-up; it is not a forward time.
       4
     ],
     "attention_self_pairs": 0,
-    "attention_min": 0.011833303608000278,
-    "attention_max": 0.043696079403162,
+    "attention_min": 0.011833304539322853,
+    "attention_max": 0.0436960831284523,
     "attention_sum_max_abs_dev_from_1": 4.76837158203125e-07,
     "repeat_noise": 5.960464477539063e-08,
     "probe_outside_window_max_change": 5.960464477539063e-08,
     "probe_outside_window_nodes_changed": 89,
-    "probe_inside_window_min_change": 0.0077580660581588745,
-    "first_call_s": 0.1622,
+    "probe_inside_window_min_change": 0.007758080959320068,
+    "first_call_s": 0.1607,
     "warmup_forwards": 2,
     "timed_forwards": 10,
-    "forward_mean_ms": 1.409,
-    "forward_std_ms": 0.12,
+    "forward_mean_ms": 1.474,
+    "forward_std_ms": 0.155,
     "peak_memory_mb": 44.9,
     "gpu": "NVIDIA GeForce GTX 1660 SUPER"
   },
@@ -134,14 +139,14 @@ included that start-up; it is not a forward time.
   "python": "3.12.10",
   "processor": "Intel64 Family 6 Model 158 Stepping 10, GenuineIntel",
   "os": "Windows-10-10.0.19045-SP0",
-  "commit": "ca5ab83-dirty"
+  "commit": "0b44754"
 }
 T09 CHECAGENS: OK
 ```
 
 ## Unit tests
 
-`pytest -v tests/test_gatv2.py`: 16 passed (`test_edge_index_calculado_a_mao`,
+On commit `0b44754`, `pytest -v tests/test_gatv2.py`: 16 passed (`test_edge_index_calculado_a_mao`,
 `test_mesmas_arestas_do_grafo_time_aware`, `test_um_frame_sem_arestas`,
 `test_grafo_vazio_levanta_erro`, `test_nos_fora_de_0_a_n_levantam_erro`,
 `test_self_loop_levanta_erro`, `test_configuracao_fiel_a_especificacao`,

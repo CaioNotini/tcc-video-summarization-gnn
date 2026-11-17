@@ -387,3 +387,27 @@ Two terms are used in every document, and each has one meaning.
 **Consequences:** The duration of the evaluated summary equals the duration counted for the 15% budget (D-21, D-23). The F-score of the baseline under this rule is not the number the HieTaSumm-lib code would print, so a comparison with published numbers needs the original rule, reported separately.
 
 **Affects:** T07, T17, T18, T19.
+
+## D-27 — SLC pooling clusters only along the edges between consecutive frames
+
+**Date:** 2026-11-17. **Status:** Open. Proposed by the researcher, pending the advisor's confirmation.
+
+**Context:** The single-link rule of SLC-HELM merges the nodes joined by a path of edges below the threshold δ. The time-aware graph joins every pair of frames within `delta_t = 32` (D-24), so a short edge can skip frames, and the clusters are not contiguous in general. A read-only probe on the raw ResNet50 features of the 25 SumMe videos, one pooling step with `<`, found the following. With δ = the median of the window edges, there are 748 clusters, 52 of them not contiguous, in 23 of 25 videos. With δ = the median of all pairs, there are 79 clusters, 15 not contiguous, in 12 of 25 videos. The same step collapses the video: `Air_Force_One` goes from 716 frames to 4 clusters (window edges) or to 1 (all pairs). The paper says that its threshold avoids excessive early coarsening. The specification, the probes and the counter-example are in [evidence/t12-slc-pooling-spec.md](./evidence/t12-slc-pooling-spec.md).
+
+**Decision (proposed):** At level 0 the clustering thresholds only the edges between consecutive frames (i, i+1). At level j ≥ 1 it thresholds only the edges between consecutive clusters. The window edges stay as the spatial edges used by GATv2 (T09) and the MGP (T15). Reason (researcher): in SLC-HELM the edges of the base graph join adjacent regions, with few neighbours per node. In a video the equivalent of "adjacent" is the consecutive frame, while the window of `delta_t` is a choice of HieTaSumm for the context of the attention layer. So the rule translates the paper to the temporal domain. It keeps contiguity by construction, because the components of a subgraph of a path are runs of consecutive nodes. A second probe, with the same features, δ = the median of the consecutive edges at each level, `<` and L = 3, gives mean node counts of 319.1, 160.0 and 80.7 at levels 1, 2 and 3 (from 636.2 frames). The minimums are 77, 39 and 20, the maximums 777, 389 and 195, and there are 0 non-contiguous clusters at every level.
+
+**Alternatives discarded:** The literal rule of the paper over the window edges, with the contiguity claim dropped: segments would no longer be segments, which changes the knapsack unit (Q-11, D-21). The literal rule followed by splitting each cluster into its maximal contiguous runs: it adds a step after the clustering and fragments the clusters.
+
+**Consequences:** The contiguity invariant of [architecture.md](./architecture.md) becomes true by construction. T13 must still check it on synthetic inputs and on a real video. Under this rule a per-video median fixes the number of clusters at about half per level, whatever the content (Q-02). The documents below state contiguity as a consequence of the temporal edges, and they are corrected only after the advisor confirms this decision. D-19 is not changed until then.
+
+**Corrections to apply after confirmation:**
+
+- [architecture.md](./architecture.md), Hierarchy section, the sentence before the level diagram: "Each group is a contiguous segment of the video. This holds by construction because SLC pooling merges only nodes joined by edges between consecutive frames (i, i+1), or between consecutive clusters at the higher levels; the window edges of `delta_t` are used by GATv2 and the MGP, not by the clustering (D-27):"
+- [architecture.md](./architecture.md), Invariants: "Clusters produced by SLC pooling are contiguous segments of the video, which holds because the pooling thresholds only the edges between consecutive frames or consecutive clusters (D-27); over the window edges it would not hold."
+- [phases.md](./phases.md), T12 goal: "Two frames belong to the same cluster when there is a path between them along edges between consecutive frames whose feature distance is below a threshold. Because only these edges are used for clustering, every cluster is a continuous segment of the video; the window edges of the graph would not give this guarantee."
+- [references.md](./references.md), SLC-HELM: "two frames belong to the same cluster when a path of low-distance edges connects them. In the thesis the clustering uses only the edges between consecutive frames, the temporal analogue of the adjacency edges of the region graph in the paper, so every cluster is a contiguous segment of the video (D-27)."
+- [references.md](./references.md), DiffPool and MinCutPool: "because the graph only has temporal edges" becomes "because the clustering only uses edges between consecutive frames".
+- [project.md](./project.md), method description: "two frames join the same cluster when a path of low-distance edges between consecutive frames connects them, so every cluster is a continuous segment of the video."
+- D-19: the options for the percentile become the consecutive edges, the window edges, all pairs or a global value (see Q-02).
+
+**Affects:** T12, T13, T17 (segments, Q-11).

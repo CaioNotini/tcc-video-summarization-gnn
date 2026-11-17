@@ -86,6 +86,15 @@ ends up in after the single cut, matching `HieTaSumm-lib`'s own final result exa
 3. Each cluster is a contiguous range of frame indices: this follows only from the input graph
    having exclusively temporal edges, independent of the hierarchy algorithm.
 
+**Correction note (2026-11-17).** Item 3 is wrong in general. The time-aware graph joins every pair
+of frames within `delta_t`, so an MST edge can skip frames, and a cluster of the cut can be
+non-contiguous. A read-only probe with the T07 cuts on the 25 SumMe videos (`delta_t = 32`) found
+non-contiguous clusters in 4 videos: `Base jumping`, `Bike Polo`, `Scuba` and `paluma_jump` (14 of
+121 clusters). The T07 results do not change: the keyshot port does not assume contiguity, and the
+baseline matches the reference. The original text above is kept. The item is tracked in the
+blockers of [status.md](../status.md), and the analysis is in
+[t12-slc-pooling-spec.md](./t12-slc-pooling-spec.md).
+
 **Fidelity detail, registered as baseline behaviour.** `Graph.compute_hierarchy` (`Graph.py:60-61`)
 casts every edge weight to `int` before building the higra graph:
 `edge_weights[i] = int(input_g.adj[...]["weight"])`. This is a truncation, not a rounding, and

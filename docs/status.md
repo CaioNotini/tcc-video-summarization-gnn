@@ -6,19 +6,20 @@ Related to: [phases.md](./phases.md), [project.md](./project.md), [references.md
 
 # Project status
 
-Last verified: 2026-11-17, repository commit ca5ab83 plus the uncommitted T09 changes of that date.
+Last verified: 2026-11-17, repository commit 0b44754 plus the uncommitted T09 evidence update of that date.
 
 This file says where the project stands. What each task requires is in [phases.md](./phases.md). Why the project is built this way is in [decisions.md](./decisions.md). Each open question is defined in [architecture.md](./architecture.md), and only its blocking effect is recorded below.
 
 ## Active task
 
-T09 (GATv2 on the time-aware graph): implemented on 2026-11-17, evidence saved; awaiting the researcher's validation. T08 is moved to after PC4 by the researcher; it is a learning task and T09 does not depend on it ([phases.md](./phases.md)).
+T12 (specify the SLC pooling): specification approved by the researcher on 2026-11-17 ([evidence/t12-slc-pooling-spec.md](./evidence/t12-slc-pooling-spec.md)); D-27 and Q-02 pending the advisor. T09 was validated by the researcher on 2026-11-17. T08 is moved to after PC4 by the researcher; it is a learning task and T09 does not depend on it ([phases.md](./phases.md)).
 
 ## Task states
 
-- **Validated:** T01, T02, T03, T04, T05, T06, T07, T11, T19. T07 validated by the researcher on 2026-11-17. Evidence: [evidence/t07-baseline-summe.md](./evidence/t07-baseline-summe.md). Summaries for the 25 SumMe videos, official F-score 31.20 (D-26, maximum over annotators), supplementary F-score 32.59 under the original HieTaSumm-lib rule, mean length 13.77%. Pending for the supplementary check only: the published SumMe F-score of HieTaSumm (the researcher will check the paper).
-- **Implemented, not validated:** T09. Specification: [evidence/t09-gatv2-spec.md](./evidence/t09-gatv2-spec.md). Evidence: [evidence/t09-gatv2-real-video.md](./evidence/t09-gatv2-real-video.md). The GP block of SLC-HELM (Linear 2048 to 64, `GATv2Conv` with 4 heads and no self-loops, residual, batch norm, dropout 0.2) runs untrained on SumMe `Jumps`: output (152, 64), finite, attention summing to 1 per node, locality and same-seed determinism exact on the CPU; warm GPU forward 1.41 ms, peak 44.9 MB. On the GPU, outputs vary by about 6e-8 between identical calls (atomic scatter).
-- **In progress:** none.
+- **Validated:** T01, T02, T03, T04, T05, T06, T07, T09, T11, T19. T07 validated by the researcher on 2026-11-17. Evidence: [evidence/t07-baseline-summe.md](./evidence/t07-baseline-summe.md). Summaries for the 25 SumMe videos, official F-score 31.20 (D-26, maximum over annotators), supplementary F-score 32.59 under the original HieTaSumm-lib rule, mean length 13.77%. Pending for the supplementary check only: the published SumMe F-score of HieTaSumm (the researcher will check the paper).
+- T09 validated by the researcher on 2026-11-17. Specification: [evidence/t09-gatv2-spec.md](./evidence/t09-gatv2-spec.md). Evidence: [evidence/t09-gatv2-real-video.md](./evidence/t09-gatv2-real-video.md), run again on the clean commit `0b44754`. The GP block of SLC-HELM (Linear 2048 to 64, `GATv2Conv` with 4 heads and no self-loops, residual, batch norm, dropout 0.2) runs untrained on SumMe `Jumps`: output (152, 64), finite, attention summing to 1 per node, locality and same-seed determinism exact on the CPU; warm GPU forward 1.47 ms, peak 44.9 MB. On the GPU, outputs vary by about 6e-8 between identical calls (atomic scatter).
+- **Implemented, not validated:** none.
+- **In progress:** T12: specification approved; D-27 and Q-02 pending the advisor. Specification: [evidence/t12-slc-pooling-spec.md](./evidence/t12-slc-pooling-spec.md), approved by the researcher on 2026-11-17. T12 stays in progress because its goal includes how the threshold is chosen (Q-02). The specification lives in `docs/evidence/`, as T04's and T09's do, while [phases.md](./phases.md)'s T12 acceptance criterion says "written in this file, under this task". The discrepancy is reported here rather than resolved by editing `phases.md`, as was done for T04.
 - **Blocked:** none.
 - **Planned:** T08 (after PC4), T10, T12 to T18 (T20 and T21 were removed). For T10, the VSUMM files are already downloaded locally; the adapter is pending. The τ and ρ question for VSUMM is decided: not reported (D-22).
 
@@ -30,6 +31,9 @@ A task becomes validated only when its output is saved in [evidence/](./evidence
 - **Q-03:** blocks T13 (see D-17). Owner: advisor.
 - **Q-04:** affects T13. Owner: advisor.
 - **GPU determinism (raised 2026-11-17, for T13):** test whether `torch.use_deterministic_algorithms(True)` works with the PyTorch Geometric operations used, and its cost, before training (CLAUDE.md rule 10). Measurement behind it: [evidence/t09-gatv2-real-video.md](./evidence/t09-gatv2-real-video.md). Owner: researcher.
+- **SLC contiguity (raised 2026-11-17, T12):** the time-aware graph joins every pair of frames within `delta_t`, so single-link clustering over its edges does not give contiguous clusters (23 of 25 SumMe videos in a probe, [evidence/t12-slc-pooling-spec.md](./evidence/t12-slc-pooling-spec.md)). The researcher chose to cluster only on the edges between consecutive frames, recorded as D-27 (open, pending the advisor), with the corrections to apply after confirmation listed there. The documents that state contiguity as a consequence of the temporal edges (architecture.md, phases.md, references.md, project.md) are not corrected until then. Owner: researcher and advisor.
+- **MST contiguity claim (raised 2026-11-17, T04 and T06):** the T04 specification states that every MST cluster is contiguous because the edges are temporal, and T06 checked it only on v21, the degenerate case. A read-only probe with the T07 cuts finds non-contiguous MST clusters in 4 of the 25 SumMe videos (14 of 121 clusters; `Base jumping`, `Bike Polo`, `Scuba`, `paluma_jump`). The T07 results are not affected: the keyshot port does not assume contiguity and matches the reference. Dated correction notes were added to [evidence/t04-mst-hierarchy-spec.md](./evidence/t04-mst-hierarchy-spec.md) and [evidence/t06-mst-hierarchy.md](./evidence/t06-mst-hierarchy.md) on 2026-11-17, with the original text kept. Owner: researcher.
+- **Edge features in the MGP (raised 2026-11-17, for T15):** SLC-HELM (section IV-A) says that both the node features and the edge features are projected to 64 dimensions. Check in the MGP where the edge features enter. Owner: researcher.
 - **Q-06:** affects the scope of the TVSum adapter: whether it is written in TCC1 or left for TCC2 with the TVSum experiments. Owner: advisor.
 - **Q-08:** from T13 onward.
 - **Q-09:** closed (researcher, 2026-11-16). Timing and memory are measured on the local machine, GPU GeForce GTX 1660 SUPER, 6 GB.
@@ -69,4 +73,4 @@ None. The 0.97 correlation sanity check that was listed here now has saved runs:
 
 ## Next step
 
-Stage 2 is closed: T04, T05, T06, T07 and T19 are validated (T11 too, D-22 closes Q-01). The published SumMe F-score is still pending for the supplementary comparison of T07. Stage 3 starts with T09, which depends on T07 only and is implemented, awaiting the researcher's validation; T08 and T10 comes after PC4 (researcher, 2026-11-17). By dependency order the next task is T12 (SLC specification) needs T09.
+Stage 2 is closed: T04, T05, T06, T07 and T19 are validated (T11 too, D-22 closes Q-01). The published SumMe F-score is still pending for the supplementary comparison of T07. Stage 3 started with T09, validated on 2026-11-17; T08 and T10 come after PC4 (researcher, 2026-11-17). By dependency order the next task is T12 (SLC specification), which needs T09.
