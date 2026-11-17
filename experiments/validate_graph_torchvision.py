@@ -1,4 +1,4 @@
-"""Checagem qualitativa do grafo construído a partir de um .npy de features."""
+"""Checagem qualitativa do grafo de um .npy de features: peso médio por distância temporal e sua correlação."""
 
 from __future__ import annotations
 

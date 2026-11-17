@@ -1,70 +1,26 @@
-"""Compara o grafo do frame.py com a saída real do Frame.py do Leonardo."""
+"""Compara o grafo do frame.py com o grafo de Frame.calc_end/calculate_similarity do HieTaSumm-lib (T01)."""
 
 from __future__ import annotations
 
 import argparse
-import sys
-import types
 from pathlib import Path
 
+import networkx as nx
 import numpy as np
 
-_REPO_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(_REPO_ROOT / "references" / "HieTaSumm-lib"))
-
-_stub_names = [
-    "tensorflow",
-    "tensorflow.keras",
-    "tensorflow.keras.applications",
-    "tensorflow.keras.applications.vgg16",
-    "tensorflow.keras.applications.resnet50",
-    "tensorflow.keras.models",
-    "tensorflow.keras.utils",
-    "higra",
-    "h5py",
-]
-_stubs = {name: types.ModuleType(name) for name in _stub_names}
-_stubs["tensorflow.keras.applications.vgg16"].VGG16 = object
-_stubs["tensorflow.keras.applications.vgg16"].preprocess_input = lambda x: x
-_stubs["tensorflow.keras.applications.resnet50"].ResNet50 = object
-_stubs["tensorflow.keras.applications.resnet50"].preprocess_input = lambda x: x
-_stubs["tensorflow.keras.models"].Model = object
-_stubs["h5py"].File = object
-_stubs["tensorflow.keras"].utils = _stubs["tensorflow.keras.utils"]
-_stubs["tensorflow.keras"].applications = _stubs["tensorflow.keras.applications"]
-_stubs["tensorflow.keras"].models = _stubs["tensorflow.keras.models"]
-_stubs["tensorflow"].keras = _stubs["tensorflow.keras"]
-for _name, _mod in _stubs.items():
-    sys.modules.setdefault(_name, _mod)
-sys.dont_write_bytecode = True  # não gravar __pycache__ no submódulo somente leitura
-
-from HieTaSumm.Frame import Frame  # noqa: E402
-from tcc_gnn.graph.frame import build_time_aware_graph  # noqa: E402
+from tcc_gnn.graph.frame import build_time_aware_graph
+from tcc_gnn.reference import reference_graph
 
 
-def build_leonardo_reference_graph(
-    features: np.ndarray, delta_t: int
-) -> dict[tuple[int, int], float]:
-    frame = Frame(model=None)
-    n = len(features)
-    edges: dict[tuple[int, int], float] = {}
-
-    for v1 in range(n):
-        end = frame.calc_end(v1, delta_t, n)
-        for v2 in range(v1, end):
-            if v1 == v2:
-                continue
-            w = frame.calculate_similarity(features[v1], features[v2])
-            edges[(v1, v2)] = float(w)
-
-    return edges
+def _edge_weights(graph: nx.Graph) -> dict[tuple[int, int], float]:
+    """Peso por aresta `(menor, maior)`."""
+    return {(min(u, v), max(u, v)): data["weight"] for u, v, data in graph.edges(data=True)}
 
 
-def compare(leonardo_edges: dict[tuple[int, int], float], ours_graph) -> None:
-    ours_edges = {
-        (min(u, v), max(u, v)): data["weight"]
-        for u, v, data in ours_graph.edges(data=True)
-    }
+def compare(leonardo_graph: nx.Graph, ours_graph: nx.Graph) -> None:
+    """Imprime as arestas exclusivas de cada lado e a maior diferença de peso nas comuns."""
+    leonardo_edges = _edge_weights(leonardo_graph)
+    ours_edges = _edge_weights(ours_graph)
 
     only_leonardo = set(leonardo_edges) - set(ours_edges)
     only_ours = set(ours_edges) - set(leonardo_edges)
@@ -96,7 +52,4 @@ if __name__ == "__main__":
     features = np.load(args.features)
     print(f"Features carregadas: shape {features.shape}")
 
-    leonardo_edges = build_leonardo_reference_graph(features, args.delta_t)
-    ours_graph = build_time_aware_graph(features, args.delta_t)
-
-    compare(leonardo_edges, ours_graph)
+    compare(reference_graph(features, args.delta_t), build_time_aware_graph(features, args.delta_t))

@@ -1,12 +1,4 @@
-"""Gera as duas figuras PNG de verificação visual da T06, com PIL (matplotlib não é dependência).
-
-(a) docs/evidence/t06-synthetic-graph.png: grafo sintético, nós coloridos pelo cluster que o
-    código atribuiu (mst_partition), com o cluster esperado (calculado à mão) marcado ao lado —
-    uma divergência de cor entre o preenchimento e o marcador indicaria um erro.
-(b) docs/evidence/t06-real-video-partition.png: a partição do vídeo real (docs/evidence/
-    t06-real-video-partition.csv) como duas faixas de frames, implementação vs. referência,
-    com os frames divergentes marcados.
-"""
+"""Figuras PNG da T06 (images/t06-synthetic-graph.png e images/t06-real-video-partition.png), com Pillow."""
 
 from __future__ import annotations
 
@@ -14,12 +6,15 @@ import colorsys
 import csv
 from pathlib import Path
 
+import networkx as nx
 from PIL import Image, ImageDraw
 
-import networkx as nx
 from tcc_gnn.hierarchy.mst import mst_partition
+from tcc_gnn.reference import canonical_partition
 
 EVIDENCE_DIR = Path(__file__).resolve().parents[1] / "docs" / "evidence"
+IMAGES_DIR = EVIDENCE_DIR / "images"
+SHEETS_DIR = EVIDENCE_DIR / "sheets"
 
 
 def cluster_color(cluster_id: int, n_clusters: int) -> tuple[int, int, int]:
@@ -30,6 +25,7 @@ def cluster_color(cluster_id: int, n_clusters: int) -> tuple[int, int, int]:
 
 
 def plot_synthetic_graph(output_path: Path) -> None:
+    """Grafo sintético de 4 nós com o cluster atribuído (preenchimento) e o esperado à mão (marcador)."""
     g = nx.Graph()
     g.add_nodes_from(range(4))
     g.add_edge(0, 1, weight=1.0)
@@ -43,18 +39,8 @@ def plot_synthetic_graph(output_path: Path) -> None:
     # folhas 2 e 3 uma da outra.
     expected = {0: "A", 1: "A", 2: "B", 3: "C"}
 
-    def canonicalize(partition: dict[int, int | str]) -> dict[int, int]:
-        """Reindexa os clusters por ordem do menor frame, pra que a MESMA cor represente o
-        mesmo agrupamento em assigned e expected quando as partições coincidem — só uma
-        divergência real de agrupamento produz cores diferentes."""
-        by_min_frame = sorted(
-            set(partition.values()), key=lambda c: min(f for f, cl in partition.items() if cl == c)
-        )
-        relabel = {c: i for i, c in enumerate(by_min_frame)}
-        return {f: relabel[c] for f, c in partition.items()}
-
-    assigned = canonicalize(raw_assigned)
-    expected_ids = canonicalize(expected)
+    assigned = canonical_partition(raw_assigned)
+    expected_ids = canonical_partition(expected)
 
     n_clusters = max(len(set(assigned.values())), len(set(expected_ids.values())))
 
@@ -113,6 +99,7 @@ def plot_synthetic_graph(output_path: Path) -> None:
 
 
 def plot_real_video_partition(csv_path: Path, output_path: Path) -> None:
+    """Partição do vídeo real em duas faixas, implementação e referência, com os frames divergentes marcados."""
     rows = []
     with open(csv_path, newline="") as f:
         reader = csv.DictReader(f)
@@ -189,8 +176,8 @@ def plot_real_video_partition(csv_path: Path, output_path: Path) -> None:
 
 
 if __name__ == "__main__":
-    plot_synthetic_graph(EVIDENCE_DIR / "t06-synthetic-graph.png")
+    plot_synthetic_graph(IMAGES_DIR / "t06-synthetic-graph.png")
     plot_real_video_partition(
-        EVIDENCE_DIR / "t06-real-video-partition.csv",
-        EVIDENCE_DIR / "t06-real-video-partition.png",
+        SHEETS_DIR / "t06-real-video-partition.csv",
+        IMAGES_DIR / "t06-real-video-partition.png",
     )

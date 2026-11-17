@@ -4,154 +4,32 @@ from __future__ import annotations
 
 import argparse
 import csv
-import os
-import sys
-import tempfile
-import types
 from pathlib import Path
 
 import numpy as np
 
+from tcc_gnn.hierarchy.mst import compute_hierarchy, cut_graph, partition_from_cut
+from tcc_gnn.reference import (
+    canonical_partition,
+    reference_compute_hierarchy,
+    reference_cut_graph,
+    reference_graph,
+)
+
 _REPO_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(_REPO_ROOT / "references" / "HieTaSumm-lib"))
-
-_stub_names = [
-    "tensorflow",
-    "tensorflow.keras",
-    "tensorflow.keras.applications",
-    "tensorflow.keras.applications.vgg16",
-    "tensorflow.keras.applications.resnet50",
-    "tensorflow.keras.models",
-    "tensorflow.keras.utils",
-    "h5py",
-]
-_stubs = {name: types.ModuleType(name) for name in _stub_names}
-_stubs["tensorflow.keras.applications.vgg16"].VGG16 = object
-_stubs["tensorflow.keras.applications.vgg16"].preprocess_input = lambda x: x
-_stubs["tensorflow.keras.applications.resnet50"].ResNet50 = object
-_stubs["tensorflow.keras.applications.resnet50"].preprocess_input = lambda x: x
-_stubs["tensorflow.keras.models"].Model = object
-_stubs["h5py"].File = object
-_stubs["tensorflow.keras"].utils = _stubs["tensorflow.keras.utils"]
-_stubs["tensorflow.keras"].applications = _stubs["tensorflow.keras.applications"]
-_stubs["tensorflow.keras"].models = _stubs["tensorflow.keras.models"]
-_stubs["tensorflow"].keras = _stubs["tensorflow.keras"]
-for _name, _mod in _stubs.items():
-    sys.modules.setdefault(_name, _mod)
-# higra NÃO é stubado: é o pacote real (D-05), precisamos dele calculando de verdade.
-sys.dont_write_bytecode = True  # não gravar __pycache__ no submódulo somente leitura
-
-from HieTaSumm.Frame import Frame  # noqa: E402
-from HieTaSumm.Graph import Graph  # noqa: E402
-from HieTaSumm.Summary import Summary  # noqa: E402
-from tcc_gnn.hierarchy.mst import compute_hierarchy, cut_graph, partition_from_cut  # noqa: E402
 
 
 def features_path_for_video(video: str) -> Path:
-    """Caminho padrão de features_teste.npy para um vídeo do VSUMM (--video v21/v29)."""
+    """Caminho de `features_teste.npy` de um vídeo do VSUMM (v21, v29)."""
     return _REPO_ROOT / "data" / "processed" / "vsumm" / video / "features_teste.npy"
 
 
-def frames_dir_for_video(video: str) -> Path:
-    """Caminho padrão da pasta de frames (jpg) de um vídeo do VSUMM, usada por bestCutNumber."""
-    return _REPO_ROOT / "data" / "processed" / "vsumm" / video / "frames"
-
-
-class _TripleCollector:
-    """Substitui Files como `input_higra`/`cut_graph_file`: guarda os triples em memória."""
-
-    def __init__(self) -> None:
-        self.rows: list[tuple[int, int, float | int]] = []
-
-    def save_graph_data(self, v1, v2, weight) -> None:
-        self.rows.append((v1, v2, weight))
-
-
-def build_graph_via_frame_direct(features: np.ndarray, delta_t: int):
-    """Constrói o grafo integer-indexed chamando Frame.calc_end/calculate_similarity direto,
-    a mesma convenção estabelecida em experiments/validate_graph.py (T01), contornando o bug de
-    rótulo de Frame.load documentado em docs/evidence/t04-mst-hierarchy-spec.md."""
-    import networkx as nx
-
-    frame = Frame(model=None)
-    n = len(features)
-    g = nx.Graph()
-    g.add_nodes_from(range(n))
-
-    for v1 in range(n):
-        end = frame.calc_end(v1, delta_t, n)
-        for v2 in range(v1, end):
-            if v1 == v2:
-                continue
-            w = frame.calculate_similarity(features[v1], features[v2])
-            g.add_edge(v1, v2, weight=float(w))
-
-    return g
-
-
-def reference_compute_hierarchy(graph) -> tuple[list[tuple[int, int, int]], list[int]]:
-    ref_graph = Graph(is_binary=True, hierarchy="watershed_hierarchy_by_area")
-    collector = _TripleCollector()
-    leaf_list = ref_graph.compute_hierarchy(graph, collector)
-    triples = [(v1, v2, int(w)) for v1, v2, w in collector.rows]
-    return triples, leaf_list
-
-
-def reference_cut_graph(triples: list[tuple[int, int, int]], cut_number: int):
-    ref_graph = Graph(is_binary=True, hierarchy="watershed_hierarchy_by_area")
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        higra_path = os.path.join(tmp_dir, "higra.txt")
-        with open(higra_path, "w") as f:
-            for v1, v2, w in triples:
-                f.write(f"{v1}, {v2}, {w}\n")
-
-        class _FileLike:
-            file = higra_path
-
-        collector = _TripleCollector()
-        cut_result = ref_graph.cut_graph(_FileLike(), collector, cut_number)
-    return cut_result
-
-
-def canonical_partition(frame_to_cluster: dict[int, int]) -> dict[int, int]:
-    """Renomeia os ids de cluster por ordem do menor frame, pra comparar partições sem depender
-    da numeração arbitrária dos componentes conexos."""
-    by_min_frame = sorted(
-        set(frame_to_cluster.values()),
-        key=lambda c: min(f for f, cl in frame_to_cluster.items() if cl == c),
-    )
-    relabel = {c: i for i, c in enumerate(by_min_frame)}
-    return {f: relabel[c] for f, c in frame_to_cluster.items()}
-
-
 def segment_sizes(partition: dict[int, int]) -> list[int]:
-    """Tamanho de cada cluster (nº de frames), do maior pro menor."""
+    """Tamanho de cada cluster (nº de frames), do maior para o menor."""
     sizes: dict[int, int] = {}
     for cluster in partition.values():
         sizes[cluster] = sizes.get(cluster, 0) + 1
     return sorted(sizes.values(), reverse=True)
-
-
-def reference_best_cut_number(frames_dir: Path, delta_t: int, alpha: int = 75) -> dict:
-    """Chama Summary.bestCutNumber (HieTaSumm-lib) direto, sem instanciar Summary via __init__
-    (que extrai frames, carrega um modelo TensorFlow, etc.) — usa Summary.__new__ e só define os
-    dois atributos (`frames_path`, `delta_t`) que bestCutNumber/calc_end/rgbSim/spatialSim leem,
-    igual à convenção já usada pra Frame/Graph em build_graph_via_frame_direct e
-    reference_compute_hierarchy. `alpha=75` é o default de options.json (Summary.py:52-59)."""
-    summary = Summary.__new__(Summary)
-    summary.frames_path = str(frames_dir) + os.sep
-    summary.delta_t = delta_t
-
-    best_cut_number_raw = float(summary.bestCutNumber())
-    cut_number_ref = int(best_cut_number_raw * (alpha / 100))
-    if cut_number_ref <= 2:
-        cut_number_ref = 3
-
-    return {
-        "best_cut_number_raw": best_cut_number_raw,
-        "alpha": alpha,
-        "cut_number_ref": cut_number_ref,
-    }
 
 
 def merge_csv_rows(
@@ -160,9 +38,7 @@ def merge_csv_rows(
     fieldnames: list[str],
     key_fields: list[str],
 ) -> None:
-    """Escreve `new_rows` em `csv_path`, substituindo só as linhas existentes cuja combinação de
-    `key_fields` bate com alguma linha nova (pra reexecução idempotente — ex.: rerodar o mesmo
-    vídeo/cutNumber não duplica linha), preservando as demais já no arquivo."""
+    """Grava `new_rows` em `csv_path`, trocando só as linhas antigas com as mesmas `key_fields` (reexecução idempotente)."""
     new_keys = {tuple(str(row[k]) for k in key_fields) for row in new_rows}
 
     existing_rows: list[dict] = []
@@ -194,7 +70,7 @@ if __name__ == "__main__":
     features = np.load(args.features)
     print(f"Features carregadas: shape {features.shape}")
 
-    graph = build_graph_via_frame_direct(features, args.delta_t)
+    graph = reference_graph(features, args.delta_t)
     n_frames = graph.number_of_nodes()
     print(f"Grafo construido (Frame.calc_end/calculate_similarity diretos): {n_frames} frames")
 

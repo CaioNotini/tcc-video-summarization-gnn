@@ -1,13 +1,4 @@
-"""T07: baseline HieTaSumm de ponta a ponta no SumMe, com F-score pelo protocolo (D-26) e tempo/memória por etapa.
-
-Por vídeo: reextrai os frames numa pasta temporária em .cache/ e compara byte a byte com
-data/processed/summe/<vídeo>/frames; recalcula as features na GPU sem sobrescrever o cache e compara
-com o .npy (np.allclose); daí em diante usa os frames e o .npy em disco: bestCutNumber (porta),
-grafo time-aware, hierarquia MST e corte, keyshots (group_central_frames), F-score oficial
-(sampled_to_native, D-26) e F-score suplementar com a regra original (Evaluation.find_corresponding_frames
-do submódulo, duração do .mat). Cada etapa tem tempo de parede e pico de RSS do processo; a etapa de
-features tem também o pico de memória da GPU. Resultados num CSV e num run do mlflow (configs/default.yaml).
-"""
+"""T07: baseline HieTaSumm de ponta a ponta no SumMe, com F oficial (D-26), F suplementar pela regra original e tempo/memória por etapa."""
 
 from __future__ import annotations
 
@@ -16,38 +7,34 @@ import csv
 import platform
 import shutil
 import subprocess
-import sys
 import threading
 import time
-import types
 from contextlib import contextmanager
 from pathlib import Path
 
-import cv2
 import mlflow
 import networkx as nx
 import numpy as np
 import psutil
 import torch
-import yaml
 from scipy import io
 
+from tcc_gnn.config import REPO_ROOT as _REPO_ROOT
+from tcc_gnn.config import load_config, tracking_config
 from tcc_gnn.data.summe import SumMeAdapter
+from tcc_gnn.evaluation.fscore import f_score, sampled_to_native
+from tcc_gnn.features.features import extract_features
+from tcc_gnn.features.frame_extraction import extract_frames, video_metadata
+from tcc_gnn.graph.frame import build_time_aware_graph
+from tcc_gnn.hierarchy.best_cut import best_cut_number, cut_number_from_best
+from tcc_gnn.hierarchy.keyshots import group_central_frames, initial_len_shot
+from tcc_gnn.hierarchy.mst import compute_hierarchy, cut_graph
+from tcc_gnn.reference import reference_evaluation
 
-_REPO_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(_REPO_ROOT / "experiments"))
-
-from measure_q10_budget import extract_features_batched  # noqa: E402
-from tcc_gnn.evaluation.fscore import f_score, sampled_to_native  # noqa: E402
-from tcc_gnn.features.frame_extraction import extract_frames  # noqa: E402
-from tcc_gnn.graph.frame import build_time_aware_graph  # noqa: E402
-from tcc_gnn.hierarchy.best_cut import best_cut_number, cut_number_from_best  # noqa: E402
-from tcc_gnn.hierarchy.keyshots import group_central_frames, initial_len_shot  # noqa: E402
-from tcc_gnn.hierarchy.mst import compute_hierarchy, cut_graph  # noqa: E402
-
-RATE_FPS = 4.0  # options.json: "rate": 4 (D-25)
-PERCENT = 15.0  # options.json: "percent": 15 (D-21)
-ALPHA = 75  # options.json: "alpha": 75 (D-20)
+_CFG = load_config()
+RATE_FPS = float(_CFG["graph"]["rate"])  # D-25
+PERCENT = float(_CFG["hierarchy"]["percent"])  # D-21
+ALPHA = _CFG["hierarchy"]["alpha"]  # D-20
 VIDEOS_DIR = _REPO_ROOT / "data" / "raw" / "summe" / "SumMe" / "videos"
 FRAMES_ROOT = _REPO_ROOT / "data" / "processed" / "summe"
 MAT_DIR = _REPO_ROOT / "references" / "HieTaSumm-lib" / "HieTaSumm" / "mat-files"
@@ -64,40 +51,6 @@ STAGES = [
 ]
 
 
-def reference_evaluation():
-    """Instância de Evaluation do submódulo (só os métodos), com stubs de tensorflow para o import."""
-    sys.dont_write_bytecode = True  # não gravar __pycache__ no submódulo somente leitura
-    stub_names = [
-        "tensorflow",
-        "tensorflow.keras",
-        "tensorflow.keras.applications",
-        "tensorflow.keras.applications.vgg16",
-        "tensorflow.keras.applications.resnet50",
-        "tensorflow.keras.models",
-        "tensorflow.keras.utils",
-    ]
-    stubs = {name: types.ModuleType(name) for name in stub_names}
-    stubs["tensorflow.keras.applications.vgg16"].VGG16 = object
-    stubs["tensorflow.keras.applications.vgg16"].preprocess_input = lambda x: x
-    stubs["tensorflow.keras.applications.resnet50"].ResNet50 = object
-    stubs["tensorflow.keras.applications.resnet50"].preprocess_input = lambda x: x
-    stubs["tensorflow.keras.models"].Model = object
-    stubs["tensorflow.keras"].utils = stubs["tensorflow.keras.utils"]
-    stubs["tensorflow.keras"].applications = stubs["tensorflow.keras.applications"]
-    stubs["tensorflow.keras"].models = stubs["tensorflow.keras.models"]
-    stubs["tensorflow"].keras = stubs["tensorflow.keras"]
-    added = [name for name in stubs if name not in sys.modules]
-    for name in added:
-        sys.modules[name] = stubs[name]
-    sys.path.insert(0, str(_REPO_ROOT / "references" / "HieTaSumm-lib"))
-    from HieTaSumm.Evaluation import Evaluation
-
-    # tira os stubs depois do import: o mlflow vê "tensorflow" em sys.modules e tenta usar tf.Tensor
-    for name in added:
-        del sys.modules[name]
-    return Evaluation.__new__(Evaluation)
-
-
 @contextmanager
 def measure(stage: str, row: dict, interval_s: float = 0.02):
     """Grava em `row` o tempo de parede e o pico de RSS do processo (amostrado a cada 20 ms) da etapa."""
@@ -106,6 +59,7 @@ def measure(stage: str, row: dict, interval_s: float = 0.02):
     stop = threading.Event()
 
     def sample() -> None:
+        """Atualiza o pico de RSS até a etapa terminar."""
         while not stop.is_set():
             peak[0] = max(peak[0], process.memory_info().rss)
             stop.wait(interval_s)
@@ -123,16 +77,8 @@ def measure(stage: str, row: dict, interval_s: float = 0.02):
         row[f"cpu_peak_mb_{stage}"] = round(peak[0] / 2**20, 1)
 
 
-def video_metadata(video_path: Path) -> tuple[float, int]:
-    cap = cv2.VideoCapture(str(video_path))
-    if not cap.isOpened():
-        raise ValueError(f"Não consegui abrir o vídeo: {video_path}")
-    fps, n = cap.get(cv2.CAP_PROP_FPS), int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    cap.release()
-    return fps, n
-
-
 def frames_identical(dir_a: Path, dir_b: Path) -> bool:
+    """Mesmos nomes e mesmos bytes nos jpgs das duas pastas."""
     a = sorted(dir_a.glob("*.jpg"))
     b = sorted(dir_b.glob("*.jpg"))
     return [p.name for p in a] == [p.name for p in b] and all(
@@ -141,6 +87,7 @@ def frames_identical(dir_a: Path, dir_b: Path) -> bool:
 
 
 def run_video(video_id: str, name: str, delta_t: int, device: torch.device, adapter: SumMeAdapter, reference) -> dict:
+    """Linha do CSV de um vídeo: reprodutibilidade de frames e features, pipeline, F oficial e suplementar, tempo e memória."""
     video_path = VIDEOS_DIR / f"{name}.mp4"
     frames_dir = FRAMES_ROOT / name / "frames"
     features_path = FRAMES_ROOT / name / "features_resnet50_avgpool.npy"
@@ -168,7 +115,7 @@ def run_video(video_id: str, name: str, delta_t: int, device: torch.device, adap
     if device.type == "cuda":
         torch.cuda.reset_peak_memory_stats(device)
     with measure("features", row):
-        recomputed = extract_features_batched(frames_dir, device)
+        recomputed = extract_features(frames_dir, device)
     row["gpu_peak_mb_features"] = (
         round(torch.cuda.max_memory_allocated(device) / 2**20, 1) if device.type == "cuda" else ""
     )
@@ -196,6 +143,7 @@ def run_video(video_id: str, name: str, delta_t: int, device: torch.device, adap
         summary = sampled_to_native(keyshots, fps, gt.n_frames)
         f_official = f_score(summary, gt.keyframes, "max")
     with measure("eval_original_rule", row):
+        # passa o id da folha (0-based) como o original, embora o jpg dele seja 1-based: característica do original
         sb_summary = reference.find_corresponding_frames(gt.n_frames, float(mat["video_duration"][0][0]), list(keyshots))
         f_original = float(reference.f_score(sb_summary, gt.keyframes, "max"))
 
@@ -217,28 +165,16 @@ def run_video(video_id: str, name: str, delta_t: int, device: torch.device, adap
 
 
 def git_commit() -> str:
+    """Commit curto do HEAD, com `-dirty` se há mudanças locais."""
     head = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=_REPO_ROOT, capture_output=True, text=True)
     dirty = subprocess.run(["git", "status", "--porcelain"], cwd=_REPO_ROOT, capture_output=True, text=True)
     return head.stdout.strip() + ("-dirty" if dirty.stdout.strip() else "")
 
 
-def tracking_config() -> tuple[str, str]:
-    """(tracking_uri, artifact_location) do configs/default.yaml, com caminhos relativos à raiz do repo."""
-    with open(_REPO_ROOT / "configs" / "default.yaml") as f:
-        cfg = yaml.safe_load(f)["experiment_tracking"]
-    prefix = "sqlite:///"
-    if not cfg["tracking_uri"].startswith(prefix):
-        raise ValueError(f"tracking_uri deve ser sqlite (mlflow 3.18 recusa o backend de arquivo): {cfg['tracking_uri']}")
-    db_path = (_REPO_ROOT / cfg["tracking_uri"][len(prefix):]).resolve()
-    artifact_root = (_REPO_ROOT / cfg["artifact_root"]).resolve()
-    db_path.parent.mkdir(parents=True, exist_ok=True)
-    return prefix + db_path.as_posix(), artifact_root.as_uri()
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--videos", nargs="*", help="nomes dos vídeos (padrão: os 25 do SumMe)")
-    parser.add_argument("--delta-t", type=int, default=32, help="D-24")
+    parser.add_argument("--delta-t", type=int, default=_CFG["graph"]["delta_t"], help="D-24")
     parser.add_argument("--csv-out", type=Path,
                         default=_REPO_ROOT / "docs" / "evidence" / "sheets" / "t07-baseline-summe.csv")
     parser.add_argument("--experiment", default="T07-hietasumm-baseline-summe")
@@ -253,7 +189,7 @@ if __name__ == "__main__":
         raise SystemExit(f"Vídeos desconhecidos: {sorted(unknown)}")
     reference = reference_evaluation()
 
-    uri, artifact_root = tracking_config()
+    uri, artifact_root = tracking_config(_CFG)
     mlflow.set_tracking_uri(uri)
     if mlflow.get_experiment_by_name(args.experiment) is None:
         mlflow.create_experiment(args.experiment, artifact_location=f"{artifact_root}/{args.experiment}")

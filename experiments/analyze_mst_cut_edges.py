@@ -1,26 +1,7 @@
-"""Tabela das arestas cortadas pelo cutNumber e contagem de empates no peso truncado (T06, verificação adicional).
-
-Não altera src/: usa compute_hierarchy/cut_graph/mst_partition normalmente e reproduz, só neste
-script, o rastreio de quais nós da árvore o cut_graph severa (a função cut_graph em si não expõe
-essa lista, só o grafo de componentes final).
-
-Correção de método (encontrada ao verificar o v29): a primeira versão deste script usava
-`hg.bpt_canonical` + `tree.mst_edge_map` pra achar a aresta original que construiu cada nó da
-árvore. Isso bateu com a árvore real de `watershed_hierarchy_by_area` no v21, mas NÃO bate no v29
-(confirmado comparando os parent-links dos dois diretamente: `bpt_canonical` constrói uma MST
-diferente quando há platôs de peso, porque o critério "by_area" desempata de um jeito que o
-`bpt_canonical` puro não reproduz, e esse desempate não é exposto pela API do higra pra essa
-variante). Em vez disso, cada nó severado tem sua aresta de corte identificada diretamente a
-partir da árvore real retornada por `compute_hierarchy`: para o nó severado, acha-se o irmão (o
-outro filho do mesmo pai) e todas as arestas do grafo original que ligam uma folha do lado do nó
-severado a uma folha do lado do irmão; a aresta reportada é a de menor (peso truncado, posição na
-ordenação), igual ao desempate que o próprio higra usa. Esse método foi conferido contra a tabela
-antiga do v21 e reproduz exatamente as mesmas 20 arestas.
-"""
+"""Arestas cortadas pelo cutNumber e empates no peso truncado (T06, verificação adicional; método em t06-additional-verification.md)."""
 
 from __future__ import annotations
 
-import csv
 import sys
 from pathlib import Path
 
@@ -29,12 +10,10 @@ import numpy as np
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_REPO_ROOT / "experiments"))
 
-from validate_mst_hierarchy import (  # noqa: E402
-    build_graph_via_frame_direct,
-    features_path_for_video,
-    merge_csv_rows,
-)
-from tcc_gnn.hierarchy.mst import compute_hierarchy, mst_partition  # noqa: E402
+from validate_mst_hierarchy import features_path_for_video, merge_csv_rows
+
+from tcc_gnn.hierarchy.mst import compute_hierarchy, mst_partition
+from tcc_gnn.reference import reference_graph
 
 CSV_FIELDNAMES = [
     "video",
@@ -52,8 +31,7 @@ CSV_FIELDNAMES = [
 
 
 def trace_severed_nodes(triples: list[tuple[int, int, int]], cutNumber: int) -> list[int]:
-    """Reproduz o laço top-down de cut_graph só para registrar quais nós ele isola (RG.add_node),
-    sem duplicar a lógica de produção além do necessário para expor essa lista para análise."""
+    """Repete o laço top-down de `cut_graph` só para listar os nós que ele isola (`RG.add_node`)."""
     cut_list: list[int] = []
     severed: list[int] = []
 
@@ -76,8 +54,7 @@ def trace_severed_nodes(triples: list[tuple[int, int, int]], cutNumber: int) -> 
 def build_children_and_leaf_sets(
     triples: list[tuple[int, int, int]], leaf_set: set[int]
 ) -> tuple[dict[int, frozenset[int]], dict[int, list[int]]]:
-    """Mapa nó->folhas descendentes e nó->filhos, por DP bottom-up sobre `triples`
-    (já vem em ordem leaves_to_root, então cada nó é processado depois dos seus filhos)."""
+    """Mapas nó -> folhas descendentes e nó -> filhos, de baixo para cima sobre `triples` (ordem leaves_to_root)."""
     children: dict[int, list[int]] = {}
     for n, p, _leaf in triples:
         if n != p:
@@ -94,8 +71,9 @@ def build_children_and_leaf_sets(
 
 
 def analyze(features_path: Path, delta_t: int, cut_number: int, video: str, csv_out: Path) -> dict:
+    """Grava no CSV a aresta de cada corte e devolve o resumo dos empates."""
     features = np.load(features_path)
-    graph = build_graph_via_frame_direct(features, delta_t)
+    graph = reference_graph(features, delta_t)
     n_frames = graph.number_of_nodes()
 
     triples, leaf_list, _altitudes = compute_hierarchy(graph)

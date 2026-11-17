@@ -1,14 +1,7 @@
-"""Compara implementação vs. HieTaSumm-lib para vários (vídeo, cutNumber) (T06, verificação adicional).
-
-Critério de aceitação da baseline é sempre a comparação com int() (D-02): a decisão do pesquisador
-é que o truncamento faz parte da baseline e deve ser mantido em toda comparação com a referência.
-A comparação com pesos escalados (x1e6, sem empate de truncamento) é só diagnóstico de empate,
-reportada nas mesmas linhas mas não usada como critério de aceitação.
-"""
+"""Compara porta e HieTaSumm-lib em vários (vídeo, cutNumber) com int() como critério (D-02); pesos x1e6 só como diagnóstico de empate (T06)."""
 
 from __future__ import annotations
 
-import csv
 import sys
 from pathlib import Path
 
@@ -18,16 +11,19 @@ import numpy as np
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_REPO_ROOT / "experiments"))
 
-from validate_mst_hierarchy import (  # noqa: E402
-    build_graph_via_frame_direct,
-    canonical_partition,
+from validate_mst_hierarchy import (
     features_path_for_video,
     merge_csv_rows,
-    reference_compute_hierarchy,
-    reference_cut_graph,
     segment_sizes,
 )
-from tcc_gnn.hierarchy.mst import compute_hierarchy, cut_graph, mst_partition, partition_from_cut  # noqa: E402
+
+from tcc_gnn.hierarchy.mst import compute_hierarchy, cut_graph, partition_from_cut
+from tcc_gnn.reference import (
+    canonical_partition,
+    reference_compute_hierarchy,
+    reference_cut_graph,
+    reference_graph,
+)
 
 CSV_FIELDNAMES = [
     "video",
@@ -47,6 +43,7 @@ CSV_FIELDNAMES = [
 
 
 def _scaled(graph: nx.Graph, scale: float) -> nx.Graph:
+    """Cópia do grafo com os pesos multiplicados por `scale`."""
     scaled = nx.Graph()
     scaled.add_nodes_from(graph.nodes)
     for u, v, data in graph.edges(data=True):
@@ -55,8 +52,9 @@ def _scaled(graph: nx.Graph, scale: float) -> nx.Graph:
 
 
 def run_case(features_path: Path, delta_t: int, cut_number: int, cutnumber_fonte: str = "mao") -> dict:
+    """Linha do CSV de um caso: árvore, partição e diagnóstico com pesos escalados."""
     features = np.load(features_path)
-    graph = build_graph_via_frame_direct(features, delta_t)
+    graph = reference_graph(features, delta_t)
     n_frames = graph.number_of_nodes()
 
     # Critério de aceitação: comparação com int() (D-02, decisão do pesquisador).

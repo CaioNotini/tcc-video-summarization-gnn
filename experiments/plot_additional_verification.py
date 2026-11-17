@@ -1,17 +1,7 @@
-"""Figuras da verificação adicional da T06 (docs/evidence/images/), com Pillow (matplotlib não é
-dependência).
-
-(a) t06-cut-edges-<video>.png: faixa de frames do vídeo (cutNumber=20) com os pontos de corte
-    marcados, e uma nota sobre o empate de peso truncado no ponto de corte.
-(b) t06-truncation-comparison-<video>.png: a partição do vídeo com os pesos originais (int())
-    comparada com a dos mesmos pesos escalados por 1e6 antes do truncamento (sem empate).
-(c) t06-comparison-cases.png: nº de clusters e de frames divergentes por caso, lido de
-    docs/evidence/sheets/t06-comparison-cases.csv (todos os vídeos/cutNumber juntos).
-"""
+"""Figuras da verificação adicional da T06 em images/: t06-cut-edges-<v>.png, t06-truncation-comparison-<v>.png, t06-comparison-cases.png."""
 
 from __future__ import annotations
 
-import colorsys
 import csv
 import sys
 from pathlib import Path
@@ -23,22 +13,20 @@ from PIL import Image, ImageDraw
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_REPO_ROOT / "experiments"))
 
-from validate_mst_hierarchy import build_graph_via_frame_direct, canonical_partition, features_path_for_video  # noqa: E402
-from tcc_gnn.hierarchy.mst import mst_partition  # noqa: E402
+from plot_mst_hierarchy import cluster_color
+from validate_mst_hierarchy import features_path_for_video
+
+from tcc_gnn.hierarchy.mst import mst_partition
+from tcc_gnn.reference import canonical_partition, reference_graph
 
 IMAGES_DIR = _REPO_ROOT / "docs" / "evidence" / "images"
 SHEETS_DIR = _REPO_ROOT / "docs" / "evidence" / "sheets"
 
 
-def cluster_color(cluster_id: int, n_clusters: int) -> tuple[int, int, int]:
-    hue = (cluster_id % max(n_clusters, 1)) / max(n_clusters, 1)
-    r, g, b = colorsys.hsv_to_rgb(hue, 0.65, 0.95)
-    return int(r * 255), int(g * 255), int(b * 255)
-
-
 def plot_cut_edges(video: str, delta_t: int, cut_number: int, cut_edges_csv: Path, output_path: Path) -> None:
+    """Faixa de frames com os pontos de corte e o empate de peso truncado em cada um."""
     features = np.load(features_path_for_video(video))
-    graph = build_graph_via_frame_direct(features, delta_t)
+    graph = reference_graph(features, delta_t)
     n_frames = graph.number_of_nodes()
 
     partition = canonical_partition(mst_partition(graph, cutNumber=cut_number))
@@ -89,8 +77,9 @@ def plot_cut_edges(video: str, delta_t: int, cut_number: int, cut_edges_csv: Pat
 
 
 def plot_truncation_comparison(video: str, delta_t: int, cut_number: int, output_path: Path) -> None:
+    """Partição com pesos int() contra a partição com pesos x1e6, em duas faixas."""
     features = np.load(features_path_for_video(video))
-    graph = build_graph_via_frame_direct(features, delta_t)
+    graph = reference_graph(features, delta_t)
     n_frames = graph.number_of_nodes()
 
     scaled_graph = nx.Graph()
@@ -154,6 +143,7 @@ def plot_truncation_comparison(video: str, delta_t: int, cut_number: int, output
 
 
 def plot_comparison_cases(csv_path: Path, output_path: Path) -> None:
+    """Clusters e frames divergentes por caso, lidos de sheets/t06-comparison-cases.csv."""
     rows = []
     with open(csv_path, newline="") as f:
         for row in csv.DictReader(f):
