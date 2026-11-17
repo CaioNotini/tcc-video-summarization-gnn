@@ -28,6 +28,15 @@ class SumMeAdapter:
         with h5py.File(self.dataset_path, "r") as f:
             return sorted(f.keys(), key=lambda video_id: int(video_id.split("_")[1]))
 
+    def video_names(self) -> dict[str, str]:
+        """`video_id` -> `video_name` do .h5, que é o nome do .mp4 do SumMe sem extensão (com espaços)."""
+        with h5py.File(self.dataset_path, "r") as f:
+            names = {}
+            for video_id in f:
+                name = f[video_id]["video_name"][()]
+                names[video_id] = name.decode() if isinstance(name, bytes) else str(name)
+        return {video_id: names[video_id] for video_id in self.list_videos()}
+
     def load_ground_truth(self, video_id: str) -> GroundTruth:
         with h5py.File(self.dataset_path, "r") as f:
             video = f[video_id]

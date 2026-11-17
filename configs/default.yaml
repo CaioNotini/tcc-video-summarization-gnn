@@ -42,4 +42,6 @@ evaluation:
 
 experiment_tracking:
   backend: "mlflow"
-  tracking_uri: "./mlruns"
+  # mlflow 3.18 recusa o backend de arquivo; banco SQLite e artefatos ficam em ./mlruns/
+  tracking_uri: "sqlite:///mlruns/mlflow.db"
+  artifact_root: "./mlruns"

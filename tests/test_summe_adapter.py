@@ -51,6 +51,37 @@ def test_load_ground_truth_video_1_bate_com_o_arquivo_do_submodulo():
     assert gt.change_points.shape == (30, 2)
 
 
+NOMES_COM_ESPACO = {
+    "Base jumping",
+    "Bike Polo",
+    "Eiffel Tower",
+    "Excavators river crossing",
+    "Fire Domino",
+    "Saving dolphines",
+    "St Maarten Landing",
+    "Statue of Liberty",
+}
+_VIDEOS_DIR = Path(__file__).resolve().parents[1] / "data" / "raw" / "summe" / "SumMe" / "videos"
+
+
+def test_video_names_25_nomes_unicos_em_ordem():
+    names = SumMeAdapter().video_names()
+
+    assert list(names) == SumMeAdapter().list_videos()
+    assert names["video_1"] == "Air_Force_One"
+    assert names["video_12"] == "Jumps"
+    assert len(set(names.values())) == 25
+    assert {n for n in names.values() if " " in n} == NOMES_COM_ESPACO
+
+
+@pytest.mark.skipif(not _VIDEOS_DIR.is_dir(), reason="vídeos do SumMe não estão em data/raw")
+def test_video_names_cada_nome_tem_um_mp4():
+    names = set(SumMeAdapter().video_names().values())
+    mp4 = {p.stem for p in _VIDEOS_DIR.glob("*.mp4")}
+
+    assert names == mp4
+
+
 def test_load_ground_truth_video_inexistente_levanta_erro():
     adapter = SumMeAdapter()
 
