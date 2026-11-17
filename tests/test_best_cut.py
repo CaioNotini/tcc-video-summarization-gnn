@@ -19,7 +19,7 @@ pytestmark = pytest.mark.skipif(
 
 def _reference_best_cut_number(frames_dir: Path, delta_t: int) -> float:
     """Valor bruto de `Summary.bestCutNumber` do submódulo."""
-    return reference_best_cut_number(frames_dir, delta_t)["best_cut_number_raw"]
+    return reference_best_cut_number(frames_dir, delta_t, alpha=75)["best_cut_number_raw"]
 
 
 def _write_synthetic_frames(frames_dir: Path, n_frames: int = 6) -> None:
@@ -62,8 +62,7 @@ def test_best_cut_number_pasta_sem_jpg(tmp_path: Path) -> None:
 
 
 def test_best_cut_number_desvio_zero_levanta_erro(tmp_path: Path) -> None:
-    # Um único frame: só existe o par (0, 0), então std([1.0]) = 0 exato; o original
-    # entraria em loop infinito no `while cut <= 1`.
+    # um frame só tem o par (0, 0), std([1.0]) = 0, e o original ficaria em loop no `while cut <= 1`
     frames_dir = tmp_path / "frames"
     _write_synthetic_frames(frames_dir, n_frames=1)
 
@@ -84,3 +83,15 @@ def test_cut_number_from_best_piso_e_escala() -> None:
     assert cut_number_from_best(4.0, alpha=75) == 3  # int(3.0) = 3
     assert cut_number_from_best(2.0, alpha=75) == 3  # int(1.5) = 1 -> piso 3
     assert cut_number_from_best(0.0, alpha=75) == 3
+
+
+def test_frame_preto_levanta_erro_como_o_original_falha(tmp_path: Path) -> None:
+    # divergência 3: a porta levanta ValueError; o original chega a NaN e falha no int() do cutNumber
+    frames_dir = tmp_path / "frames"
+    _write_synthetic_frames(frames_dir, n_frames=4)
+    Image.fromarray(np.zeros((12, 16, 3), dtype=np.uint8)).save(frames_dir / "000002.jpg")
+
+    with pytest.raises(ValueError, match="norma zero"):
+        best_cut_number(frames_dir, delta_t=3)
+    with pytest.raises(ValueError), np.errstate(invalid="ignore", divide="ignore"):
+        reference_best_cut_number(frames_dir, delta_t=3, alpha=75)
