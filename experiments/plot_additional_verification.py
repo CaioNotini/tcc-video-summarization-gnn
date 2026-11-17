@@ -6,7 +6,6 @@ import csv
 import sys
 from pathlib import Path
 
-import networkx as nx
 import numpy as np
 from PIL import Image, ImageDraw
 
@@ -17,9 +16,8 @@ from plot_mst_hierarchy import cluster_color
 from validate_mst_hierarchy import features_path_for_video
 
 from tcc_gnn.hierarchy.mst import mst_partition
-from tcc_gnn.reference import canonical_partition, reference_graph
+from tcc_gnn.reference import canonical_partition, reference_graph, scaled_weights
 
-IMAGES_DIR = _REPO_ROOT / "docs" / "evidence" / "images"
 SHEETS_DIR = _REPO_ROOT / "docs" / "evidence" / "sheets"
 
 
@@ -82,10 +80,7 @@ def plot_truncation_comparison(video: str, delta_t: int, cut_number: int, output
     graph = reference_graph(features, delta_t)
     n_frames = graph.number_of_nodes()
 
-    scaled_graph = nx.Graph()
-    scaled_graph.add_nodes_from(graph.nodes)
-    for u, v, data in graph.edges(data=True):
-        scaled_graph.add_edge(u, v, weight=data["weight"] * 1e6)
+    scaled_graph = scaled_weights(graph, scale=1e6)
 
     partition_original = canonical_partition(mst_partition(graph, cutNumber=cut_number))
     partition_scaled = canonical_partition(mst_partition(scaled_graph, cutNumber=cut_number))
@@ -191,6 +186,7 @@ if __name__ == "__main__":
     parser.add_argument("--video", help="gera só as figuras por-video deste vídeo; omitido gera v21 e v29")
     parser.add_argument("--delta-t", type=int, default=8)
     parser.add_argument("--cut-number", type=int, default=20)
+    parser.add_argument("--output-dir", type=Path, required=True, help="as figuras da evidência ficam em docs/evidence/images/")
     args = parser.parse_args()
 
     videos = [args.video] if args.video else ["v21", "v29"]
@@ -200,10 +196,10 @@ if __name__ == "__main__":
             args.delta_t,
             args.cut_number,
             SHEETS_DIR / "t06-cut-edges-v21.csv",
-            IMAGES_DIR / f"t06-cut-edges-{video}.png",
+            args.output_dir / f"t06-cut-edges-{video}.png",
         )
         plot_truncation_comparison(
-            video, args.delta_t, args.cut_number, IMAGES_DIR / f"t06-truncation-comparison-{video}.png"
+            video, args.delta_t, args.cut_number, args.output_dir / f"t06-truncation-comparison-{video}.png"
         )
 
-    plot_comparison_cases(SHEETS_DIR / "t06-comparison-cases.csv", IMAGES_DIR / "t06-comparison-cases.png")
+    plot_comparison_cases(SHEETS_DIR / "t06-comparison-cases.csv", args.output_dir / "t06-comparison-cases.png")

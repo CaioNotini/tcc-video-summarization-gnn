@@ -22,7 +22,7 @@ def weight_by_distance(graph) -> dict[int, list[float]]:
     return by_distance
 
 
-def summarize(graph, features: np.ndarray) -> None:
+def summarize(graph) -> None:
     """Imprime estatísticas gerais e a média de peso por distância temporal."""
     weights = np.array([data["weight"] for _, _, data in graph.edges(data=True)])
 
@@ -61,4 +61,4 @@ if __name__ == "__main__":
     print(f"Features carregadas: shape {features.shape}")
 
     graph = build_time_aware_graph(features, args.delta_t)
-    summarize(graph, features)
+    summarize(graph)

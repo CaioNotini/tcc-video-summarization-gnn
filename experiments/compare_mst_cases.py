@@ -5,7 +5,6 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-import networkx as nx
 import numpy as np
 
 _REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -23,6 +22,7 @@ from tcc_gnn.reference import (
     reference_compute_hierarchy,
     reference_cut_graph,
     reference_graph,
+    scaled_weights,
 )
 
 CSV_FIELDNAMES = [
@@ -40,15 +40,6 @@ CSV_FIELDNAMES = [
     "frames_diferentes_escalado_vs_referencia_escalada",
     "frames_diferentes_escalado_vs_int",
 ]
-
-
-def _scaled(graph: nx.Graph, scale: float) -> nx.Graph:
-    """Cópia do grafo com os pesos multiplicados por `scale`."""
-    scaled = nx.Graph()
-    scaled.add_nodes_from(graph.nodes)
-    for u, v, data in graph.edges(data=True):
-        scaled.add_edge(u, v, weight=data["weight"] * scale)
-    return scaled
 
 
 def run_case(features_path: Path, delta_t: int, cut_number: int, cutnumber_fonte: str = "mao") -> dict:
@@ -71,7 +62,7 @@ def run_case(features_path: Path, delta_t: int, cut_number: int, cutnumber_fonte
     n_diff = sum(1 for f in range(n_frames) if partition_ours.get(f) != partition_ref.get(f))
 
     # Diagnóstico de empate (não é critério de aceitação): pesos x1e6, sem truncamento degenerado.
-    scaled_graph = _scaled(graph, scale=1e6)
+    scaled_graph = scaled_weights(graph, scale=1e6)
     triples_scaled_ours, leaf_list_scaled_ours, _alt = compute_hierarchy(scaled_graph)
     triples_scaled_ref, leaf_list_scaled_ref = reference_compute_hierarchy(scaled_graph)
 
@@ -123,7 +114,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--csv-out",
         type=Path,
-        default=_REPO_ROOT / "docs" / "evidence" / "sheets" / "t06-comparison-cases.csv",
+        required=True,
+        help="a planilha da evidência é sheets/t06-comparison-cases.csv (linhas mescladas por vídeo/cutNumber)",
     )
     args = parser.parse_args()
 

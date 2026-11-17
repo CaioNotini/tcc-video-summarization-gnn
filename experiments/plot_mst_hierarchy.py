@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import colorsys
 import csv
 from pathlib import Path
@@ -12,9 +13,7 @@ from PIL import Image, ImageDraw
 from tcc_gnn.hierarchy.mst import mst_partition
 from tcc_gnn.reference import canonical_partition
 
-EVIDENCE_DIR = Path(__file__).resolve().parents[1] / "docs" / "evidence"
-IMAGES_DIR = EVIDENCE_DIR / "images"
-SHEETS_DIR = EVIDENCE_DIR / "sheets"
+SHEETS_DIR = Path(__file__).resolve().parents[1] / "docs" / "evidence" / "sheets"
 
 
 def cluster_color(cluster_id: int, n_clusters: int) -> tuple[int, int, int]:
@@ -34,9 +33,7 @@ def plot_synthetic_graph(output_path: Path) -> None:
 
     cut_number = 2
     raw_assigned = mst_partition(g, cutNumber=cut_number)  # saída real do código
-    # Partição esperada, calculada à mão sobre a árvore watershed-by-area deste grafo (ver
-    # docs/evidence/t06-mst-hierarchy.md e tests/test_mst_hierarchy.py): cutNumber=2 isola as
-    # folhas 2 e 3 uma da outra.
+    # partição esperada à mão (t06-mst-hierarchy.md): cutNumber=2 isola as folhas 2 e 3 uma da outra
     expected = {0: "A", 1: "A", 2: "B", 3: "C"}
 
     assigned = canonical_partition(raw_assigned)
@@ -60,8 +57,7 @@ def plot_synthetic_graph(output_path: Path) -> None:
         x = xs[frame]
         fill = cluster_color(assigned[frame], n_clusters)
         expected_color = cluster_color(expected_ids[frame], n_clusters)
-        # Compara por partição canônica (mesmo agrupamento), não por id bruto: dois clusters
-        # equivalentes podem ter ids diferentes por numeração arbitrária.
+        # compara partições canônicas, porque clusters equivalentes podem ter ids diferentes
         same_group_assigned = {f for f, c in assigned.items() if c == assigned[frame]}
         same_group_expected = {f for f, c in expected_ids.items() if c == expected_ids[frame]}
         is_mismatch = same_group_assigned != same_group_expected
@@ -176,8 +172,9 @@ def plot_real_video_partition(csv_path: Path, output_path: Path) -> None:
 
 
 if __name__ == "__main__":
-    plot_synthetic_graph(IMAGES_DIR / "t06-synthetic-graph.png")
-    plot_real_video_partition(
-        SHEETS_DIR / "t06-real-video-partition.csv",
-        IMAGES_DIR / "t06-real-video-partition.png",
-    )
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output-dir", type=Path, required=True, help="as figuras da evidência ficam em docs/evidence/images/")
+    args = parser.parse_args()
+
+    plot_synthetic_graph(args.output_dir / "t06-synthetic-graph.png")
+    plot_real_video_partition(SHEETS_DIR / "t06-real-video-partition.csv", args.output_dir / "t06-real-video-partition.png")

@@ -20,11 +20,21 @@ import torch
 from scipy import io
 
 from tcc_gnn.config import REPO_ROOT as _REPO_ROOT
-from tcc_gnn.config import load_config, tracking_config
+from tcc_gnn.config import (
+    SUMME_FEATURES_FILE,
+    SUMME_PROCESSED,
+    SUMME_VIDEOS,
+    load_config,
+    tracking_config,
+)
 from tcc_gnn.data.summe import SumMeAdapter
 from tcc_gnn.evaluation.fscore import f_score, sampled_to_native
-from tcc_gnn.features.features import extract_features
-from tcc_gnn.features.frame_extraction import extract_frames, video_metadata
+from tcc_gnn.features.features import BATCH_SIZE, extract_features
+from tcc_gnn.features.frame_extraction import (
+    extract_frames,
+    frame_paths,
+    video_metadata,
+)
 from tcc_gnn.graph.frame import build_time_aware_graph
 from tcc_gnn.hierarchy.best_cut import best_cut_number, cut_number_from_best
 from tcc_gnn.hierarchy.keyshots import group_central_frames, initial_len_shot
@@ -35,8 +45,6 @@ _CFG = load_config()
 RATE_FPS = float(_CFG["graph"]["rate"])  # D-25
 PERCENT = float(_CFG["hierarchy"]["percent"])  # D-21
 ALPHA = _CFG["hierarchy"]["alpha"]  # D-20
-VIDEOS_DIR = _REPO_ROOT / "data" / "raw" / "summe" / "SumMe" / "videos"
-FRAMES_ROOT = _REPO_ROOT / "data" / "processed" / "summe"
 MAT_DIR = _REPO_ROOT / "references" / "HieTaSumm-lib" / "HieTaSumm" / "mat-files"
 TMP_ROOT = _REPO_ROOT / ".cache" / "tmp" / "t07_extraction"
 STAGES = [
@@ -79,8 +87,8 @@ def measure(stage: str, row: dict, interval_s: float = 0.02):
 
 def frames_identical(dir_a: Path, dir_b: Path) -> bool:
     """Mesmos nomes e mesmos bytes nos jpgs das duas pastas."""
-    a = sorted(dir_a.glob("*.jpg"))
-    b = sorted(dir_b.glob("*.jpg"))
+    a = frame_paths(dir_a)
+    b = frame_paths(dir_b)
     return [p.name for p in a] == [p.name for p in b] and all(
         pa.read_bytes() == pb.read_bytes() for pa, pb in zip(a, b)
     )
@@ -88,9 +96,9 @@ def frames_identical(dir_a: Path, dir_b: Path) -> bool:
 
 def run_video(video_id: str, name: str, delta_t: int, device: torch.device, adapter: SumMeAdapter, reference) -> dict:
     """Linha do CSV de um vídeo: reprodutibilidade de frames e features, pipeline, F oficial e suplementar, tempo e memória."""
-    video_path = VIDEOS_DIR / f"{name}.mp4"
-    frames_dir = FRAMES_ROOT / name / "frames"
-    features_path = FRAMES_ROOT / name / "features_resnet50_avgpool.npy"
+    video_path = SUMME_VIDEOS / f"{name}.mp4"
+    frames_dir = SUMME_PROCESSED / name / "frames"
+    features_path = SUMME_PROCESSED / name / SUMME_FEATURES_FILE
     fps, n_frames_opencv = video_metadata(video_path)
     gt = adapter.load_ground_truth(video_id)
     mat = io.loadmat(MAT_DIR / f"{name.replace(' ', '_')}.mat")
@@ -124,7 +132,7 @@ def run_video(video_id: str, name: str, delta_t: int, device: torch.device, adap
         float(np.max(np.abs(recomputed - cached))) if recomputed.shape == cached.shape else ""
     )
     features = cached
-    n_disk = sum(1 for _ in frames_dir.glob("*.jpg"))
+    n_disk = len(frame_paths(frames_dir))
     row["n_frames_sampled"] = n_disk
     if len(features) != n_disk:
         raise ValueError(f"{name}: {len(features)} features para {n_disk} frames")
@@ -175,8 +183,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--videos", nargs="*", help="nomes dos vídeos (padrão: os 25 do SumMe)")
     parser.add_argument("--delta-t", type=int, default=_CFG["graph"]["delta_t"], help="D-24")
-    parser.add_argument("--csv-out", type=Path,
-                        default=_REPO_ROOT / "docs" / "evidence" / "sheets" / "t07-baseline-summe.csv")
+    parser.add_argument("--csv-out", type=Path, required=True, help="a planilha da evidência é sheets/t07-baseline-summe.csv")
     parser.add_argument("--experiment", default="T07-hietasumm-baseline-summe")
     args = parser.parse_args()
 
@@ -199,8 +206,8 @@ if __name__ == "__main__":
     with mlflow.start_run():
         mlflow.log_params({
             "delta_t": args.delta_t, "alpha": ALPHA, "percent": PERCENT, "rate": RATE_FPS,
-            "extractor": "torchvision ResNet50 IMAGENET1K_V2 avgpool, batch 16",
-            "frame_sampling": "every 0.25 s, HieTaSumm-lib rule (D-25)",
+            "extractor": f"torchvision ResNet50 IMAGENET1K_V2 avgpool, batch {BATCH_SIZE}",
+            "frame_sampling": f"every {1 / RATE_FPS} s, HieTaSumm-lib rule (D-25)",
             "official_mapping": "D-26", "commit": git_commit(), "n_videos": len(selected),
         })
         mlflow.set_tags({

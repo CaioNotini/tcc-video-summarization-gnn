@@ -11,11 +11,12 @@ import networkx as nx
 import numpy as np
 import torch
 
-from tcc_gnn.config import REPO_ROOT, load_config
+from tcc_gnn.config import SUMME_FEATURES_FILE, SUMME_PROCESSED, load_config
 from tcc_gnn.features.features import cached_features
 from tcc_gnn.features.frame_extraction import (
     expected_frame_count,
     extract_frames,
+    frame_paths,
     video_metadata,
 )
 from tcc_gnn.graph.frame import build_time_aware_graph
@@ -45,9 +46,9 @@ def run_video(video_path: Path, frames_root: Path, delta_ts: list[int], cfg: dic
     name = video_path.stem
     frames_dir = frames_root / name / "frames"
 
-    if not frames_dir.is_dir() or not any(frames_dir.glob("*.jpg")):
+    if not frames_dir.is_dir() or not any(frames_dir.iterdir()):
         extract_frames(video_path, frames_dir, fps=rate)
-    n_disk = sum(1 for _ in frames_dir.glob("*.jpg"))
+    n_disk = len(frame_paths(frames_dir))
 
     native_fps, n_native = video_metadata(video_path)
     duration_s = n_native / native_fps
@@ -55,9 +56,7 @@ def run_video(video_path: Path, frames_root: Path, delta_ts: list[int], cfg: dic
     if n_disk != n_expected:
         raise ValueError(f"{name}: {n_disk} frames em disco, {n_expected} esperados (extração incompleta)")
 
-    features = cached_features(frames_dir, frames_root / name / "features_resnet50_avgpool.npy", device)
-    if len(features) != n_disk:
-        raise ValueError(f"{name}: {len(features)} features para {n_disk} frames")
+    features = cached_features(frames_dir, frames_root / name / SUMME_FEATURES_FILE, device)
 
     rows = []
     for delta_t in delta_ts:
@@ -83,7 +82,7 @@ def run_video(video_path: Path, frames_root: Path, delta_ts: list[int], cfg: dic
                 "n_keyshot_frames": n_keyshot,
                 "summary_duration_s": round(summary_s, 2),
                 "percent_of_duration": round(pct, 2),
-                "exceeds_15": pct > percent,
+                "exceeds_15": pct > percent,  # compara com o percent do yaml; o nome da coluna é histórico
             }
         )
     return rows
@@ -93,10 +92,9 @@ if __name__ == "__main__":
     cfg = load_config()
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--videos-dir", type=Path, required=True)
-    parser.add_argument("--frames-root", type=Path, default=REPO_ROOT / "data" / "processed" / "summe")
+    parser.add_argument("--frames-root", type=Path, default=SUMME_PROCESSED)
     parser.add_argument("--delta-t", type=int, nargs="+", default=[cfg["graph"]["delta_t"]], help="D-24")
-    parser.add_argument("--csv-out", type=Path,
-                        default=REPO_ROOT / "docs" / "evidence" / "sheets" / "q10-baseline-budget.csv")
+    parser.add_argument("--csv-out", type=Path, required=True, help="a planilha da evidência é sheets/q10-baseline-budget.csv")
     args = parser.parse_args()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

@@ -8,6 +8,7 @@ from pathlib import Path
 
 import numpy as np
 
+from tcc_gnn.config import VSUMM_FEATURES_FILE, VSUMM_PROCESSED
 from tcc_gnn.hierarchy.mst import compute_hierarchy, cut_graph, partition_from_cut
 from tcc_gnn.reference import (
     canonical_partition,
@@ -21,7 +22,7 @@ _REPO_ROOT = Path(__file__).resolve().parents[1]
 
 def features_path_for_video(video: str) -> Path:
     """Caminho de `features_teste.npy` de um vídeo do VSUMM (v21, v29)."""
-    return _REPO_ROOT / "data" / "processed" / "vsumm" / video / "features_teste.npy"
+    return VSUMM_PROCESSED / video / VSUMM_FEATURES_FILE
 
 
 def segment_sizes(partition: dict[int, int]) -> list[int]:

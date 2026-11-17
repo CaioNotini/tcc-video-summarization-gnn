@@ -166,7 +166,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--csv-out",
         type=Path,
-        default=_REPO_ROOT / "docs" / "evidence" / "sheets" / "t06-cut-edges-v21.csv",
+        required=True,
         help="mesmo arquivo pra todos os vídeos (coluna 'video' distingue as linhas)",
     )
     args = parser.parse_args()
