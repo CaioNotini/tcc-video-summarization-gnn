@@ -2,20 +2,12 @@
 
 from __future__ import annotations
 
-import os
-import sys
-import tempfile
-import types
-from pathlib import Path
-
 import networkx as nx
 import numpy as np
 import pytest
 
 from tcc_gnn.hierarchy.keyshots import group_central_frames, initial_len_shot
-
-_REPO_ROOT = Path(__file__).resolve().parents[1]
-_SUBMODULE = _REPO_ROOT / "references" / "HieTaSumm-lib"
+from tcc_gnn.reference import SUBMODULE, reference_group_central_frames
 
 
 def _three_components() -> tuple[nx.Graph, list[int]]:
@@ -55,53 +47,8 @@ def test_tres_ramos_orcamento_4_por_componente() -> None:
     assert group_central_frames(g, leaves, 12) == [1, 2, 3, 4, 8]
 
 
-def _reference_group_central_frames(graph: nx.Graph, leaflist: list[int], len_shot: int) -> list[int]:
-    """Roda Summary.group_central_frames do submódulo (cp desligado) e lê os keyshots gravados."""
-    stub_names = [
-        "tensorflow",
-        "tensorflow.keras",
-        "tensorflow.keras.applications",
-        "tensorflow.keras.applications.vgg16",
-        "tensorflow.keras.applications.resnet50",
-        "tensorflow.keras.models",
-        "tensorflow.keras.utils",
-    ]
-    stubs = {name: types.ModuleType(name) for name in stub_names}
-    stubs["tensorflow.keras.applications.vgg16"].VGG16 = object
-    stubs["tensorflow.keras.applications.vgg16"].preprocess_input = lambda x: x
-    stubs["tensorflow.keras.applications.resnet50"].ResNet50 = object
-    stubs["tensorflow.keras.applications.resnet50"].preprocess_input = lambda x: x
-    stubs["tensorflow.keras.models"].Model = object
-    stubs["tensorflow.keras"].utils = stubs["tensorflow.keras.utils"]
-    stubs["tensorflow.keras"].applications = stubs["tensorflow.keras.applications"]
-    stubs["tensorflow.keras"].models = stubs["tensorflow.keras.models"]
-    stubs["tensorflow"].keras = stubs["tensorflow.keras"]
-    for name, mod in stubs.items():
-        sys.modules.setdefault(name, mod)
-    if str(_SUBMODULE) not in sys.path:
-        sys.path.insert(0, str(_SUBMODULE))
-    from HieTaSumm.Files import Files
-    from HieTaSumm.Summary import Summary
-
-    real_os_system = os.system
-    os.system = lambda *a, **k: 0
-    try:
-        with tempfile.TemporaryDirectory() as tmp:
-            s = Summary.__new__(Summary)
-            s.len_shot = len_shot
-            s.summ_path = str(Path(tmp) / "summ") + os.sep
-            s.summ_input = Files(str(Path(tmp) / "summ_input.txt"))
-            s.video_file = tmp + os.sep
-            s.group_central_frames(graph, leaflist)
-            path = Path(s.summ_input.file)
-            lines = path.read_text().split() if path.exists() else []
-    finally:
-        os.system = real_os_system
-    return [int(line[:-4]) for line in lines]
-
-
 needs_submodule = pytest.mark.skipif(
-    not (_SUBMODULE / "HieTaSumm" / "Summary.py").exists(),
+    not (SUBMODULE / "HieTaSumm" / "Summary.py").exists(),
     reason="submódulo HieTaSumm-lib não baixado",
 )
 
@@ -110,7 +57,7 @@ needs_submodule = pytest.mark.skipif(
 @pytest.mark.parametrize("len_shot", [9, 12, 3, 0])
 def test_igual_a_referencia_casos_a_mao(len_shot: int) -> None:
     g, leaves = _three_components()
-    assert group_central_frames(g, leaves, len_shot) == _reference_group_central_frames(g, leaves, len_shot)
+    assert group_central_frames(g, leaves, len_shot) == reference_group_central_frames(g, leaves, len_shot)
 
 
 @needs_submodule
@@ -130,4 +77,4 @@ def test_igual_a_referencia_em_grafos_aleatorios() -> None:
             start += size
         leaves = list(range(n_leaves))
         len_shot = int(rng.integers(0, n_leaves))
-        assert group_central_frames(g, leaves, len_shot) == _reference_group_central_frames(g, leaves, len_shot)
+        assert group_central_frames(g, leaves, len_shot) == reference_group_central_frames(g, leaves, len_shot)

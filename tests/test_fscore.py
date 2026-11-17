@@ -2,17 +2,11 @@
 
 from __future__ import annotations
 
-import sys
-import types
-from pathlib import Path
-
 import numpy as np
 import pytest
 
 from tcc_gnn.evaluation.fscore import f_score, sampled_to_native
-
-_REPO_ROOT = Path(__file__).resolve().parents[1]
-_SUBMODULE = _REPO_ROOT / "references" / "HieTaSumm-lib"
+from tcc_gnn.reference import SUBMODULE, reference_evaluation
 
 
 def test_meio_a_meio() -> None:
@@ -58,6 +52,7 @@ def test_entradas_invalidas() -> None:
 
 
 def _marked(fps: float, sampled: list[int], n_frames: int = 200) -> list[int]:
+    """Índices nativos marcados por `sampled_to_native`."""
     return np.flatnonzero(sampled_to_native(sampled, fps, n_frames)).tolist()
 
 
@@ -111,43 +106,13 @@ def test_primeiro_frame_do_intervalo_e_o_frame_que_o_extrator_grava(fps: float) 
     assert [_marked(fps, [k])[0] for k in range(12)] == saved_by_extractor
 
 
-def _reference_evaluation():
-    """Classe Evaluation do submódulo, com stubs de tensorflow para o import do pacote."""
-    stub_names = [
-        "tensorflow",
-        "tensorflow.keras",
-        "tensorflow.keras.applications",
-        "tensorflow.keras.applications.vgg16",
-        "tensorflow.keras.applications.resnet50",
-        "tensorflow.keras.models",
-        "tensorflow.keras.utils",
-    ]
-    stubs = {name: types.ModuleType(name) for name in stub_names}
-    stubs["tensorflow.keras.applications.vgg16"].VGG16 = object
-    stubs["tensorflow.keras.applications.vgg16"].preprocess_input = lambda x: x
-    stubs["tensorflow.keras.applications.resnet50"].ResNet50 = object
-    stubs["tensorflow.keras.applications.resnet50"].preprocess_input = lambda x: x
-    stubs["tensorflow.keras.models"].Model = object
-    stubs["tensorflow.keras"].utils = stubs["tensorflow.keras.utils"]
-    stubs["tensorflow.keras"].applications = stubs["tensorflow.keras.applications"]
-    stubs["tensorflow.keras"].models = stubs["tensorflow.keras.models"]
-    stubs["tensorflow"].keras = stubs["tensorflow.keras"]
-    for name, mod in stubs.items():
-        sys.modules.setdefault(name, mod)
-    if str(_SUBMODULE) not in sys.path:
-        sys.path.insert(0, str(_SUBMODULE))
-    from HieTaSumm.Evaluation import Evaluation
-
-    return Evaluation.__new__(Evaluation)
-
-
 @pytest.mark.skipif(
-    not (_SUBMODULE / "HieTaSumm" / "Evaluation.py").exists(),
+    not (SUBMODULE / "HieTaSumm" / "Evaluation.py").exists(),
     reason="submódulo HieTaSumm-lib não baixado",
 )
 @pytest.mark.parametrize("eval_method", ["max", "avg"])
 def test_igual_ao_evaluation_f_score_de_referencia(eval_method: str) -> None:
-    reference = _reference_evaluation()
+    reference = reference_evaluation()
     rng = np.random.default_rng(7)
     for _ in range(50):
         n = int(rng.integers(5, 300))
