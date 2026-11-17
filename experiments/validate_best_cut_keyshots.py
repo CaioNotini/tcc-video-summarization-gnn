@@ -37,6 +37,7 @@ from validate_mst_hierarchy import (  # noqa: E402
 )
 from tcc_gnn.graph.frame import build_time_aware_graph  # noqa: E402
 from tcc_gnn.hierarchy.best_cut import best_cut_number, cut_number_from_best  # noqa: E402
+from tcc_gnn.hierarchy.keyshots import group_central_frames  # noqa: E402
 from tcc_gnn.hierarchy.mst import compute_hierarchy, cut_graph  # noqa: E402
 
 PERCENT = 15.0
@@ -65,28 +66,8 @@ def _ref_put(name: str, delta_t: int, raw: float, cut: int) -> None:
 
 
 def collect_keyshots(cut_graph_result: nx.Graph, leaf_list: list[int], len_shot_total: int) -> list[int]:
-    """Reprodução fiel de Summary.group_central_frames (Summary.py:167-192): retorna a lista
-    ordenada dos índices de frame keyshot, sem copiar arquivos. A divisão de len_shot por |S|
-    é feita uma vez antes do loop, como no original (Summary.py:170)."""
-    leaf_set = set(leaf_list)
-    components = list(nx.connected_components(cut_graph_result))
-    len_shot = int(len_shot_total / len(components))
-    keyshots: list[int] = []
-    for component in components:
-        sub = cut_graph_result.subgraph(component).copy()
-        comp_leaf_list = [node for node in list(sub) if node in leaf_set]
-        len_leaf_list = len(comp_leaf_list)
-        cn = int(len_leaf_list / 2)
-        if cn == 0:
-            continue
-        if len_leaf_list < len_shot:
-            init_keyshots, end_keyshots = 0, len_leaf_list - 1
-        else:
-            init_keyshots = cn - int(len_shot / 2)
-            end_keyshots = cn + int(len_shot / 2)
-        for k in range(init_keyshots, end_keyshots):
-            keyshots.append(comp_leaf_list[k])
-    return sorted(keyshots)
+    """Lista ordenada dos keyshots pela porta de Summary.group_central_frames (hierarchy/keyshots.py)."""
+    return sorted(group_central_frames(cut_graph_result, leaf_list, len_shot_total))
 
 
 def actual_reference_keyshots(

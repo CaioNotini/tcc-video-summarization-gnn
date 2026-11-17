@@ -8,11 +8,9 @@ pesos e preprocessamento de features.py, com batch e GPU se houver), grafo time-
 cutNumber = int(bestCutNumber() * alpha/100) com piso 3 (Summary.py:57-59), via a porta best_cut.py
 (equivalente ao Summary.bestCutNumber do submódulo, validada em experiments/validate_best_cut.py e
 validate_best_cut_keyshots.py),
-hierarquia e corte portados (mst.py), e contagem dos frames de keyshot reproduzindo exatamente a
-aritmética de Summary.group_central_frames (Summary.py:167-192): len_shot total =
-round(n_disk * 15/100) - 1 (Summary.py:56), dividido por len(S) componentes (Summary.py:170);
-componente com 1 folha contribui 0, com len < len_shot contribui len-1, senão 2*int(len_shot/2).
-Nada em src/ é alterado; a cópia de jpgs do original é irrelevante para a duração e não é feita.
+hierarquia e corte portados (mst.py), e keyshots pela porta de Summary.group_central_frames
+(hierarchy/keyshots.py, Summary.py:167-192), com orçamento total round(n_disk * 15/100) - 1
+(Summary.py:56). A cópia de jpgs do original é irrelevante para a duração e não é feita.
 """
 
 from __future__ import annotations
@@ -36,6 +34,7 @@ sys.path.insert(0, str(_REPO_ROOT / "experiments"))
 from tcc_gnn.hierarchy.best_cut import best_cut_number, cut_number_from_best  # noqa: E402
 from tcc_gnn.features.frame_extraction import extract_frames, saving_frames_durations  # noqa: E402
 from tcc_gnn.graph.frame import build_time_aware_graph  # noqa: E402
+from tcc_gnn.hierarchy.keyshots import group_central_frames, initial_len_shot  # noqa: E402
 from tcc_gnn.hierarchy.mst import compute_hierarchy, cut_graph  # noqa: E402
 
 RATE_FPS = 4.0  # options.json: "rate": 4
@@ -101,27 +100,10 @@ def extract_features_batched(frame_dir: Path, device: torch.device, batch_size: 
 
 
 def count_keyshot_frames(cut_graph_result: nx.Graph, leaf_list: list[int], n_disk: int) -> tuple[int, int, int]:
-    """Conta os frames de keyshot de group_central_frames (Summary.py:167-192) sem copiar arquivos.
-
-    Retorna (n_keyshot_frames, n_components, len_shot_total). len(S) inclui componentes sem folha,
-    como no original (Summary.py:168-170 usa todos os componentes conexos do grafo de corte).
-    """
-    leaf_set = set(leaf_list)
-    components = list(nx.connected_components(cut_graph_result))
-    len_shot_total = round(n_disk * (PERCENT / 100)) - 1  # Summary.py:56
-    len_shot = int(len_shot_total / len(components))  # Summary.py:170
-
-    total = 0
-    for component in components:
-        len_leaf_list = sum(1 for node in component if node in leaf_set)
-        cn = int(len_leaf_list / 2)  # Summary.py:177
-        if cn == 0:  # Summary.py:178
-            continue
-        if len_leaf_list < len_shot:  # Summary.py:180-182
-            total += len_leaf_list - 1
-        else:  # Summary.py:184-185
-            total += 2 * int(len_shot / 2)
-    return total, len(components), len_shot_total
+    """Conta os keyshots de group_central_frames (hierarchy/keyshots.py); devolve (n_keyshots, |S|, len_shot total)."""
+    len_shot_total = initial_len_shot(n_disk, PERCENT)
+    keyshots = group_central_frames(cut_graph_result, leaf_list, len_shot_total)
+    return len(keyshots), nx.number_connected_components(cut_graph_result), len_shot_total
 
 
 def run_video(video_path: Path, frames_root: Path, delta_ts: list[int], device: torch.device) -> list[dict]:
