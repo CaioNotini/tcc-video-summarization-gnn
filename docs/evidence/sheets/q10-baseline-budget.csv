@@ -1,0 +1,26 @@
+video,video_duration_s,n_frames_extracted,delta_t,best_cut_number_raw,cut_number,n_components,len_shot_total,n_keyshot_frames,summary_duration_s,percent_of_duration,exceeds_15
+Air_Force_One,179.76,716,32,5.0,3,4,106,104,26.0,14.46,False
+Base jumping,157.79,628,32,8.0,6,7,93,84,21.0,13.31,False
+Bearpark_climbing,133.64,532,32,4.0,3,4,79,72,18.0,13.47,False
+Bike Polo,102.13,408,32,0.0,3,4,60,56,14.0,13.71,False
+Bus_in_Rock_Tunnel,171.1,684,32,9.0,6,7,102,98,24.5,14.32,False
+car_over_camera,146.21,584,32,0.0,3,4,87,80,20.0,13.68,False
+Car_railcrossing,169.34,676,32,7.0,5,6,100,96,24.0,14.17,False
+Cockpit_Landing,301.83,1204,32,0.0,3,4,180,176,44.0,14.58,False
+Cooking,85.8,340,32,0.0,3,4,50,48,12.0,13.99,False
+Eiffel Tower,198.84,792,32,1.0,3,4,118,112,28.0,14.08,False
+Excavators river crossing,388.84,1552,32,8.0,6,7,232,224,56.0,14.4,False
+Fire Domino,53.73,212,32,0.0,3,4,31,24,6.0,11.17,False
+Jumps,38.0,152,32,5.0,3,4,22,16,4.0,10.53,False
+Kids_playing_in_leaves,106.34,424,32,3.0,3,4,63,56,14.0,13.17,False
+Notre_Dame,192.0,768,32,0.0,3,4,114,112,28.0,14.58,False
+Paintball,254.25,1016,32,9.0,6,7,151,140,35.0,13.77,False
+paluma_jump,85.89,340,32,5.0,3,4,50,48,12.0,13.97,False
+playing_ball,103.97,412,32,4.0,3,4,61,56,14.0,13.47,False
+Playing_on_water_slide,102.27,408,32,0.0,3,4,60,56,14.0,13.69,False
+Saving dolphines,222.99,888,32,1.0,3,4,132,128,32.0,14.35,False
+Scuba,74.03,296,32,8.0,6,7,43,42,10.5,14.18,False
+St Maarten Landing,70.04,280,32,3.0,3,4,41,40,10.0,14.28,False
+Statue of Liberty,154.52,616,32,2.0,3,4,91,88,22.0,14.24,False
+Uncut_Evening_Flight,322.72,1288,32,8.0,6,7,192,182,45.5,14.1,False
+Valparaiso_Downhill,172.77,688,32,6.0,4,5,102,100,25.0,14.47,False

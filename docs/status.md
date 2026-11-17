@@ -31,17 +31,18 @@ A task becomes validated only when its output is saved in [evidence/](./evidence
 - **Q-04:** affects T13. Owner: advisor.
 - **Q-06:** affects the scope of the TVSum adapter: whether it is written in TCC1 or left for TCC2 with the TVSum experiments. Owner: advisor.
 - **Q-08:** from T13 onward.
-- **Q-10:** blocks T07 and affects T19. Baseline summaries above 15% of the duration: how many of the 25 SumMe videos exceed the budget, and how they are treated. Owner: researcher. The per-video measurement (2026-11-16, `delta_t = 32`) stopped at video 7 of 25 and is not evidence yet, for two reasons that need a decision: (1) `src/tcc_gnn/features/frame_extraction.py` samples every `round(fps/4)` native frames (4.17 fps at 25 fps, 4.28 at 29.97, 3.75 at 30), while the HieTaSumm-lib extractor (`HieTaSumm/__init__.py:86-142`) saves one frame every 0.25 s; `measure_q10_budget.py` converts keyshot frames to seconds with `/4`, so the percentages it prints are off by that ratio (two videos printed above 15% that are below it in real duration); (2) the frames on disk for `Car_railcrossing` are a partial extraction (272 of 725, last file truncated), which stopped the run.
+- **Q-10:** blocks T07 and affects T19. Baseline summaries above 15% of the duration: how many of the 25 SumMe videos exceed the budget, and how they are treated. Owner: researcher. Measured on 2026-11-16 with `delta_t = 32`: 0 of 25 videos exceed the budget (smallest 10.53%, largest 14.58%), as the structural bound predicts; evidence in [evidence/q10-baseline-budget.md](./evidence/q10-baseline-budget.md). Closing Q-10 and unblocking T07 is the researcher's decision. `delta_t = 8` was not measured.
 - **Q-11:** affects T13 and T19. SLC level used as the segmentation; must be fixed in the protocol before results. Owner: researcher.
 - **Q-05 and Q-07 gap:** closed. Confirmed (2026-11-16) that the two identifiers were assigned in earlier working versions and discarded without a recorded entry; what they covered was not recovered. The numbers are not reused, and the gap is noted in the questions table of [architecture.md](./architecture.md).
 
 ## Local state
 
 - `data/raw/vsumm/` holds the four official VSUMM archives and two extracted videos (v21 and v29).
-- `data/processed/vsumm/` holds extracted frames and a `features_teste.npy` file for v21 and v29.
+- `data/processed/vsumm/` holds extracted frames and a `features_teste.npy` file for v21 and v29. The frames are about one per second (110 for v21, 65 for v29, both 29.97 fps), extracted before the extractor fix of 2026-11-16 and not re-extracted.
 - The two submodules, `HieTaSumm-lib` and `mHELMNet`, are populated and in sync (re-populated on 2026-11-16 with `git submodule update --init --recursive`, at the pinned commits).
-- `data/raw/summe/SumMe/` holds the 25 SumMe videos. `data/processed/summe/` holds frames for 8 videos and cached features for 7 of them; the `Car_railcrossing` frames are a partial extraction (see Q-10).
-- Python environment: `.venv/` on drive `D:` (CLAUDE.md rule 17), torch 2.5.1+cu121 on a GeForce GTX 1660 SUPER; `pytest` passes 28 tests.
+- `data/raw/summe/SumMe/` holds the 25 SumMe videos. `data/processed/summe/` holds frames (one every 0.25 s, 15,904 in total, none truncated) and ResNet50 avgpool features for all 25, regenerated on 2026-11-16 with the fixed `src/tcc_gnn/features/frame_extraction.py`.
+- Python environment: `.venv/` on drive `D:` (CLAUDE.md rule 17), torch 2.5.1+cu121 on a GeForce GTX 1660 SUPER.
+- `src/tcc_gnn/features/frame_extraction.py` was fixed on 2026-11-16 to sample one frame every `1/fps` seconds with the rule of the HieTaSumm-lib extractor (`HieTaSumm/__init__.py:86-142`), tested in `tests/test_frame_extraction.py`. Before, it kept one frame every `round(native_fps/fps)` native frames.
 
 ## Verified evidence
 
@@ -54,7 +55,7 @@ A task becomes validated only when its output is saved in [evidence/](./evidence
 
 ## Reported, not yet evidence
 
-None. The 0.97 correlation sanity check that was listed here now has saved runs: [evidence/sanity-check-features.md](./evidence/sanity-check-features.md) (v29, torchvision features, 2026-11-16: 0.9749 with `delta_t = 8`, 0.7937 with `delta_t = 32`).
+None. The 0.97 correlation sanity check that was listed here now has saved runs: [evidence/sanity-check-features.md](./evidence/sanity-check-features.md) (v29, torchvision features, 2026-11-16: Pearson 0.9749 and Spearman 1.0000 with `delta_t = 8`; Pearson 0.7937 and Spearman 0.9456 with `delta_t = 32`).
 
 ## Next step
 

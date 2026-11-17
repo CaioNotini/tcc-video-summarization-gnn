@@ -6,6 +6,7 @@ import argparse
 from pathlib import Path
 
 import numpy as np
+from scipy.stats import spearmanr
 
 from tcc_gnn.graph.frame import build_time_aware_graph
 
@@ -41,7 +42,9 @@ def summarize(graph, features: np.ndarray) -> None:
 
     if len(distances) >= 2:
         correlation = float(np.corrcoef(distances, means)[0, 1])
+        spearman = float(spearmanr(distances, means).statistic)
         print(f"\nCorrelação (distância x peso médio): {correlation:.4f}")
+        print(f"Spearman (distância x peso médio): {spearman:.4f}")
         print(
             "Esperado: próxima de +1 (peso cresce com a distância temporal, "
             "indicando que frames mais distantes tendem a ser mais dissimilares)."

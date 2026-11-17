@@ -1,29 +1,44 @@
 ```
-Role: Evidence for the feature-graph sanity check. Saved runs of the correlation between edge weight and temporal distance on VSUMM video v29 with torchvision features, with delta_t = 8 and delta_t = 32.
+Role: Evidence for the feature-graph sanity check. Saved runs of the Pearson and Spearman correlations between edge weight and temporal distance on VSUMM video v29 with torchvision features, with delta_t = 8 and delta_t = 32.
 Entry: ../status.md
 Related to: [status.md](../status.md), [architecture.md](../architecture.md)
 ```
 
 # Sanity check: edge weight grows with temporal distance (v29)
 
-Run on 2026-11-16, repository commit `02652a5` (working tree with uncommitted documentation
-changes; `src/` and `experiments/validate_graph_torchvision.py` unmodified).
-
 This saves the run behind the "correlation of 0.97" previously listed in
 [status.md](../status.md) under "Reported, not yet evidence". The script is
 `experiments/validate_graph_torchvision.py`; there is no `sanity_check_features.py` in the
 repository, and this is the script that computes this check.
 
+## History
+
+- 2026-11-16, commit `02652a5`: first run, `delta_t = 8`, Pearson only: **0.9749**.
+- 2026-11-16, commit `c71a4ed` with uncommitted changes: second run, `delta_t = 32`, Pearson
+  only: **0.7937**.
+- 2026-11-16, commit `c71a4ed` with uncommitted changes: the script gained a Spearman line
+  (`scipy.stats.spearmanr` over the same distance and mean-weight lists), and both values of
+  `delta_t` were run again. The outputs below are from this run. The Pearson values and every
+  per-distance mean are the same as in the two earlier runs.
+
 ## Parameters
 
 - Script: `experiments/validate_graph_torchvision.py`
-- Features: `data/processed/vsumm/v29/features_teste.npy`, shape (65, 2048) — ResNet50
-  avgpool output dimension, produced earlier with the torchvision extractor (as recorded in
-  the Local state section of [status.md](../status.md))
-- Graph: `src/tcc_gnn/graph/frame.py`, `build_time_aware_graph`
-- `delta_t = 8`, the value in `configs/default.yaml` used in the T01/T06 validations
+- Features: `data/processed/vsumm/v29/features_teste.npy`, shape (65, 2048), ResNet50 avgpool
+  output produced earlier with the torchvision extractor (Local state in
+  [status.md](../status.md)).
+- Frames behind these features: 65 frames for a 64.8 s video at 29.97 fps, so about one frame per
+  second (one every 30 native frames, 1.001 s). They were extracted before the extractor fix of
+  2026-11-16 and were not re-extracted.
+- Graph: `src/tcc_gnn/graph/frame.py`, `build_time_aware_graph`.
+- `delta_t = 8`: the value in `configs/default.yaml`, used in the T01 and T06 validations.
+- `delta_t = 32`: `rate * time` of the HieTaSumm-lib `options.json` (`Summary.py:15`), used for
+  the Q-10 measurement.
 
-## Output (verbatim, mojibake from the Windows console encoding)
+## Output, `delta_t = 8` (verbatim, mojibake from the Windows console encoding)
+
+Command: `python experiments/validate_graph_torchvision.py --features
+data/processed/vsumm/v29/features_teste.npy --delta-t 8`
 
 ```
 Features carregadas: shape (65, 2048)
@@ -43,28 +58,14 @@ Peso m�dio por dist�ncia temporal |v1 - v2|:
   dist�ncia  7: peso m�dio 12.2366  (n=58)
 
 Correla��o (dist�ncia x peso m�dio): 0.9749
-Esperado: pr�xima de +1 (peso cresce com a dist�ncia temporal, indicando que frames mais
-distantes tendem a ser mais dissimilares).
+Spearman (dist�ncia x peso m�dio): 1.0000
+Esperado: pr�xima de +1 (peso cresce com a dist�ncia temporal, indicando que frames mais distantes tendem a ser mais dissimilares).
 ```
 
-## Result
-
-Correlation between temporal distance and mean edge weight: **0.9749**, consistent with the
-0.97 previously reported without evidence. Mean edge weight (feature distance) grows
-monotonically with temporal distance, with no NaN or Inf, which is the expected behaviour of
-the time-aware graph on real features.
-
-## Second run: `delta_t = 32`
-
-Run on 2026-11-16, repository commit `c71a4ed` with uncommitted changes; `src/` and
-`experiments/validate_graph_torchvision.py` unmodified. Same script and same features file as
-above. `delta_t = 32` is `rate * time` of the HieTaSumm-lib `options.json` (`Summary.py:15`), the
-value used for the Q-10 measurement. The run above, with `delta_t = 8`, is kept as history.
+## Output, `delta_t = 32` (verbatim)
 
 Command: `python experiments/validate_graph_torchvision.py --features
 data/processed/vsumm/v29/features_teste.npy --delta-t 32`
-
-Output (verbatim, mojibake from the Windows console encoding):
 
 ```
 Features carregadas: shape (65, 2048)
@@ -73,6 +74,7 @@ Peso m�nimo:  2.1525
 Peso m�ximo:  23.9451
 Peso m�dio:   12.7634
 NaN/Inf?      False
+
 Peso m�dio por dist�ncia temporal |v1 - v2|:
   dist�ncia  1: peso m�dio 6.4691  (n=64)
   dist�ncia  2: peso m�dio 8.1563  (n=63)
@@ -105,13 +107,31 @@ Peso m�dio por dist�ncia temporal |v1 - v2|:
   dist�ncia 29: peso m�dio 14.4099  (n=36)
   dist�ncia 30: peso m�dio 14.3809  (n=35)
   dist�ncia 31: peso m�dio 14.2214  (n=34)
+
 Correla��o (dist�ncia x peso m�dio): 0.7937
-Esperado: pr�xima de +1 (peso cresce com a dist�ncia temporal, indicando que frames mais
-distantes tendem a ser mais dissimilares).
+Spearman (dist�ncia x peso m�dio): 0.9456
+Esperado: pr�xima de +1 (peso cresce com a dist�ncia temporal, indicando que frames mais distantes tendem a ser mais dissimilares).
 ```
 
-Result: correlation **0.7937**, no NaN or Inf. Distances 1 to 7 give the same means as the
-`delta_t = 8` run, as expected, since the edges are the same. The mean weight keeps growing up to
-about distance 12 and then stays between 13.6 and 14.5 up to distance 31. The lower correlation
-comes from this plateau over the longer window, not from a change in the short-range edges. The
-plateau is an observation on one VSUMM video of 65 frames, not a measured property of the graph.
+## Result
+
+| `delta_t` | Edges | Pearson | Spearman | NaN/Inf |
+| --------- | ----- | ------- | -------- | ------- |
+| 8         | 427   | 0.9749  | 1.0000   | no      |
+| 32        | 1519  | 0.7937  | 0.9456   | no      |
+
+With `delta_t = 8` the mean weight rises at every distance from 1 to 7, so the rank correlation
+is exactly 1. The value 0.9749 previously reported as 0.97 is confirmed.
+
+**Plateau.** With `delta_t = 32` the mean weight rises steadily up to about distance 12. From
+distance 12 to 31 it stays between 13.60 and 14.53, with small rises and falls (for example
+14.06 at 18, 13.89 at 21, 14.53 at 27). Pearson drops to 0.79 because it measures a straight-line
+trend, and the curve bends. Spearman stays at 0.95 because the order is still mostly increasing;
+it is not 1 because of the small falls inside the plateau. The short-range means (distances 1 to 7) are the same for both values of `delta_t`, since those edges are the same.
+
+**Distance in seconds.** These v29 frames are about one per second, so distance 12 is about 12 s
+of video, not 3 s. 12 frames would be 3 s only for frames sampled every 0.25 s, as in the SumMe
+frames of the Q-10 measurement, and that case was not measured here.
+
+This is one VSUMM video of 65 frames. The plateau is an observation on it, not a measured
+property of the graph.

@@ -1,6 +1,9 @@
 """Mede, por vídeo do SumMe, a duração do resumo keyshot da baseline HieTaSumm vs. o orçamento de 15% (Q-10).
 
-Pipeline por vídeo: frames a rate=4 fps (frame_extraction.py), features ResNet50/avgpool (mesmos
+Pipeline por vídeo: um frame a cada 1/rate = 0,25 s (frame_extraction.py, regra de
+HieTaSumm.frame_extractor), com a contagem conferida contra os instantes esperados; cada frame
+representa 0,25 s, então a duração do resumo é n_keyshot * 0,25 s, comparada à duração do vídeo
+(frames nativos / fps). Features ResNet50/avgpool (mesmos
 pesos e preprocessamento de features.py, com batch e GPU se houver), grafo time-aware (frame.py),
 cutNumber = int(bestCutNumber() * alpha/100) com piso 3 (Summary.py:57-59), via a porta best_cut.py
 (equivalente ao Summary.bestCutNumber do submódulo, validada em experiments/validate_best_cut.py e
@@ -31,7 +34,7 @@ _REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_REPO_ROOT / "experiments"))
 
 from tcc_gnn.hierarchy.best_cut import best_cut_number, cut_number_from_best  # noqa: E402
-from tcc_gnn.features.frame_extraction import extract_frames  # noqa: E402
+from tcc_gnn.features.frame_extraction import extract_frames, saving_frames_durations  # noqa: E402
 from tcc_gnn.graph.frame import build_time_aware_graph  # noqa: E402
 from tcc_gnn.hierarchy.mst import compute_hierarchy, cut_graph  # noqa: E402
 
@@ -65,6 +68,15 @@ def video_duration_seconds(video_path: Path) -> float:
     if fps <= 0 or n <= 0:
         raise ValueError(f"Metadados inválidos (fps={fps}, frames={n}): {video_path}")
     return n / fps
+
+
+def expected_frame_count(video_path: Path) -> int:
+    """Número de instantes que frame_extraction grava para o vídeo (um a cada 1/rate s)."""
+    cap = cv2.VideoCapture(str(video_path))
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    n = cap.get(cv2.CAP_PROP_FRAME_COUNT)
+    cap.release()
+    return len(saving_frames_durations(fps, n, min(fps, 1 / RATE_FPS)))
 
 
 def extract_features_batched(frame_dir: Path, device: torch.device, batch_size: int = 16) -> np.ndarray:
@@ -121,6 +133,9 @@ def run_video(video_path: Path, frames_root: Path, delta_ts: list[int], device: 
     n_disk = sum(1 for _ in frames_dir.glob("*.jpg"))
 
     duration_s = video_duration_seconds(video_path)
+    n_expected = expected_frame_count(video_path)
+    if n_disk != n_expected:
+        raise ValueError(f"{name}: {n_disk} frames em disco, {n_expected} esperados (extração incompleta)")
 
     features_path = frames_root / name / "features_resnet50_avgpool.npy"
     if features_path.exists():
@@ -140,7 +155,7 @@ def run_video(video_path: Path, frames_root: Path, delta_ts: list[int], device: 
         cut = cut_graph(triples, cut_number)
         n_keyshot, n_components, len_shot_total = count_keyshot_frames(cut, leaf_list, n_disk)
 
-        summary_s = n_keyshot / RATE_FPS
+        summary_s = n_keyshot * (1 / RATE_FPS)  # cada frame amostrado cobre 1/rate = 0,25 s
         percent = 100.0 * summary_s / duration_s
         rows.append(
             {

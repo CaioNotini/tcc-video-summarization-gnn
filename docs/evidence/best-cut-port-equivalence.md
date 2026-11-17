@@ -13,6 +13,12 @@ GeForce GTX 1660 SUPER (driver 572.42), Python 3.12.10, torch 2.5.1+cu121, higra
 under `data/processed/summe/`, `delta_t = 32` (`rate * time` of `options.json`, `Summary.py:15`),
 `alpha = 75`, `percent = 15`.
 
+These frames came from `frame_extraction.py` before its fix of the same day (one frame every
+`round(fps/4)` native frames) and were later replaced by frames sampled every 0.25 s (152 frames
+for `Jumps`, 716 for `Air_Force_One`, see [q10-baseline-budget.md](./q10-baseline-budget.md)).
+Port and reference read the same frames in each comparison, so the equivalence does not depend
+on how the frames were sampled. The runs below were not repeated on the new frames.
+
 ## What is compared
 
 - `experiments/validate_best_cut.py`: the raw `bestCutNumber` value and the derived `cutNumber`
