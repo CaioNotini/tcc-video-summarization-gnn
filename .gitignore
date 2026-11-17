@@ -28,4 +28,4 @@ mlruns/
 .pytest_cache/
 .coverage
 htmlcov/
-teste.py
+teste.py.kiro/
