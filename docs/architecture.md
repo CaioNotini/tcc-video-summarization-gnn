@@ -22,24 +22,28 @@ The HieTaSumm baseline shares only the graph with the proposed method. Its MST h
 
 ```
 src/tcc_gnn/
+├── config.py     [exists]    reads configs/default.yaml, the single source of parameters
+├── reference.py  [exists]    validation only: imports HieTaSumm-lib with tensorflow stubs, calls the reference
 ├── graph/        [exists]    frame.py: time-aware graph            (T01)
-├── features/     [exists]    features.py, frame_extraction.py      (tests: frame_extraction only)
-│                             tf_resnet_extractor.py                (validation only)
+├── features/     [exists]    features.py (extractor, batch, GPU), frame_extraction.py
+│                             tf_resnet_extractor.py                (validation only, D-04)
 ├── data/         [exists]    base.py, summe.py (T05); VSUMM/TVSum  (T10 planned)
 ├── hierarchy/    [partial]   mst.py: MST cut, validated (T06); best_cut.py, keyshots.py (T07); SLC pooling planned (T13)
-├── models/       [planned]   GATv2, MGP, readout                   (T09, T15, T17)
-├── training/     [planned]   unsupervised loops                    (after T13, objective open)
+├── models/       [planned]   GATv2, MGP, readout                   (T09, T15, T17; not created yet)
+├── training/     [planned]   unsupervised loops                    (after T13, objective open; not created yet)
 └── evaluation/   [partial]   fscore.py: F-score, D-26 mapping (T07); tau, rho (T18 planned)
 
-experiments/      [exists]    validate_graph*.py, validate_mst_hierarchy.py,
-                              analyze_mst_cut_edges.py, compare_mst_cases.py,
-                              plot_additional_verification.py, validate_best_cut*.py,
-                              measure_q10_budget.py, run_baseline_summe.py (T07)
-tests/            [exists]    test_frame_graph.py, test_mst_hierarchy.py,
-                              test_mst_hierarchy_scaled_weights.py,
-                              test_summe_adapter.py, test_smoke.py,
-                              test_best_cut.py, test_frame_extraction.py,
-                              test_fscore.py, test_keyshots.py
+experiments/      [exists]    validate_graph.py, validate_graph_torchvision.py (T01);
+                              validate_mst_hierarchy.py, compare_mst_cases.py,
+                              analyze_mst_cut_edges.py, plot_mst_hierarchy.py,
+                              plot_additional_verification.py (T06);
+                              validate_best_cut_keyshots.py, measure_q10_budget.py (Q-10);
+                              run_baseline_summe.py (T07). Script per evidence: evidence/README.md
+tests/            [exists]    one file per module: test_config.py, test_reference.py,
+                              test_frame_graph.py, test_features.py, test_frame_extraction.py,
+                              test_data_base.py, test_summe_adapter.py, test_mst_hierarchy.py,
+                              test_mst_hierarchy_scaled_weights.py, test_best_cut.py,
+                              test_keyshots.py, test_fscore.py, test_smoke.py
 references/       [exists]    git submodules: HieTaSumm-lib, mHELMNet (read-only)
 ```
 
@@ -104,6 +108,8 @@ Each frame is described by a 2048-dimensional vector: the global average pooling
 
  tf_resnet_extractor.py (TensorFlow) ──► used only to check fidelity against the original; not in production
 ```
+
+`frame_extraction.py` saves one frame every `1/rate` s (D-25) with the rule of the HieTaSumm-lib extractor, numbered from 0, and refuses an output folder that is not empty. `features.py` is the single extractor: `extract_features` runs in batches on the given device, and `cached_features` reads the `.npy` next to the frames or writes it.
 
 ## Graph attention over the base graph (step 3, planned, T09)
 
@@ -200,9 +206,11 @@ Each dataset has its own adapter in `src/tcc_gnn/data/`. An adapter lists the vi
 
 The common interface is defined in `src/tcc_gnn/data/base.py`: a `GroundTruth` dataclass (`video_id`, `n_frames`, `keyframes`, `scores: ScoreSeries | None`, `change_points: np.ndarray | None`) and a `ScoreSeries` dataclass (`values`, `frame_indices`) for a continuous score defined only on a subset of frames, plus the `DatasetAdapter` protocol (`list_videos`, `load_ground_truth`). SumMe is the first dataset used, and `src/tcc_gnn/data/summe.py` implements `DatasetAdapter` over the HieTaSumm library submodule's data (T05): `keyframes` maps to `user_summary`, `scores` maps to `gtscore`/`picks` with no padding or interpolation, and `change_points` maps to `change_points`. The VSUMM and TVSum adapters are still planned (T10).
 
-## Evaluation (step 7, planned, T19, T07 and T18)
+## Evaluation (step 7, partial: F-score exists, T18 planned)
 
 Every compared method is run through the same evaluation code and the same protocol. The protocol, covering how keyframes become a summary and how the F-score is computed, is fixed in a written specification ([evaluation-protocol.md](./evaluation-protocol.md)) before any result is produced (D-13, task T19).
+
+The F-score exists in [`src/tcc_gnn/evaluation/fscore.py`](../src/tcc_gnn/evaluation/fscore.py): `sampled_to_native` maps the sampled frames to native frames (D-26), and `f_score` is the port of `Evaluation.f_score`. The supplementary check with the original `find_corresponding_frames` is not in `src/`: [`experiments/run_baseline_summe.py`](../experiments/run_baseline_summe.py) calls it on the submodule through `src/tcc_gnn/reference.py`. Rank metrics, and time and memory as a shared evaluation step, are planned (T18); today the T07 script measures time and memory itself.
 
 ```
  experiments/run_eval.py (planned)
@@ -235,7 +243,7 @@ The cell with a graph and without learning is the original HieTaSumm method, and
 
 ## Code structure
 
-The package is [`src/tcc_gnn/`](../src/tcc_gnn/). Directories marked as planned are empty placeholders today.
+The package is [`src/tcc_gnn/`](../src/tcc_gnn/). Directories marked as planned do not exist yet; the task that needs them creates them.
 
 ```
 tcc-video-summarization-gnn/
@@ -246,6 +254,8 @@ tcc-video-summarization-gnn/
 │   └── default.yaml
 ├── docs/                       # this documentation
 ├── src/tcc_gnn/
+│   ├── config.py               # reads configs/default.yaml                [exists]
+│   ├── reference.py            # HieTaSumm-lib access, validation only    [exists]
 │   ├── graph/                  # frame.py                                  [exists]
 │   ├── features/               # features.py, frame_extraction.py,          [exists]
 │   │                           # tf_resnet_extractor.py (validation only)
@@ -253,11 +263,11 @@ tcc-video-summarization-gnn/
 │   │                           # VSUMM/TVSum adapters                     [planned]
 │   ├── hierarchy/              # mst.py (T06), best_cut.py, keyshots.py    [partial]
 │   │                           # SLC pooling (T13)                        [planned]
-│   ├── models/                 # GATv2 base, MGP modules, readout          [planned]
-│   ├── training/               # unsupervised loops                        [planned]
+│   ├── models/                 # GATv2 base, MGP modules, readout          [planned, not created]
+│   ├── training/               # unsupervised loops                        [planned, not created]
 │   └── evaluation/             # fscore.py (T07); tau, rho (T18)           [partial]
-├── tests/                      # test_frame_graph.py, test_mst_hierarchy.py, test_summe_adapter.py, test_smoke.py, test_best_cut.py, test_frame_extraction.py, test_fscore.py, test_keyshots.py  [exists]
-├── experiments/                # validate_graph*.py, validate_mst_hierarchy.py, analyze_mst_cut_edges.py, validate_best_cut*.py, measure_q10_budget.py, run_baseline_summe.py  [exists]
+├── tests/                      # one test file per module (list in "Where things stand")  [exists]
+├── experiments/                # validation and run scripts (list in "Where things stand")  [exists]
 ├── references/                 # submodules: HieTaSumm-lib, mHELMNet      [exists, read-only]
 └── data/                       # raw and processed data, git-ignored       [exists, local files only]
 ```

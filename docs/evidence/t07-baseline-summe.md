@@ -23,6 +23,7 @@ The official number is the one defined by the protocol
 native frames of its 0.25 s interval (D-26), and the F-score is the maximum over annotators
 (`Evaluation.py:132-155`). The supplementary number uses the original
 `Evaluation.find_corresponding_frames` and is reported only to compare with published numbers.
+It receives the 0-based leaf id of each keyshot, which is what the original passes (the file name `str(leaf).zfill(6)` written by `Summary.group_central_frames`), although the original extractor numbers its jpgs from `000001`; this off-by-one is a feature of the original, kept on purpose (researcher, 2026-11-17).
 
 **Published reference (to be filled in by the researcher):**
 

@@ -85,10 +85,40 @@ The original loop in `Frame.load` (`references/HieTaSumm-lib/HieTaSumm/Frame.py`
 `for vertex2 in range(vertex1, self.calc_end(...))`) includes the case `vertex2 == vertex1`
 and therefore adds one zero-weight self-loop per frame to its graph. The port
 (`src/tcc_gnn/graph/frame.py`) skips `v1 == v2` and produces no self-loops, and
-`build_leonardo_reference_graph` in `experiments/validate_graph.py` skips the same case, so the
+the reference graph used by `experiments/validate_graph.py` (`build_leonardo_reference_graph` up to commit `5b73d21`, now `reference_graph` in `src/tcc_gnn/reference.py`) skips the same case, so the
 edge-set comparison above covers the proper edges only. The discard is deliberate: the
 self-loops carry weight 0 and no information, and `Frame.load` itself cannot feed
 `Graph.compute_hierarchy` because of the node-label mismatch documented in
 [t04-mst-hierarchy-spec.md](./t04-mst-hierarchy-spec.md), so the integer-indexed,
 self-loop-free convention established here is the one every later comparison uses. This note
 records the deviation; it does not change the result above.
+
+## Re-run after the cleanup of 2026-11-17
+
+`src/tcc_gnn/graph/frame.py` received one-line docstrings and no logic change. The validation was
+run again on the same features, with the reference graph now built by
+`reference_graph` (`src/tcc_gnn/reference.py`). Output, verbatim:
+
+`python experiments/validate_graph.py --features data/processed/vsumm/v21/features_teste.npy --delta-t 8`
+
+```
+Features carregadas: shape (110, 1000)
+Arestas só na referência (Leonardo): 0
+Arestas só no nosso grafo:           0
+Arestas em comum:                    742
+Maior diferença de peso (comuns):    0.0000000000
+
+OK: grafos equivalentes.
+```
+
+`python experiments/validate_graph.py --features data/processed/vsumm/v29/features_teste.npy --delta-t 8`
+
+```
+Features carregadas: shape (65, 2048)
+Arestas só na referência (Leonardo): 0
+Arestas só no nosso grafo:           0
+Arestas em comum:                    427
+Maior diferença de peso (comuns):    0.0000000000
+
+OK: grafos equivalentes.
+```
