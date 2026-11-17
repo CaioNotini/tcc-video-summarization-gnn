@@ -8,11 +8,7 @@ SAMPLING_PERIOD_S = 0.25  # um frame amostrado a cada 1/rate s, rate = 4 (D-25)
 
 
 def sampled_to_native(sampled_frames: list[int] | np.ndarray, fps: float, n_frames: int) -> np.ndarray:
-    """Resumo 0/1 por frame nativo a partir de frames amostrados, pela regra da D-26.
-
-    O frame amostrado `k` marca os frames nativos `c` com `0.25 * k <= c / fps < 0.25 * (k + 1)`.
-    O vetor tem `n_frames` posições (o `n_frames` do ground truth); o que passa do fim é cortado.
-    """
+    """Resumo 0/1 com `n_frames` posições: o frame amostrado `k` marca os nativos `c` com `0.25 k <= c / fps < 0.25 (k + 1)` (D-26)."""
     if fps <= 0:
         raise ValueError(f"fps deve ser positivo, veio {fps}")
     if n_frames <= 0:
@@ -26,15 +22,7 @@ def sampled_to_native(sampled_frames: list[int] | np.ndarray, fps: float, n_fram
 
 
 def f_score(predicted_summary: np.ndarray, user_summary: np.ndarray, eval_method: str = "max") -> float:
-    """Porta de `Evaluation.f_score` (`Evaluation.py:132-155`): F-score (0-100) contra cada anotador.
-
-    `predicted_summary` é um vetor 0/1 por frame nativo; `user_summary` é `(n_anotadores, n_frames)`.
-    Os dois são completados com zeros até o maior comprimento, como no original. `eval_method`
-    `"max"` devolve o máximo entre anotadores (SumMe), qualquer outro valor devolve a média (TVSum).
-    Resumo previsto vazio vale 0 (decisão do protocolo; o original divide por zero). Anotador com
-    resumo vazio levanta `ValueError`, porque o original também divide por zero e o SumMe não tem
-    esse caso.
-    """
+    """Porta de `Evaluation.f_score` (`Evaluation.py:132-155`): F (0-100), máximo (`"max"`) ou média entre anotadores; resumo vazio vale 0."""
     predicted_summary = np.asarray(predicted_summary)
     user_summary = np.asarray(user_summary)
     if predicted_summary.ndim != 1:

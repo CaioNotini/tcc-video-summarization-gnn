@@ -1,8 +1,4 @@
-"""Teste de fumaça — confirma que o pacote importa e o ambiente está configurado.
-
-Serve como ponto de partida: cada módulo novo em src/tcc_gnn/ deve ganhar
-seu próprio arquivo de teste aqui (ex.: test_graph.py para src/tcc_gnn/graph/).
-"""
+"""Teste de fumaça: o pacote importa."""
 
 import tcc_gnn
 

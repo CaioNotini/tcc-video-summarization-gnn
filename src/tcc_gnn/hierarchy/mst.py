@@ -1,8 +1,4 @@
-"""Hierarquia MST com higra (watershed-by-area), porta fiel de HieTaSumm-lib/HieTaSumm/Graph.py (D-02, D-05).
-
-Produz uma única partição (o corte `cutNumber`), não uma hierarquia multi-nível: ver a decisão
-de escopo da T04 em docs/evidence/t04-mst-hierarchy-spec.md.
-"""
+"""Hierarquia MST com higra (watershed-by-area), porta de `Graph.py` (D-02, D-05): uma partição única no corte `cutNumber` (T04)."""
 
 from __future__ import annotations
 
@@ -14,20 +10,7 @@ import numpy as np
 def compute_hierarchy(
     input_g: nx.Graph,
 ) -> tuple[list[tuple[int, int, int]], list[int], np.ndarray]:
-    """Porta de `Graph.compute_hierarchy`: árvore watershed-by-area, binarizada (D-02).
-
-    `input_g` é o grafo time-aware (nós = `0..n_frames-1`, aresta `weight` = distância L1).
-    Cada peso de aresta é truncado para `int` antes de chamar o higra
-    (`edge_weights[i] = int(...)`, `Graph.py:60-61`); é um comportamento de truncamento, não de
-    arredondamento, mantido de propósito como parte da baseline HieTaSumm (ver "Fidelity detail"
-    em docs/evidence/t04-mst-hierarchy-spec.md).
-
-    Retorna `(triples, leaf_list, altitudes)`: `triples` é a lista `(node, parent, leaf_flag)` na
-    ordem `leaves_to_root_iterator` (`leaf_flag = -1` para folha, `-2` para nó interno, igual ao
-    original); `leaf_list` são os ids de nó que são folhas (coincidem com os índices de frame
-    originais); `altitudes[node]` é a altitude higra do nó, calculada mas não persistida no
-    arquivo pelo código original — exposta aqui só para inspeção/teste.
-    """
+    """Porta de `Graph.compute_hierarchy`: `(triples (node, parent, -1 folha / -2 interno), leaf_list, altitudes)`, pesos truncados por `int` (D-20)."""
     leaf_list: list[int] = []
     graph = hg.UndirectedGraph()
     graph.add_vertices(max(input_g.nodes) + 1)
@@ -57,14 +40,7 @@ def compute_hierarchy(
 
 
 def cut_graph(triples: list[tuple[int, int, int]], cutNumber: int) -> nx.Graph:
-    """Porta de `Graph.cut_graph`: corte top-down a partir da raiz, abrindo `cutNumber` nós (D-02).
-
-    `triples` é a saída de `compute_hierarchy`, na mesma ordem (`leaves_to_root`). No grafo de
-    saída, o atributo `weight` de cada aresta é na verdade o `leaf_flag` herdado dos `triples`,
-    não uma distância real: é assim que o `Graph.py` original reaproveita a coluna de peso do
-    arquivo ao gravar o corte, e é mantido fiel aqui (ver `cut_graph_file.save_graph_data` no
-    original). Os componentes conexos do grafo retornado são os grupos finais.
-    """
+    """Porta de `Graph.cut_graph`: abre `cutNumber` nós a partir da raiz; componentes = grupos, `weight` = `leaf_flag` como no original."""
     RG = nx.Graph()
     cut_list: list[int] = []
 

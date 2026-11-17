@@ -1,12 +1,4 @@
-"""Porta vetorizada de `Summary.bestCutNumber` (HieTaSumm-lib), a estatística de corte da baseline (D-02).
-
-Reimplementação de desempenho, não de algoritmo: mesma meia-resolução do `rgbSim`
-(`Summary.py:127-133`), mesmo cosseno float64 na fórmula do scipy (`uv / sqrt(uu * vv)`), mesmo
-clamp em 20 do `spatialSim` (`Summary.py:135-139`), mesma janela `calc_end` (`Summary.py:256-260`),
-mesma ordem dos pares no `np.std` e o mesmo `np.round(cut) - 1` (`Summary.py:104-125`). A única
-divergência intencional: desvio-padrão zero levanta `ValueError` em vez do loop infinito
-`while cut <= 1` do original. Validada por equivalência em experiments/validate_best_cut.py.
-"""
+"""Porta vetorizada de `Summary.bestCutNumber` (D-02); só diverge em std = 0 e `delta_t <= 0`, que levantam `ValueError`."""
 
 from __future__ import annotations
 
@@ -19,8 +11,7 @@ _BLOCK_ROWS = 64
 
 
 def _rgb_features_uint8(frames_path: Path) -> np.ndarray:
-    """Carrega os frames jpg como no `rgbSim`: meia resolução, achatados; mantém uint8 (o /255
-    para float64 é aplicado por blocos em `best_cut_number`, elemento a elemento, sem mudar valor)."""
+    """Frames jpg em meia resolução e achatados, como no `rgbSim` (`Summary.py:127-133`), ainda em uint8."""
     frame_list = sorted(p.name for p in frames_path.iterdir())
     rows: list[np.ndarray] = []
     for frames in frame_list:
@@ -36,12 +27,8 @@ def _rgb_features_uint8(frames_path: Path) -> np.ndarray:
 
 
 def best_cut_number(frames_path: Path, delta_t: int) -> float:
-    """Equivalente a `Summary.bestCutNumber` para uma pasta de frames e um `delta_t` positivo.
-
-    `delta_t <= 0` levanta `ValueError`: no original, `delta_t < 0` cai no ramo janela-completa
-    de `calc_end`, que o pipeline nunca usa e esta porta não reproduz.
-    """
-    if delta_t <= 0:
+    """`Summary.bestCutNumber` (`Summary.py:104-125`) para uma pasta de frames; `delta_t <= 0` e std = 0 levantam `ValueError`."""
+    if delta_t <= 0:  # divergência 1: no original, delta_t < 0 cai no ramo janela-completa de calc_end
         raise ValueError(f"delta_t deve ser positivo, veio {delta_t}")
     pixels = _rgb_features_uint8(frames_path)
     n = len(pixels)
@@ -72,7 +59,7 @@ def best_cut_number(frames_path: Path, delta_t: int) -> float:
     weight_list = weight_list[~np.isnan(weight_list)]
 
     cut = np.std(weight_list)
-    if cut <= 0:
+    if cut <= 0:  # divergência 2: no original, std = 0 deixa o `while cut <= 1` em loop infinito
         raise ValueError(
             "Desvio-padrão zero dos pesos: o `while cut <= 1` do original não terminaria"
         )

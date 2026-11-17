@@ -1,16 +1,10 @@
-"""Testes para hierarchy/mst.py, com partição de um grafo sintético calculada à mão.
-
-O grafo sintético é um caminho de 4 frames, 0-1-2-3 (edges contíguas, como no grafo time-aware).
-A árvore watershed-by-area e a partição do corte foram traçadas à mão a partir da lógica
-ported de `Graph.compute_hierarchy`/`Graph.cut_graph` antes deste arquivo existir, e confirmadas
-por uma chamada direta ao higra (não ao código deste módulo) num terminal, para servir de
-oráculo independente. Ver o rastreio em docs/evidence/t06-mst-hierarchy.md.
-"""
+"""Testes para hierarchy/mst.py num caminho de 4 frames cuja árvore e partição foram traçadas à mão (t06-mst-hierarchy.md)."""
 
 from __future__ import annotations
 
 import networkx as nx
 import pytest
+
 from tcc_gnn.hierarchy.mst import compute_hierarchy, cut_graph, mst_partition
 
 
@@ -125,6 +119,7 @@ def test_compute_hierarchy_e_determinista():
 )
 def test_cut_graph_particao_bate_com_o_corte_tracado_a_mao(cut_number, particao_esperada):
     def canonical(frame_to_cluster: dict[int, int]) -> dict[int, str]:
+        """Rótulos A, B, ... pela ordem do menor frame (oráculo local, independente de reference.py)."""
         by_min_frame = sorted(set(frame_to_cluster.values()), key=lambda c: min(
             f for f, cl in frame_to_cluster.items() if cl == c
         ))

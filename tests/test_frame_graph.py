@@ -1,10 +1,13 @@
 """Testes para graph/frame.py."""
 
 from __future__ import annotations
+
 from pathlib import Path
+
 import h5py
 import numpy as np
 import pytest
+
 from tcc_gnn.graph.frame import build_time_aware_graph, calc_window_end, edge_weight
 
 

@@ -6,16 +6,19 @@ import numpy as np
 
 
 def calc_window_end(i: int, delta_t: int, n_frames: int) -> int:
+    """Porta de `Frame.calc_end`: fim exclusivo da janela do frame `i`."""
     if (i + delta_t) > n_frames or delta_t < 0:
         return n_frames
     return i + delta_t
 
 
 def edge_weight(feature_a: np.ndarray, feature_b: np.ndarray) -> float:
+    """Porta de `Frame.calculate_similarity`: distância L1 * 100 / dimensão."""
     return float(np.linalg.norm(feature_a - feature_b, ord=1) * 100 / len(feature_b))
 
 
 def build_time_aware_graph(features: np.ndarray, delta_t: int) -> nx.Graph:
+    """Grafo time-aware de `Frame.load` com nós inteiros `0..n-1` (T01)."""
     n_frames = len(features)
     RG = nx.Graph()
     RG.add_nodes_from(range(n_frames))

@@ -7,7 +7,7 @@ requires-python = ">=3.10"
 
 dependencies = [
     # Grafo e hierarquia (mesma stack usada por HieTaSumm-lib e mHELMNet)
-    "networkx>=3.0",
+    "networkx==3.7",  # fixo: a ordem de nós do subgrafo define o frame central (keyshots.py)
     "higra>=0.6",
 
     # Extração de features (torchvision no lugar do TF/Keras do HieTaSumm-lib original —

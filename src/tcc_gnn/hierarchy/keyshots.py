@@ -11,17 +11,13 @@ def initial_len_shot(n_frames: int, percent: float = 15) -> int:
 
 
 def group_central_frames(graph: nx.Graph, leaflist: list[int], len_shot: int) -> list[int]:
-    """Porta de `Summary.group_central_frames` (`Summary.py:167-192`), sem copiar os jpgs.
-
-    `graph` é o grafo de corte (`mst.cut_graph`), `leaflist` as folhas da hierarquia e `len_shot`
-    o orçamento total (`initial_len_shot`). Devolve os índices de frame na ordem em que o original
-    os grava: componente a componente, `comp_leaf_list[init_keyshots:end_keyshots]` em cada um.
-    """
+    """Porta de `Summary.group_central_frames` (`Summary.py:167-192`) sem o `cp`: keyshots na ordem em que o original os grava."""
     S = [graph.subgraph(c).copy() for c in nx.connected_components(graph)]
     len_shot = int(len_shot / len(S))
     leaf_set = set(leaflist)
     keyshots: list[int] = []
     for c in range(len(S)):
+        # fiel ao original: o "centro" é o da ordem de nós do networkx no subgrafo, não a ordem temporal
         comp_leaf_list = [node for node in list(S[c]) if node in leaf_set]
         len_leaf_list = len(comp_leaf_list)
         cn = int(len_leaf_list / 2)  # nó central da estratégia de keyframe

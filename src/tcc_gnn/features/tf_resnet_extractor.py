@@ -1,5 +1,4 @@
-"""Extração de features via CNN pré-treinada
-"""
+"""Réplica em TensorFlow do extrator do HieTaSumm-lib, só para validação de fidelidade (D-04)."""
 
 from __future__ import annotations
 
@@ -38,6 +37,7 @@ def _build_backbone(model_name: str) -> tuple[Model, tuple[int, int]]:
 
 
 def extract_features_tf(frame_dir: Path, model_name: str = "resnet50") -> np.ndarray:
+    """Features da camada do original (`predictions` ou `fc2`) dos frames de `frame_dir`, em ordem."""
     feature_model, img_size = _build_backbone(model_name)
 
     frame_paths = sorted(Path(frame_dir).iterdir())

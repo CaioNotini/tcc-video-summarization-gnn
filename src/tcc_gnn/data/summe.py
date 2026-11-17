@@ -25,6 +25,7 @@ class SumMeAdapter:
         self.dataset_path = dataset_path
 
     def list_videos(self) -> list[str]:
+        """`video_1` ... `video_25` em ordem numérica."""
         with h5py.File(self.dataset_path, "r") as f:
             return sorted(f.keys(), key=lambda video_id: int(video_id.split("_")[1]))
 
@@ -38,6 +39,7 @@ class SumMeAdapter:
         return {video_id: names[video_id] for video_id in self.list_videos()}
 
     def load_ground_truth(self, video_id: str) -> GroundTruth:
+        """Ground truth do vídeo no formato comum (D-15)."""
         with h5py.File(self.dataset_path, "r") as f:
             video = f[video_id]
             n_frames = int(video["n_frames"][()])
