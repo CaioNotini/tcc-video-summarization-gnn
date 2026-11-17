@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import h5py
 import numpy as np
 import pytest
 
+from tcc_gnn.config import SUMME_VIDEOS
 from tcc_gnn.data.summe import DEFAULT_DATASET_PATH, SumMeAdapter
 
 pytestmark = pytest.mark.skipif(
@@ -62,7 +61,7 @@ NOMES_COM_ESPACO = {
     "St Maarten Landing",
     "Statue of Liberty",
 }
-_VIDEOS_DIR = Path(__file__).resolve().parents[1] / "data" / "raw" / "summe" / "SumMe" / "videos"
+_VIDEOS_DIR = SUMME_VIDEOS
 
 
 def test_video_names_25_nomes_unicos_em_ordem():

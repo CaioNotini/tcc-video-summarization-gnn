@@ -43,9 +43,10 @@ def _tensorflow_stubs() -> dict[str, types.ModuleType]:
 
 @contextmanager
 def hietasumm_reference() -> Iterator[types.SimpleNamespace]:
-    """Importa o pacote HieTaSumm com stubs do tensorflow; ao sair, remove os stubs e o submódulo do sys.path."""
+    """Importa o pacote HieTaSumm com stubs do tensorflow; ao sair, remove os stubs, os módulos HieTaSumm importados e o submódulo do sys.path."""
     if not (SUBMODULE / "HieTaSumm" / "__init__.py").exists():
         raise FileNotFoundError(f"Submódulo HieTaSumm-lib não baixado: {SUBMODULE}")
+    modules_before = set(sys.modules)
     stubs = _tensorflow_stubs()
     added = [name for name in stubs if name not in sys.modules]
     for name in added:
@@ -74,6 +75,8 @@ def hietasumm_reference() -> Iterator[types.SimpleNamespace]:
     finally:
         for name in added:
             sys.modules.pop(name, None)
+        for name in [m for m in sys.modules if m.split(".")[0] == "HieTaSumm" and m not in modules_before]:
+            del sys.modules[name]
         if path_added:
             sys.path.remove(str(SUBMODULE))
         sys.dont_write_bytecode = previous_bytecode
@@ -129,7 +132,7 @@ def reference_cut_graph(triples: list[tuple[int, int, int]], cut_number: int) ->
         return ref_graph.cut_graph(_FileLike(), _TripleCollector(), cut_number)
 
 
-def reference_best_cut_number(frames_dir: Path, delta_t: int, alpha: int = 75) -> dict:
+def reference_best_cut_number(frames_dir: Path, delta_t: int, alpha: int) -> dict:
     """`Summary.bestCutNumber` sem o `__init__` do Summary, e o `cutNumber` com piso 3 de `Summary.py:57-59`."""
     with hietasumm_reference() as ref:
         summary = ref.Summary.__new__(ref.Summary)
@@ -168,11 +171,14 @@ def reference_evaluation():
 
 
 def reference_frame_extractor(video: Path, rate: int, frames_root: Path) -> list[Path]:
-    """`HieTaSumm.frame_extractor` do submódulo; devolve os jpgs gravados em `frames_root/<vídeo>/frames`."""
+    """`HieTaSumm.frame_extractor` do submódulo; devolve os jpgs gravados em `frames_root/<vídeo>/frames`, que não pode existir antes."""
+    frames_dir = frames_root / video.stem / "frames"
+    if frames_dir.exists():  # o original pula a extração se a pasta existe e devolveria jpgs antigos
+        raise ValueError(f"Pasta de frames já existe: {frames_dir}")
     with hietasumm_reference() as ref:
         extractor = ref.HieTaSumm.__new__(ref.HieTaSumm)
         extractor.frame_extractor(video.as_posix(), rate, frames_root.as_posix())
-    return sorted((frames_root / video.stem / "frames").glob("*.jpg"))
+    return sorted(frames_dir.glob("*.jpg"))
 
 
 def canonical_partition(frame_to_cluster: dict[int, int]) -> dict[int, int]:
@@ -183,3 +189,12 @@ def canonical_partition(frame_to_cluster: dict[int, int]) -> dict[int, int]:
     )
     relabel = {c: i for i, c in enumerate(by_min_frame)}
     return {f: relabel[c] for f, c in frame_to_cluster.items()}
+
+
+def scaled_weights(graph: nx.Graph, scale: float) -> nx.Graph:
+    """Cópia do grafo com os pesos multiplicados por `scale` (diagnóstico de empate da T06, sem truncamento)."""
+    scaled = nx.Graph()
+    scaled.add_nodes_from(graph.nodes)
+    for u, v, data in graph.edges(data=True):
+        scaled.add_edge(u, v, weight=data["weight"] * scale)
+    return scaled

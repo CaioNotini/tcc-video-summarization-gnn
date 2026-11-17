@@ -26,11 +26,9 @@ dependencies = [
     # Processamento de vídeo / imagem
     "opencv-python>=4.9",
     "pillow>=10.0",
-    "scikit-learn>=1.4",
-    "scikit-image>=0.22",
     "scipy>=1.12",
 
-    # Avaliação (F-score, Kendall's tau, Spearman's rho vêm do scipy/scikit-learn acima)
+    # Avaliação (F-score em numpy; Kendall's tau e Spearman's rho, quando houver, vêm do scipy acima)
     "numpy>=1.26",
 
     # Leitura de datasets pré-extraídos em .h5 (SumMe/TVSum no formato eccv16_dataset)

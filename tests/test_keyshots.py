@@ -19,13 +19,12 @@ def _three_components() -> tuple[nx.Graph, list[int]]:
 
 
 def test_initial_len_shot() -> None:
-    assert initial_len_shot(152) == 22  # round(22.8) - 1
-    assert initial_len_shot(716) == 106  # round(107.4) - 1
+    assert initial_len_shot(152, 15) == 22  # round(22.8) - 1
+    assert initial_len_shot(716, 15) == 106  # round(107.4) - 1
 
 
 def test_ordem_das_folhas_vem_do_subgrafo() -> None:
-    # comp_leaf_list segue list(S[c]), a ordem do subgraph().copy() do networkx, como no original;
-    # na componente C ela é [8, 101, 7], não a ordem de inserção.
+    # comp_leaf_list segue a ordem de list(S[c]) do networkx, como no original: em C é [8, 101, 7]
     g, _ = _three_components()
     assert [list(g.subgraph(c).copy()) for c in nx.connected_components(g)] == [
         [0, 1, 2, 3, 4, 5, 100],
@@ -35,8 +34,7 @@ def test_ordem_das_folhas_vem_do_subgrafo() -> None:
 
 
 def test_tres_ramos_orcamento_3_por_componente() -> None:
-    # len_shot = int(9 / 3) = 3. A: folhas [0..5], 6 >= 3, cn = 3, k em [2, 4) -> 2, 3.
-    # B: 1 folha, cn = 0 -> nada. C: folhas [8, 7], 2 < 3 -> k em [0, 1) -> 8.
+    # len_shot = 3; A: cn = 3, k em [2, 4) -> 2, 3; B: cn = 0 -> nada; C: [8, 7], 2 < 3, k em [0, 1) -> 8
     g, leaves = _three_components()
     assert group_central_frames(g, leaves, 9) == [2, 3, 8]
 

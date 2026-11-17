@@ -7,15 +7,8 @@ graph:
   delta_t: 32
   rate: 4 # frames amostrados por segundo, um a cada 0,25 s (D-25)
 
-features:
-  backbone: "resnet50" # portado de TensorFlow/Keras para torchvision — ver doc de escopo
-  pretrained: "imagenet"
-  img_size: [224, 224]
-
 hierarchy:
-  # baseline de comparação — mesma lib (higra) usada no HieTaSumm-lib original
-  baseline_method: "watershed_hierarchy_by_area"
-  is_binary: true
+  # baseline de comparação (watershed_hierarchy_by_area binarizada, fixa no código portado)
   alpha: 75 # options.json: cutNumber = int(bestCutNumber * alpha/100) (D-20)
   percent: 15 # options.json: orçamento de keyshots em % dos frames amostrados (D-21)
 
@@ -34,11 +27,7 @@ training:
   lr: 0.001
   batch_size: 1 # um vídeo = um grafo
 
-evaluation:
-  metrics: ["f_score"]
-
 experiment_tracking:
-  backend: "mlflow"
   # mlflow 3.18 recusa o backend de arquivo; banco SQLite e artefatos ficam em ./mlruns/
   tracking_uri: "sqlite:///mlruns/mlflow.db"
   artifact_root: "./mlruns"

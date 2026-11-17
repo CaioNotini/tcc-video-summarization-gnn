@@ -11,6 +11,7 @@ import pytest
 from tcc_gnn.features.frame_extraction import (
     expected_frame_count,
     extract_frames,
+    frame_paths,
     video_metadata,
 )
 from tcc_gnn.reference import SUBMODULE, reference_frame_extractor
@@ -125,3 +126,22 @@ def test_expected_frame_count_bate_com_o_que_extract_frames_grava(tmp_path: Path
     saved = extract_frames(video, tmp_path / "frames", fps=4)
 
     assert expected_frame_count(video, 4) == len(saved) == 4 * int(100 / fps)
+
+
+def test_frame_paths_ordena_e_aceita_so_o_padrao(tmp_path: Path) -> None:
+    for name in ["000001.jpg", "000000.jpg"]:
+        (tmp_path / name).write_bytes(b"")
+    assert [p.name for p in frame_paths(tmp_path)] == ["000000.jpg", "000001.jpg"]
+
+
+@pytest.mark.parametrize("intruso", ["nota.txt", "000002.JPG", "frame.jpg", "0000003.jpg"])
+def test_frame_paths_recusa_arquivo_fora_do_padrao(tmp_path: Path, intruso: str) -> None:
+    (tmp_path / "000000.jpg").write_bytes(b"")
+    (tmp_path / intruso).write_bytes(b"")
+    with pytest.raises(ValueError, match="fora do padrão"):
+        frame_paths(tmp_path)
+
+
+def test_frame_paths_pasta_vazia(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="Nenhum frame"):
+        frame_paths(tmp_path)

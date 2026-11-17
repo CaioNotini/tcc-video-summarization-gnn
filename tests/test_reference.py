@@ -18,7 +18,9 @@ from tcc_gnn.reference import (
     reference_compute_hierarchy,
     reference_cut_graph,
     reference_evaluation,
+    reference_frame_extractor,
     reference_graph,
+    scaled_weights,
 )
 
 needs_submodule = pytest.mark.skipif(
@@ -93,3 +95,27 @@ def test_grafo_hierarquia_e_corte_de_referencia_num_caso_pequeno() -> None:
 
 def test_canonical_partition_renumera_pelo_menor_frame() -> None:
     assert canonical_partition({0: 7, 1: 7, 2: 3, 3: 9, 4: 3}) == {0: 0, 1: 0, 2: 1, 3: 2, 4: 1}
+
+
+@needs_submodule
+def test_modulos_hietasumm_removidos_ao_sair() -> None:
+    with hietasumm_reference():
+        assert "HieTaSumm.Summary" in sys.modules
+    assert not any(name.split(".")[0] == "HieTaSumm" for name in sys.modules)
+
+
+@needs_submodule
+def test_frame_extractor_de_referencia_recusa_pasta_existente(tmp_path) -> None:
+    (tmp_path / "video" / "frames").mkdir(parents=True)
+    with pytest.raises(ValueError, match="já existe"):
+        reference_frame_extractor(tmp_path / "video.avi", 4, tmp_path)
+
+
+def test_scaled_weights_multiplica_e_preserva_nos() -> None:
+    graph = nx.Graph()
+    graph.add_nodes_from(range(3))
+    graph.add_edge(0, 1, weight=0.5)
+    scaled = scaled_weights(graph, 1e6)
+    assert set(scaled.nodes) == {0, 1, 2}
+    assert scaled.edges[0, 1]["weight"] == 0.5e6
+    assert graph.edges[0, 1]["weight"] == 0.5

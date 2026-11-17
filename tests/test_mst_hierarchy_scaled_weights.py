@@ -8,6 +8,7 @@ import networkx as nx
 import numpy as np
 import pytest
 
+from tcc_gnn.config import VSUMM_FEATURES_FILE, VSUMM_PROCESSED
 from tcc_gnn.hierarchy.mst import (
     compute_hierarchy,
     cut_graph,
@@ -15,25 +16,25 @@ from tcc_gnn.hierarchy.mst import (
     partition_from_cut,
 )
 from tcc_gnn.reference import (
+    SUBMODULE,
     canonical_partition,
     reference_compute_hierarchy,
     reference_cut_graph,
     reference_graph,
+    scaled_weights,
 )
 
-_REPO_ROOT = Path(__file__).resolve().parents[1]
-_H5_PATH = _REPO_ROOT / "references" / "HieTaSumm-lib" / "HieTaSumm" / "eccv16_dataset_summe_google_pool5.h5"
 _VIDEOS = ["v21", "v29"]
 
 
 
 def _features_path(video: str) -> Path:
     """`features_teste.npy` do vídeo do VSUMM."""
-    return _REPO_ROOT / "data" / "processed" / "vsumm" / video / "features_teste.npy"
+    return VSUMM_PROCESSED / video / VSUMM_FEATURES_FILE
 
 
 pytestmark = pytest.mark.skipif(
-    not (_H5_PATH.exists() and all(_features_path(v).exists() for v in _VIDEOS)),
+    not ((SUBMODULE / "HieTaSumm" / "Graph.py").exists() and all(_features_path(v).exists() for v in _VIDEOS)),
     reason="submódulo HieTaSumm-lib ou features de v21/v29 não disponíveis",
 )
 
@@ -41,12 +42,7 @@ pytestmark = pytest.mark.skipif(
 def _scaled_graph(video: str, scale: float) -> nx.Graph:
     """Grafo de referência (`delta_t = 8`) com os pesos multiplicados por `scale`."""
     features = np.load(_features_path(video))
-    graph = reference_graph(features, delta_t=8)
-    scaled = nx.Graph()
-    scaled.add_nodes_from(graph.nodes)
-    for u, v, data in graph.edges(data=True):
-        scaled.add_edge(u, v, weight=data["weight"] * scale)
-    return scaled
+    return scaled_weights(reference_graph(features, delta_t=8), scale)
 
 
 @pytest.mark.parametrize("video", _VIDEOS)
@@ -70,11 +66,7 @@ def test_sem_truncamento_bate_com_a_referencia(video):
 
 @pytest.mark.parametrize("video", _VIDEOS)
 def test_sem_truncamento_muda_a_particao_em_relacao_ao_peso_original(video):
-    # cutNumber=20: tanto no v21 (todo peso trunca pra 0) quanto no v29 (2048-d, sem esse
-    # degenerado) a árvore sem empate (pesos x1e6) difere da árvore com int() — mais frames mudam
-    # no v21 (107/110) do que no v29 (31/65), ver docs/evidence/t06-additional-verification.md,
-    # mas em nenhum dos dois o truncamento é um no-op nesse cutNumber. Isso é só diagnóstico de
-    # empate: não substitui o critério de aceitação com int() (D-02).
+    # cutNumber=20: pesos x1e6 mudam a partição no v21 (107/110 frames) e no v29 (31/65); só diagnóstico, o critério segue int() (D-02)
     original_graph = _scaled_graph(video, scale=1.0)
     scaled_graph = _scaled_graph(video, scale=1e6)
 

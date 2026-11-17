@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import numpy as np
@@ -16,12 +17,11 @@ CPU = torch.device("cpu")
 
 
 def _write_frames(frames_dir: Path, n_frames: int = 5) -> None:
-    """Grava `n_frames` jpgs 48x40 aleatórios e um arquivo que não é jpg."""
+    """Grava `n_frames` jpgs 48x40 aleatórios com seed fixa."""
     frames_dir.mkdir(parents=True)
     rng = np.random.default_rng(1)
     for i in range(n_frames):
         Image.fromarray(rng.integers(0, 256, size=(40, 48, 3), dtype=np.uint8)).save(frames_dir / f"{i:06d}.jpg")
-    (frames_dir / "nota.txt").write_text("ignorado")
 
 
 def test_forma_finitos_e_independente_do_batch(tmp_path: Path) -> None:
@@ -57,10 +57,37 @@ def test_pasta_sem_jpg_levanta_erro(tmp_path: Path) -> None:
         extract_features(tmp_path / "frames", CPU)
 
 
+def test_pasta_com_arquivo_fora_do_padrao_levanta_erro(tmp_path: Path) -> None:
+    _write_frames(tmp_path / "frames", n_frames=2)
+    (tmp_path / "frames" / "nota.txt").write_text("intruso")
+    with pytest.raises(ValueError, match="fora do padrão"):
+        extract_features(tmp_path / "frames", CPU)
+
+
 def test_cached_features_le_o_npy_sem_extrair(tmp_path: Path) -> None:
+    _write_frames(tmp_path / "frames", n_frames=3)
     cache = tmp_path / "features.npy"
     np.save(cache, np.arange(6.0).reshape(3, 2))
-    np.testing.assert_array_equal(cached_features(tmp_path / "nao_existe", cache, CPU), np.arange(6.0).reshape(3, 2))
+    np.testing.assert_array_equal(cached_features(tmp_path / "frames", cache, CPU), np.arange(6.0).reshape(3, 2))
+
+
+def test_cached_features_contagem_diferente_levanta_erro(tmp_path: Path) -> None:
+    _write_frames(tmp_path / "frames", n_frames=3)
+    cache = tmp_path / "features.npy"
+    np.save(cache, np.zeros((2, 2048)))
+    with pytest.raises(ValueError, match="2 features para 3 frames"):
+        cached_features(tmp_path / "frames", cache, CPU)
+
+
+def test_cached_features_mais_antigo_que_os_frames_levanta_erro(tmp_path: Path) -> None:
+    _write_frames(tmp_path / "frames", n_frames=2)
+    cache = tmp_path / "features.npy"
+    np.save(cache, np.zeros((2, 2048)))
+    frame = tmp_path / "frames" / "000001.jpg"
+    later = cache.stat().st_mtime + 10
+    os.utime(frame, (later, later))  # simula frames reextraídos depois do .npy
+    with pytest.raises(ValueError, match="mais antigo"):
+        cached_features(tmp_path / "frames", cache, CPU)
 
 
 def test_cached_features_extrai_e_grava_quando_falta(tmp_path: Path) -> None:

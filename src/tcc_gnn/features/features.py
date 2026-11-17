@@ -10,33 +10,40 @@ import torch
 from PIL import Image
 from torchvision.models import ResNet50_Weights, resnet50
 
+from tcc_gnn.features.frame_extraction import frame_paths
 
-def extract_features(frame_dir: Path, device: torch.device, batch_size: int = 16) -> np.ndarray:
-    """Features `(n_frames, 2048)` dos jpgs de `frame_dir`, em ordem de nome."""
+BATCH_SIZE = 16
+
+
+def extract_features(frame_dir: Path, device: torch.device, batch_size: int = BATCH_SIZE) -> np.ndarray:
+    """Features `(n_frames, 2048)` dos jpgs `NNNNNN.jpg` de `frame_dir`, em ordem de nome."""
     weights = ResNet50_Weights.IMAGENET1K_V2
     model = resnet50(weights=weights)
     model.fc = torch.nn.Identity()
     model.eval().to(device)
     preprocess = weights.transforms()
 
-    frame_paths = sorted(p for p in Path(frame_dir).iterdir() if p.suffix == ".jpg")
-    if not frame_paths:
-        raise ValueError(f"Nenhum frame .jpg em {frame_dir}")
+    paths = frame_paths(frame_dir)
     features: list[np.ndarray] = []
     with torch.no_grad():
-        for start in range(0, len(frame_paths), batch_size):
-            batch_paths = frame_paths[start : start + batch_size]
-            batch = torch.stack([preprocess(Image.open(p).convert("RGB")) for p in batch_paths]).to(device)
+        for start in range(0, len(paths), batch_size):
+            batch = torch.stack([preprocess(Image.open(p).convert("RGB")) for p in paths[start : start + batch_size]]).to(device)
             features.append(model(batch).cpu().numpy())
     return np.concatenate(features)
 
 
 def cached_features(frame_dir: Path, features_path: Path, device: torch.device) -> np.ndarray:
-    """Lê `features_path` se existir; senão extrai de `frame_dir` e grava o .npy."""
-    if features_path.exists():
-        return np.load(features_path)
-    features = extract_features(frame_dir, device)
-    np.save(features_path, features)
+    """Lê `features_path` se existir e for coerente com os frames (mesma contagem, não mais antigo); senão extrai e grava."""
+    paths = frame_paths(frame_dir)
+    if not features_path.exists():
+        features = extract_features(frame_dir, device)
+        np.save(features_path, features)
+        return features
+    features = np.load(features_path)
+    if len(features) != len(paths):
+        raise ValueError(f"{features_path}: {len(features)} features para {len(paths)} frames")
+    if features_path.stat().st_mtime < max(p.stat().st_mtime for p in paths):
+        raise ValueError(f"{features_path} é mais antigo que os frames de {frame_dir}: apague o .npy para reextrair")
     return features
 
 

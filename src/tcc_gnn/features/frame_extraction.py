@@ -21,6 +21,17 @@ def video_metadata(video_path: Path) -> tuple[float, int]:
     return fps, n_frames
 
 
+def frame_paths(frames_dir: Path) -> list[Path]:
+    """Jpgs `NNNNNN.jpg` de `frames_dir` em ordem; levanta `ValueError` se a pasta não tem frames ou tem outro arquivo."""
+    entries = sorted(Path(frames_dir).iterdir())
+    others = [p.name for p in entries if not (p.suffix == ".jpg" and len(p.stem) == 6 and p.stem.isdigit())]
+    if others:
+        raise ValueError(f"Arquivos fora do padrão NNNNNN.jpg em {frames_dir}: {others[:5]}")
+    if not entries:
+        raise ValueError(f"Nenhum frame .jpg em {frames_dir}")
+    return entries
+
+
 def saving_frames_durations(native_fps: float, frame_count: float, saving_period: float) -> list[float]:
     """Instantes (s) a gravar: `np.arange(0, int(frame_count / fps), período)` (`__init__.py:134-142`)."""
     # fiel ao original: o int() da duração deixa a fração final do vídeo sem amostra

@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from tcc_gnn.config import load_config, tracking_config
+from tcc_gnn.evaluation.fscore import SAMPLING_PERIOD_S
 
 
 def test_default_yaml_tem_os_parametros_da_baseline() -> None:
@@ -20,8 +21,13 @@ def test_default_yaml_tem_os_parametros_da_baseline() -> None:
 
 def test_default_yaml_sem_campos_mortos() -> None:
     cfg = load_config()
-    assert "data" not in cfg
-    assert cfg["evaluation"]["metrics"] == ["f_score"]
+    assert set(cfg) == {"graph", "hierarchy", "model", "training", "experiment_tracking"}
+    assert set(cfg["hierarchy"]) == {"alpha", "percent", "slc"}
+    assert set(cfg["experiment_tracking"]) == {"tracking_uri", "artifact_root"}
+
+
+def test_rate_do_yaml_bate_com_o_periodo_da_d26() -> None:
+    assert 1 / load_config()["graph"]["rate"] == SAMPLING_PERIOD_S
 
 
 def test_tracking_config_resolve_relativo_a_raiz(tmp_path: Path) -> None:

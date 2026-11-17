@@ -8,6 +8,11 @@ import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CONFIG = REPO_ROOT / "configs" / "default.yaml"
+SUMME_VIDEOS = REPO_ROOT / "data" / "raw" / "summe" / "SumMe" / "videos"
+SUMME_PROCESSED = REPO_ROOT / "data" / "processed" / "summe"
+VSUMM_PROCESSED = REPO_ROOT / "data" / "processed" / "vsumm"
+SUMME_FEATURES_FILE = "features_resnet50_avgpool.npy"  # em SUMME_PROCESSED/<vídeo>/, ao lado de frames/
+VSUMM_FEATURES_FILE = "features_teste.npy"  # em VSUMM_PROCESSED/<vídeo>/, das validações T01 e T06
 _SQLITE_PREFIX = "sqlite:///"
 
 

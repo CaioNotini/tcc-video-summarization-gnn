@@ -18,8 +18,7 @@ def _path_graph(weights: list[float]) -> nx.Graph:
     return g
 
 
-# Árvore esperada (calculada à mão): pesos [1, 3, 2] -> aresta (0,1) é a menor, depois (2,3),
-# depois (1,2) liga os dois grupos. {0,1} mergeiam no nó 4, {2,3} no nó 5, raiz é o nó 6.
+# árvore à mão para pesos [1, 3, 2]: {0,1} no nó 4, {2,3} no nó 5, (1,2) liga os dois na raiz 6
 TRIPLES_ESPERADOS = [
     (0, 4, -1),
     (1, 4, -1),
@@ -67,10 +66,7 @@ def test_compute_hierarchy_e_arvore_binaria_estrita():
 
 
 def test_compute_hierarchy_trunca_pesos_para_int_antes_do_higra():
-    # pesos (0,1)=2.9, (1,2)=10.0, (2,3)=2.1: truncados para int -> 2, 10, 2 (empate entre as
-    # pontas), então {0,1} mergeia primeiro (menor índice de aresta ganha o empate), não {2,3}
-    # como aconteceria com os floats crus (2.1 < 2.9, {2,3} mergearia primeiro). Confirmado
-    # chamando higra diretamente com os pesos truncados e com os pesos crus, fora deste código.
+    # pesos 2.9, 10.0, 2.1 truncam para 2, 10, 2: no empate {0,1} junta primeiro (com os floats seria {2,3}), conferido no higra
     g = _path_graph([2.9, 10.0, 2.1])
 
     triples, leaf_list, _altitudes = compute_hierarchy(g)
@@ -80,10 +76,7 @@ def test_compute_hierarchy_trunca_pesos_para_int_antes_do_higra():
 
 
 def test_compute_hierarchy_grafo_desconexo_levanta_erro():
-    # Dois grupos fora da janela delta_t um do outro: o higra exige um grafo conexo e levanta
-    # RuntimeError. Isso corrige a expectativa inicial da especificação da T04 (que previa uma
-    # "floresta"); o comportamento real, verificado chamando o higra diretamente, é uma exceção.
-    # Não bloqueia o uso real porque o grafo time-aware é sempre conexo para delta_t >= 1.
+    # grafo desconexo: o higra levanta RuntimeError (não uma floresta, como previa a T04); o grafo time-aware é conexo para delta_t >= 1
     g = nx.Graph()
     g.add_nodes_from(range(4))
     g.add_edge(0, 1, weight=1.0)
@@ -104,11 +97,7 @@ def test_compute_hierarchy_e_determinista():
     assert list(altitudes_1) == list(altitudes_2)
 
 
-# Corte traçado à mão sobre TRIPLES_ESPERADOS (ver docstring do módulo e docs/evidence/t06-mst-hierarchy.md):
-# cutNumber=0 e cutNumber=1 dão a mesma partição ({0,1}, {2,3}), porque a primeira linha
-# processada é o próprio registro da raiz (v1=v2=6), que já está em cut_list e consome a
-# primeira unidade de cutNumber sem abrir nenhum nó novo. cutNumber=2 abre o nó 5 de verdade,
-# o que isola as folhas 2 e 3 uma da outra.
+# corte à mão (t06-mst-hierarchy.md): cutNumber 0 e 1 dão {0,1},{2,3} porque o registro da raiz consome uma unidade; 2 isola 2 e 3
 @pytest.mark.parametrize(
     ("cut_number", "particao_esperada"),
     [
@@ -134,8 +123,7 @@ def test_cut_graph_particao_bate_com_o_corte_tracado_a_mao(cut_number, particao_
 
 
 def test_cut_graph_aresta_final_guarda_o_leaf_flag_nao_um_peso():
-    # Comportamento fiel ao original: a coluna "weight" do grafo de corte é o leaf_flag herdado
-    # dos triples (-1 ou -2), não uma distância real.
+    # fiel ao original: o "weight" do grafo de corte é o leaf_flag (-1 ou -2) dos triples, não uma distância
     cut = cut_graph(TRIPLES_ESPERADOS, cutNumber=0)
 
     for _u, _v, data in cut.edges(data=True):
