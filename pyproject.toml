@@ -21,7 +21,7 @@ dependencies = [
     # recentes do torch. PyG >=2.3 já tem fallback nativo em PyTorch puro pras operações de
     # scatter, então não é bloqueante — só reconsiderar se algum gargalo de performance real
     # aparecer mais pra frente (aí instala à parte, com -f https://data.pyg.org/whl/torch-<versão>+cpu.html).
-    "torch-geometric>=2.5",
+    "torch-geometric==2.8.1",  # fixo: GATv2Conv da T09 (D-06 pede registrar a versão)
 
     # Processamento de vídeo / imagem
     "opencv-python>=4.9",

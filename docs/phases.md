@@ -104,7 +104,7 @@ This stage has four tasks, T08 to T11. Its basis is the PyTorch Geometric implem
 
 ### T09: GATv2 on the time-aware graph
 
-- **Depends on:** T07 and T08.
+- **Depends on:** T07.
 - **Basis:** `GATv2Conv` from PyTorch Geometric (D-06).
 - **Goal:** add the first neural layer of the method. Each frame's features are updated using its direct temporal neighbours. This is step three of the pipeline in [architecture.md](./architecture.md).
 - **Acceptance criterion:** tests check the shape and the finiteness of the outputs, and the layer runs on one real video, with the output saved in `evidence/`.

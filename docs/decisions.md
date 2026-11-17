@@ -106,6 +106,8 @@ Two terms are used in every document, and each has one meaning.
 
 **Consequences:** No custom attention code to maintain. Results depend on the library version, which must be recorded in the environment.
 
+**Note (researcher, 2026-11-17):** In T09 the layer uses node features only (`edge_dim=None`), in line with the note of D-08 on the SLC-HELM GATv2 branches; edge distances are not passed as attributes. The version is fixed to `torch-geometric==2.8.1` in `pyproject.toml`. The interpretation of eqs. 1–2 of SLC-HELM (message matrix, bias, self-loops, heads, dropout) is in [evidence/t09-gatv2-spec.md](./evidence/t09-gatv2-spec.md).
+
 **Affects:** T08, T09.
 
 ## D-07 — The multigraph has two edge types, processed in separate branches and merged by an MLP

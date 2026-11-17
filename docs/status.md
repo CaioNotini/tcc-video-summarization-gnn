@@ -6,21 +6,21 @@ Related to: [phases.md](./phases.md), [project.md](./project.md), [references.md
 
 # Project status
 
-Last verified: 2026-11-17, repository commit aa93fc2 plus the uncommitted audit fixes of that date (see Local state).
+Last verified: 2026-11-17, repository commit ca5ab83 plus the uncommitted T09 changes of that date.
 
 This file says where the project stands. What each task requires is in [phases.md](./phases.md). Why the project is built this way is in [decisions.md](./decisions.md). Each open question is defined in [architecture.md](./architecture.md), and only its blocking effect is recorded below.
 
 ## Active task
 
-T07 (HieTaSumm baseline end to end on SumMe): implemented and run on the 25 videos on 2026-11-16, evidence saved; awaiting the researcher's validation (see Next step).
+T09 (GATv2 on the time-aware graph): implemented on 2026-11-17, evidence saved; awaiting the researcher's validation. T08 is moved to after PC4 by the researcher; it is a learning task and T09 does not depend on it ([phases.md](./phases.md)).
 
 ## Task states
 
-- **Validated:** T01, T02, T03, T04, T05, T06, T11, T19
-- **Implemented, not validated:** T07. Evidence: [evidence/t07-baseline-summe.md](./evidence/t07-baseline-summe.md). Summaries for the 25 SumMe videos, official F-score 31.20 (D-26, maximum over annotators), supplementary F-score 32.59 under the original HieTaSumm-lib rule, mean length 13.77%. The published SumMe reference is pending (the researcher will check the paper).
+- **Validated:** T01, T02, T03, T04, T05, T06, T07, T11, T19. T07 validated by the researcher on 2026-11-17. Evidence: [evidence/t07-baseline-summe.md](./evidence/t07-baseline-summe.md). Summaries for the 25 SumMe videos, official F-score 31.20 (D-26, maximum over annotators), supplementary F-score 32.59 under the original HieTaSumm-lib rule, mean length 13.77%. Pending for the supplementary check only: the published SumMe F-score of HieTaSumm (the researcher will check the paper).
+- **Implemented, not validated:** T09. Specification: [evidence/t09-gatv2-spec.md](./evidence/t09-gatv2-spec.md). Evidence: [evidence/t09-gatv2-real-video.md](./evidence/t09-gatv2-real-video.md). The GP block of SLC-HELM (Linear 2048 to 64, `GATv2Conv` with 4 heads and no self-loops, residual, batch norm, dropout 0.2) runs untrained on SumMe `Jumps`: output (152, 64), finite, attention summing to 1 per node, locality and same-seed determinism exact on the CPU; warm GPU forward 1.41 ms, peak 44.9 MB. On the GPU, outputs vary by about 6e-8 between identical calls (atomic scatter).
 - **In progress:** none.
 - **Blocked:** none.
-- **Planned:** T08 to T10, T12 to T18 (T20 and T21 were removed). For T10, the VSUMM files are already downloaded locally; the adapter is pending. The τ and ρ question for VSUMM is decided: not reported (D-22).
+- **Planned:** T08 (after PC4), T10, T12 to T18 (T20 and T21 were removed). For T10, the VSUMM files are already downloaded locally; the adapter is pending. The τ and ρ question for VSUMM is decided: not reported (D-22).
 
 A task becomes validated only when its output is saved in [evidence/](./evidence/) and linked from this file. The rule is in [principles.md](./principles.md), principle 3.
 
@@ -29,6 +29,7 @@ A task becomes validated only when its output is saved in [evidence/](./evidence
 - **Q-02:** blocks T13.
 - **Q-03:** blocks T13 (see D-17). Owner: advisor.
 - **Q-04:** affects T13. Owner: advisor.
+- **GPU determinism (raised 2026-11-17, for T13):** test whether `torch.use_deterministic_algorithms(True)` works with the PyTorch Geometric operations used, and its cost, before training (CLAUDE.md rule 10). Measurement behind it: [evidence/t09-gatv2-real-video.md](./evidence/t09-gatv2-real-video.md). Owner: researcher.
 - **Q-06:** affects the scope of the TVSum adapter: whether it is written in TCC1 or left for TCC2 with the TVSum experiments. Owner: advisor.
 - **Q-08:** from T13 onward.
 - **Q-09:** closed (researcher, 2026-11-16). Timing and memory are measured on the local machine, GPU GeForce GTX 1660 SUPER, 6 GB.
@@ -48,7 +49,7 @@ A task becomes validated only when its output is saved in [evidence/](./evidence
 - Python environment: `.venv/` on drive `D:` (CLAUDE.md rule 17), torch 2.5.1+cu121 on a GeForce GTX 1660 SUPER.
 - mlflow 3.18.0 tracks runs in `mlruns/mlflow.db` (SQLite) with artifacts in `mlruns/`, both git-ignored (`configs/default.yaml`); the file store was refused by this mlflow version (see the T07 evidence).
 - Code cleanup of 2026-11-17, committed as `c1e41a1` to `aa93fc2`. One feature extractor (`src/tcc_gnn/features/features.py`, batch, device; it replaces the per-frame version and the copy in `experiments/measure_q10_budget.py`). One access to the HieTaSumm-lib reference (`src/tcc_gnn/reference.py`, validation only), whose tensorflow stubs are removed on exit; it replaces seven copies in scripts and tests. `configs/default.yaml`, read through `src/tcc_gnn/config.py`, is the single source of `delta_t`, `rate`, `alpha`, `percent` and `tracking_uri`. `extract_frames` refuses an output folder that is not empty. `experiments/validate_best_cut.py` was merged into `validate_best_cut_keyshots.py`. The empty `models/` and `training/` packages were removed. networkx is pinned to 3.7. The `einsum` of `best_cut.py` was kept: `np.dot` gives weights that differ in the last bits (up to 1.8e-12 on three SumMe videos). Results after the cleanup: the official and supplementary F-scores recomputed from the T07 keyshots are identical on the 25 videos (means 31.20 and 32.59); `cutNumber`, keyshots and length match the Q-10 and T07 sheets on `Jumps`, `Air_Force_One` and `Base jumping`; `pytest` passes 97 tests; the T01 graph validation was run again ([evidence/t01-graph-validation.md](./evidence/t01-graph-validation.md)). The oracle output is in [evidence/cleanup-regression.md](./evidence/cleanup-regression.md).
-- Audit fixes of 2026-11-17, not committed. `best_cut.py` raises `ValueError` on an all-black frame (third divergence, decided by the researcher; no frame on disk is affected). The reference cache was removed. `cached_features` refuses a `.npy` with another frame count or older than its frames, and frame folders must hold only `NNNNNN.jpg` (`frame_paths`). Scripts that write evidence require the output path. Data paths live in `src/tcc_gnn/config.py`; `alpha` and `percent` have no defaults in the code. `configs/default.yaml` lost the keys nobody read, and `pyproject.toml` lost scikit-learn and scikit-image (no import in the code or in the submodule modules loaded by `reference.py`). `tests/conftest.py` puts pytest temporaries in `.cache/tmp/pytest` and refuses to run when `TEMP` is not on `D:`. `pytest` passes 111 tests, 1 skipped (TensorFlow not installed). The regression check after these fixes is in [evidence/cleanup-regression.md](./evidence/cleanup-regression.md).
+- Audit fixes of 2026-11-17, committed as `e4140d2` to `7190494`. `best_cut.py` raises `ValueError` on an all-black frame (third divergence, decided by the researcher; no frame on disk is affected). The reference cache was removed. `cached_features` refuses a `.npy` with another frame count or older than its frames, and frame folders must hold only `NNNNNN.jpg` (`frame_paths`). Scripts that write evidence require the output path. Data paths live in `src/tcc_gnn/config.py`; `alpha` and `percent` have no defaults in the code. `configs/default.yaml` lost the keys nobody read, and `pyproject.toml` lost scikit-learn and scikit-image (no import in the code or in the submodule modules loaded by `reference.py`). `tests/conftest.py` puts pytest temporaries in `.cache/tmp/pytest` and refuses to run when `TEMP` is not on `D:`. `pytest` passes 111 tests, 1 skipped (TensorFlow not installed). The regression check after these fixes is in [evidence/cleanup-regression.md](./evidence/cleanup-regression.md).
 - `src/tcc_gnn/features/frame_extraction.py` was fixed on 2026-11-16 to sample one frame every `1/fps` seconds with the rule of the HieTaSumm-lib extractor (`HieTaSumm/__init__.py:86-142`), tested in `tests/test_frame_extraction.py`. Before, it kept one frame every `round(native_fps/fps)` native frames.
 
 ## Verified evidence
@@ -68,4 +69,4 @@ None. The 0.97 correlation sanity check that was listed here now has saved runs:
 
 ## Next step
 
-Stage 2 continues: T04, T05, T06 and T19 are all validated, and T11 is validated too (D-22 closes Q-01). T07 is implemented and its evidence is saved; it needs the researcher's validation and the published SumMe F-score for the supplementary comparison. Stage 2 closes when T07 is validated. By dependency order the next tasks are T08 (no dependency) and then T09 (T07 and T08).
+Stage 2 is closed: T04, T05, T06, T07 and T19 are validated (T11 too, D-22 closes Q-01). The published SumMe F-score is still pending for the supplementary comparison of T07. Stage 3 starts with T09, which depends on T07 only and is implemented, awaiting the researcher's validation; T08 and T10 comes after PC4 (researcher, 2026-11-17). By dependency order the next task is T12 (SLC specification) needs T09.

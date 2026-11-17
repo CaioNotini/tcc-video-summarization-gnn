@@ -19,7 +19,8 @@ hierarchy:
 
 model:
   embedding_size: 64
-  gat_heads: 4
+  gat_heads: 4 # SLC-HELM não informa o número de cabeças (t09-gatv2-spec.md)
+  dropout: 0.2 # SLC-HELM, Seção IV-A; aplicado na saída do bloco GP (t09-gatv2-spec.md)
 
 training:
   unsupervised_objective: null # graph_reconstruction | D17 definir ainda

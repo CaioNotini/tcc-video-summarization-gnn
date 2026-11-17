@@ -101,7 +101,7 @@ Q-10 sheets, and the regenerated T06 artefacts are byte-identical.
 
 ## Re-run after the audit fixes (2026-11-17)
 
-After the fixes of the audit of the same day (on top of commit `aa93fc2`, not committed), the same
+After the fixes of the audit of the same day (on top of commit `aa93fc2`, then committed as `e4140d2` to `7190494`), the same
 oracle script was run again (`python .cache/scratch/oracle.py`). Its 32 output lines are identical,
 line by line (`diff` with no output), to the output above, ending in `ORACULO: OK`: official and
 supplementary F-scores identical on the 25 videos (means 31.20 and 32.59), and `cutNumber`,

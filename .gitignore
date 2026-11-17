@@ -29,3 +29,4 @@ mlruns/
 .coverage
 htmlcov/
 teste.py.kiro/
+.kiro/

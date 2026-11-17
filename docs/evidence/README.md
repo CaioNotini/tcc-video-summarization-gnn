@@ -25,10 +25,12 @@ written before that date omit this argument.
 | [t06-mst-hierarchy.md](./t06-mst-hierarchy.md) | T06 | `experiments/validate_mst_hierarchy.py`, `experiments/plot_mst_hierarchy.py` | `6e5a29d` | current |
 | [t06-additional-verification.md](./t06-additional-verification.md) | T06 | `experiments/compare_mst_cases.py`, `experiments/analyze_mst_cut_edges.py`, `experiments/plot_additional_verification.py` | `02652a5` | current |
 | [sanity-check-features.md](./sanity-check-features.md) | T01 support | `experiments/validate_graph_torchvision.py` | `fc4674d` | current |
-| [best-cut-port-equivalence.md](./best-cut-port-equivalence.md) | Q-10, T07 support | `experiments/validate_best_cut_keyshots.py`; `experiments/validate_best_cut.py` up to `5b73d21` | `aa93fc2` | current |
-| [q10-baseline-budget.md](./q10-baseline-budget.md) | Q-10 | `experiments/measure_q10_budget.py` | `fc4674d` | current |
+| [best-cut-port-equivalence.md](./best-cut-port-equivalence.md) | Q-10, T07 support | `experiments/validate_best_cut_keyshots.py`; `experiments/validate_best_cut.py` up to `5b73d21` | `7190494` | current |
+| [q10-baseline-budget.md](./q10-baseline-budget.md) | Q-10 | `experiments/measure_q10_budget.py` | `7190494` | current |
 | [t07-baseline-summe.md](./t07-baseline-summe.md) | T07 | `experiments/run_baseline_summe.py` | `aa93fc2` | current |
-| [cleanup-regression.md](./cleanup-regression.md) | cleanup of 2026-11-17 | oracle script outside the repository (described in the file) | not committed yet | current |
+| [cleanup-regression.md](./cleanup-regression.md) | cleanup of 2026-11-17 | oracle script outside the repository (described in the file) | `7190494` | current |
+| [t09-gatv2-spec.md](./t09-gatv2-spec.md) | T09 | none (specification) | not committed yet | current |
+| [t09-gatv2-real-video.md](./t09-gatv2-real-video.md) | T09 | `experiments/run_gatv2_real_video.py`, `pytest` (`tests/test_gatv2.py`) | not committed yet | current |
 
 ## Figures and data sheets
 

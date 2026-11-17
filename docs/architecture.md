@@ -29,7 +29,7 @@ src/tcc_gnn/
 │                             tf_resnet_extractor.py                (validation only, D-04)
 ├── data/         [exists]    base.py, summe.py (T05); VSUMM/TVSum  (T10 planned)
 ├── hierarchy/    [partial]   mst.py: MST cut, validated (T06); best_cut.py, keyshots.py (T07); SLC pooling planned (T13)
-├── models/       [planned]   GATv2, MGP, readout                   (T09, T15, T17; not created yet)
+├── models/       [partial]   gatv2.py: GP block, GATv2 on the time-aware graph (T09); MGP, readout planned (T15, T17)
 ├── training/     [planned]   unsupervised loops                    (after T13, objective open; not created yet)
 └── evaluation/   [partial]   fscore.py: F-score, D-26 mapping (T07); tau, rho (T18 planned)
 
@@ -38,12 +38,13 @@ experiments/      [exists]    validate_graph.py, validate_graph_torchvision.py (
                               analyze_mst_cut_edges.py, plot_mst_hierarchy.py,
                               plot_additional_verification.py (T06);
                               validate_best_cut_keyshots.py, measure_q10_budget.py (Q-10);
-                              run_baseline_summe.py (T07). Script per evidence: evidence/README.md
+                              run_baseline_summe.py (T07); run_gatv2_real_video.py (T09).
+                              Script per evidence: evidence/README.md
 tests/            [exists]    one file per module: test_config.py, test_reference.py,
                               test_frame_graph.py, test_features.py, test_frame_extraction.py,
                               test_data_base.py, test_summe_adapter.py, test_mst_hierarchy.py,
                               test_mst_hierarchy_scaled_weights.py, test_best_cut.py,
-                              test_keyshots.py, test_fscore.py, test_tf_resnet_extractor.py
+                              test_keyshots.py, test_fscore.py, test_gatv2.py, test_tf_resnet_extractor.py
                               (skipped without TensorFlow), test_smoke.py; conftest.py keeps
                               pytest temporaries in .cache/tmp/pytest and requires TEMP on D:
 references/       [exists]    git submodules: HieTaSumm-lib, mHELMNet (read-only)
@@ -65,7 +66,7 @@ The seven steps describe the proposed method. The original HieTaSumm baseline is
  [2] features ────────►  2048-d vector per frame       exists
    │
    ▼
- [3] GATv2 ───────────►  frames updated from neighbours planned
+ [3] GATv2 ───────────►  frames updated from neighbours exists
    │
    ▼
  [4] hierarchy ───────►  SLC pooling (learned)       planned
@@ -113,11 +114,11 @@ Each frame is described by a 2048-dimensional vector: the global average pooling
 
 `frame_extraction.py` saves one frame every `1/rate` s (D-25) with the rule of the HieTaSumm-lib extractor, numbered from 0, and refuses an output folder that is not empty; `frame_paths` lists a frame folder and refuses any file that is not `NNNNNN.jpg`. `features.py` is the single extractor: `extract_features` runs in batches on the given device, and `cached_features` reads the `.npy` next to the frames, refusing one with another frame count or older than the frames, or writes it.
 
-## Graph attention over the base graph (step 3, planned, T09)
+## Graph attention over the base graph (step 3, exists, T09)
 
-A GATv2 layer from PyTorch Geometric (`GATv2Conv`) updates each frame's features from its direct temporal neighbours. Attention weights are learned per pair of nodes. Because the graph has only temporal edges, the attention is always local. The layer is not implemented from scratch, and the edge distance may be passed as an edge attribute. Planned location: `src/tcc_gnn/models/`.
+A GATv2 layer from PyTorch Geometric (`GATv2Conv`) updates each frame's features from its direct temporal neighbours. Attention weights are learned per pair of nodes. Because the graph has only temporal edges, the attention is always local. The layer is not implemented from scratch, and it uses node features only, without edge attributes (note in D-06).
 
-The layer follows the first graph processing block of SLC-HELM (eqs. 1–2). Its source is recorded in [references.md](./references.md).
+The layer follows the first graph processing block (GP) of SLC-HELM (eqs. 1–2), whose source is recorded in [references.md](./references.md). It is `GraphProcessingBlock` in [`src/tcc_gnn/models/gatv2.py`](../src/tcc_gnn/models/gatv2.py): a linear embedding to 64 dimensions, `GATv2Conv` with the heads of `configs/default.yaml` and no self-loops, a residual connection and batch normalization, and dropout on the output. `time_aware_edge_index` turns the networkx graph into the `edge_index` of PyTorch Geometric. The equations and every interpretation are in [evidence/t09-gatv2-spec.md](./evidence/t09-gatv2-spec.md).
 
 ## Hierarchy (step 4, planned)
 
@@ -265,7 +266,7 @@ tcc-video-summarization-gnn/
 │   │                           # VSUMM/TVSum adapters                     [planned]
 │   ├── hierarchy/              # mst.py (T06), best_cut.py, keyshots.py    [partial]
 │   │                           # SLC pooling (T13)                        [planned]
-│   ├── models/                 # GATv2 base, MGP modules, readout          [planned, not created]
+│   ├── models/                 # gatv2.py (T09); MGP modules, readout      [partial]
 │   ├── training/               # unsupervised loops                        [planned, not created]
 │   └── evaluation/             # fscore.py (T07); tau, rho (T18)           [partial]
 ├── tests/                      # one test file per module (list in "Where things stand")  [exists]
